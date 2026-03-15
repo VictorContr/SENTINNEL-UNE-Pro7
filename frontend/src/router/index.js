@@ -11,7 +11,7 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('src/views/LoginView.vue'),
+    component: () => import('src/pages/LoginPage.vue'),
     meta: { requiresAuth: false }
   },
 
@@ -30,7 +30,7 @@ const routes = [
       {
         path: 'notificaciones',
         name: 'notificaciones',
-        component: () => import('src/views/NotificacionesView.vue'),
+        component: () => import('src/pages/NotificacionesPage.vue'),
         meta: { requiresAuth: true, roles: [] }
       },
 
@@ -38,13 +38,13 @@ const routes = [
       {
         path: 'admin/usuarios',
         name: 'admin-usuarios',
-        component: () => import('src/views/admin/UsuariosView.vue'),
+        component: () => import('src/pages/admin/UsuariosPage.vue'),
         meta: { requiresAuth: true, roles: ['ADMINISTRADOR'] }
       },
       {
         path: 'admin/carga-masiva',
         name: 'admin-carga-masiva',
-        component: () => import('src/views/admin/CargaMasivaView.vue'),
+        component: () => import('src/pages/admin/CargaMasivaPage.vue'),
         meta: { requiresAuth: true, roles: ['ADMINISTRADOR'] }
       },
 
@@ -52,25 +52,25 @@ const routes = [
       {
         path: 'profesor/estudiantes',
         name: 'profesor-estudiantes',
-        component: () => import('src/views/profesor/EstudiantesView.vue'),
+        component: () => import('src/pages/profesor/EstudiantesPage.vue'),
         meta: { requiresAuth: true, roles: ['PROFESOR'] }
       },
       {
         path: 'profesor/estudiantes/:id_sm_vc/trazabilidad',
         name: 'profesor-trazabilidad',
-        component: () => import('src/views/profesor/TrazabilidadView.vue'),
+        component: () => import('src/pages/profesor/TrazabilidadPage.vue'),
         meta: { requiresAuth: true, roles: ['PROFESOR'] }
       },
       {
         path: 'profesor/estudiantes/:id_sm_vc/materia/:materia_id/conversacion',
         name: 'profesor-conversacion',
-        component: () => import('src/views/profesor/ConversacionView.vue'),
+        component: () => import('src/pages/profesor/ConversacionPage.vue'),
         meta: { requiresAuth: true, roles: ['PROFESOR'] }
       },
       {
         path: 'profesor/estudiantes/:id_sm_vc/deploy',
         name: 'profesor-deploy',
-        component: () => import('src/views/profesor/DeployView.vue'),
+        component: () => import('src/pages/profesor/DeployPage.vue'),
         meta: { requiresAuth: true, roles: ['PROFESOR'] }
       },
 
@@ -78,19 +78,19 @@ const routes = [
       {
         path: 'estudiante/trazabilidad',
         name: 'estudiante-trazabilidad',
-        component: () => import('src/views/estudiante/TrazabilidadView.vue'),
+        component: () => import('src/pages/estudiante/TrazabilidadPage.vue'),
         meta: { requiresAuth: true, roles: ['ESTUDIANTE'] }
       },
       {
         path: 'estudiante/materia/:materia_id/historial',
         name: 'estudiante-historial',
-        component: () => import('src/views/estudiante/HistorialView.vue'),
+        component: () => import('src/pages/estudiante/HistorialPage.vue'),
         meta: { requiresAuth: true, roles: ['ESTUDIANTE'] }
       },
       {
         path: 'estudiante/deploy',
         name: 'estudiante-deploy',
-        component: () => import('src/views/estudiante/DeployView.vue'),
+        component: () => import('src/pages/estudiante/DeployPage.vue'),
         meta: { requiresAuth: true, roles: ['ESTUDIANTE'] }
       }
     ]
