@@ -1,0 +1,99 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthService_sm_vc = void 0;
+const common_1 = require("@nestjs/common");
+const jwt_1 = require("@nestjs/jwt");
+const bcrypt = __importStar(require("bcryptjs"));
+const prisma_service_1 = require("../prisma/prisma.service");
+let AuthService_sm_vc = class AuthService_sm_vc {
+    prisma;
+    jwtService;
+    constructor(prisma, jwtService) {
+        this.prisma = prisma;
+        this.jwtService = jwtService;
+    }
+    async login_sm_vc(correo_sm_vc, clave_sm_vc) {
+        const usuario_sm_vc = await this.prisma.usuario_sm.findUnique({
+            where: { correo_sm_vc },
+        });
+        if (!usuario_sm_vc) {
+            throw new common_1.UnauthorizedException('Credenciales inválidas.');
+        }
+        if (!usuario_sm_vc.activo_sm_vc) {
+            throw new common_1.UnauthorizedException('Tu cuenta ha sido revocada. Contacta al administrador.');
+        }
+        const clave_valida_sm_vc = await bcrypt.compare(clave_sm_vc, usuario_sm_vc.clave_sm_vc);
+        if (!clave_valida_sm_vc) {
+            throw new common_1.UnauthorizedException('Credenciales inválidas.');
+        }
+        const payload_sm_vc = {
+            sub: usuario_sm_vc.id_sm_vc,
+            correo: usuario_sm_vc.correo_sm_vc,
+            rol: usuario_sm_vc.rol_sm_vc,
+        };
+        const { clave_sm_vc: _, ...safe_user_sm_vc } = usuario_sm_vc;
+        return {
+            access_token_sm_vc: this.jwtService.sign(payload_sm_vc),
+            user_sm_vc: safe_user_sm_vc,
+        };
+    }
+    async validateUser_sm_vc(userId_sm_vc) {
+        const usuario_sm_vc = await this.prisma.usuario_sm.findUnique({
+            where: { id_sm_vc: userId_sm_vc },
+        });
+        if (!usuario_sm_vc || !usuario_sm_vc.activo_sm_vc) {
+            throw new common_1.UnauthorizedException();
+        }
+        const { clave_sm_vc: _, ...result_sm_vc } = usuario_sm_vc;
+        return result_sm_vc;
+    }
+};
+exports.AuthService_sm_vc = AuthService_sm_vc;
+exports.AuthService_sm_vc = AuthService_sm_vc = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        jwt_1.JwtService])
+], AuthService_sm_vc);
+//# sourceMappingURL=auth.service.js.map
