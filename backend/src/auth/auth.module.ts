@@ -10,7 +10,7 @@ import { JwtStrategy_sm_vc } from './jwt.strategy';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'sentinnel_jwt_secret_dev_2024_sm_vc',
-      signOptions: { expiresIn: process.env.JWT_EXPIRATION || '24h' },
+      signOptions: { expiresIn: 86400 }, // 24h in seconds
     }),
   ],
   controllers: [AuthController_sm_vc],

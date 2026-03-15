@@ -32,7 +32,11 @@
           <!-- Demo hints -->
           <div class="demo-hints_sm_vc">
             <span class="demo-tag_sm_vc">Demo</span>
-            <span>admin@une.edu.ve | admin123</span>
+            <div class="demo-list_sm_vc">
+              <span><strong>Admin:</strong> admin@une.edu.ve | admin123</span>
+              <span><strong>Profesor:</strong> profesor@une.edu.ve | prof123</span>
+              <span><strong>Estudiante:</strong> estudiante@une.edu.ve | est123</span>
+            </div>
           </div>
 
           <!-- Mensaje de error -->
@@ -273,7 +277,9 @@ onUnmounted(() => {
 .form-header_sm_vc h2 { font-size: 1.4rem; font-weight: 600; color: #e8f4f8; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
 .form-header_sm_vc p { font-size: 0.78rem; color: var(--color-texto-secundario_vc); margin-bottom: 1.5rem; font-family: var(--font-sans_vc); }
 .demo-hints_sm_vc { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; color: var(--color-acento_vc); background: rgba(91, 192, 190, 0.06); border: 1px solid rgba(91, 192, 190, 0.15); border-radius: var(--radius-sm_vc); padding: 0.4rem 0.75rem; margin-bottom: 1.25rem; font-family: var(--font-mono_vc); }
-.demo-tag_sm_vc { background: rgba(111, 255, 233, 0.15); color: var(--color-cta_vc); font-size: 0.6rem; letter-spacing: 0.1em; padding: 1px 6px; border-radius: 2px; font-weight: 700; text-transform: uppercase; }
+.demo-tag_sm_vc { background: rgba(111, 255, 233, 0.15); color: var(--color-cta_vc); font-size: 0.6rem; letter-spacing: 0.1em; padding: 1px 6px; border-radius: 2px; font-weight: 700; text-transform: uppercase; align-self: flex-start; margin-top: 2px; }
+.demo-list_sm_vc { display: flex; flex-direction: column; gap: 2px; }
+.demo-list_sm_vc strong { color: var(--color-cta_vc); }
 .error-banner_sm_vc { display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 75, 110, 0.1); border: 1px solid rgba(255, 75, 110, 0.3); border-radius: var(--radius-md_vc); padding: 0.6rem 0.875rem; margin-bottom: 1rem; font-size: 0.78rem; color: var(--color-error-claro_vc); font-family: var(--font-sans_vc); }
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
 .slide-down-enter-from { opacity: 0; transform: translateY(-8px); }

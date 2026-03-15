@@ -11,6 +11,17 @@ declare const JwtStrategy_sm_vc_base: new (...args: [opt: import("passport-jwt")
 export declare class JwtStrategy_sm_vc extends JwtStrategy_sm_vc_base {
     private readonly authService;
     constructor(authService: AuthService_sm_vc);
-    validate(payload: JwtPayload_sm_vc): Promise<any>;
+    validate(payload: JwtPayload_sm_vc): Promise<{
+        id_sm_vc: string;
+        correo_sm_vc: string;
+        nombre_sm_vc: string;
+        rol_sm_vc: import("@prisma/client").$Enums.Rol_sm;
+        avatar_sm_vc: string | null;
+        activo_sm_vc: boolean;
+        cohorte_sm_vc: string | null;
+        profesor_id_sm_vc: string | null;
+        created_at_sm_vc: Date;
+        updated_at_sm_vc: Date;
+    }>;
 }
 export {};

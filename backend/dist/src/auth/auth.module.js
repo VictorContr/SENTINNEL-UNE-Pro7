@@ -22,7 +22,7 @@ exports.AuthModule_sm_vc = AuthModule_sm_vc = __decorate([
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET || 'sentinnel_jwt_secret_dev_2024_sm_vc',
-                signOptions: { expiresIn: process.env.JWT_EXPIRATION || '24h' },
+                signOptions: { expiresIn: 86400 },
             }),
         ],
         controllers: [auth_controller_1.AuthController_sm_vc],
