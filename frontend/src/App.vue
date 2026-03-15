@@ -7,8 +7,7 @@
 </script>
 
 <style>
-/* ── Google Fonts: IBM Plex Mono + IBM Plex Sans ── */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+/* ── Google Fonts cargadas desde index.html via <link> ── */
 
 /* ── Global resets ── */
 *, *::before, *::after {

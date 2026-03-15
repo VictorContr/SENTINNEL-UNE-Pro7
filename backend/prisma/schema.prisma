@@ -1,0 +1,185 @@
+// Prisma schema for SENTINNEL — Sistema de Trazabilidad de Pasantías
+// Convention: all fields use _sm_vc / _sm_int / _sm_dec suffixes
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════
+// USUARIOS
+// ═══════════════════════════════════════════════════
+
+enum Rol_sm {
+  ADMINISTRADOR
+  PROFESOR
+  ESTUDIANTE
+}
+
+model Usuario_sm {
+  id_sm_vc              String    @id @default(uuid())
+  nombre_sm_vc          String
+  correo_sm_vc          String    @unique
+  clave_sm_vc           String    // bcrypt hash
+  rol_sm_vc             Rol_sm
+  avatar_sm_vc          String?
+  activo_sm_vc          Boolean   @default(true) // Soft-delete flag
+  cohorte_sm_vc         String?
+  profesor_id_sm_vc     String?
+  created_at_sm_vc      DateTime  @default(now())
+  updated_at_sm_vc      DateTime  @updatedAt
+
+  // Relations
+  profesor              Usuario_sm?  @relation("ProfesorEstudiantes", fields: [profesor_id_sm_vc], references: [id_sm_vc])
+  estudiantes           Usuario_sm[] @relation("ProfesorEstudiantes")
+
+  progreso_estudiante   ProgresoEstudiante_sm[]
+  mensajes_enviados     Conversacion_sm[]  @relation("RemitenteMensajes")
+  notificaciones        Notificacion_sm[]  @relation("DestinatarioNotificaciones")
+  deploys               ProyectoDeploy_sm[]
+
+  @@map("usuarios")
+}
+
+// ═══════════════════════════════════════════════════
+// MATERIAS Y REQUISITOS
+// ═══════════════════════════════════════════════════
+
+model Materia_sm {
+  id_sm_vc              String    @id @default(uuid())
+  nombre_sm_vc          String
+  descripcion_sm_vc     String?
+  orden_sm_int          Int
+  activo_sm_vc          Boolean   @default(true)
+
+  requisitos            Requisito_sm[]
+  progreso              ProgresoEstudiante_sm[]
+  conversaciones        Conversacion_sm[]
+
+  @@map("materias")
+}
+
+model Requisito_sm {
+  id_sm_vc              String    @id @default(uuid())
+  nombre_sm_vc          String
+  obligatorio_sm_vc     Boolean   @default(true)
+  orden_sm_int          Int
+  materia_id_sm_vc      String
+  materia               Materia_sm @relation(fields: [materia_id_sm_vc], references: [id_sm_vc])
+
+  conversaciones        Conversacion_sm[]
+
+  @@map("requisitos")
+}
+
+// ═══════════════════════════════════════════════════
+// PROGRESO POR (ESTUDIANTE × MATERIA)
+// ═══════════════════════════════════════════════════
+
+enum EstadoAprobacion_sm {
+  PENDIENTE
+  ENTREGADO
+  APROBADO
+  REPROBADO
+}
+
+model ProgresoEstudiante_sm {
+  id_sm_vc                  String              @id @default(uuid())
+  estudiante_id_sm_vc       String
+  materia_id_sm_vc          String
+  estado_aprobacion_sm_vc   EstadoAprobacion_sm @default(PENDIENTE)
+  nota_sm_dec               Float?
+  fecha_aprobacion_sm_vc    DateTime?
+  intentos_sm_int           Int                 @default(0)
+
+  estudiante                Usuario_sm @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
+  materia                   Materia_sm @relation(fields: [materia_id_sm_vc], references: [id_sm_vc])
+
+  @@unique([estudiante_id_sm_vc, materia_id_sm_vc])
+  @@map("progreso_estudiante")
+}
+
+// ═══════════════════════════════════════════════════
+// CONVERSACIÓN DOCUMENTAL (CHAT POR MATERIA)
+// ═══════════════════════════════════════════════════
+
+enum TipoMensaje_sm {
+  INFORME
+  CORRECCION
+}
+
+enum EstadoEvaluacion_sm {
+  OBSERVACIONES
+  APROBADO
+  REPROBADO
+}
+
+model Conversacion_sm {
+  id_sm_vc                  String              @id @default(uuid())
+  estudiante_id_sm_vc       String
+  materia_id_sm_vc          String
+  remitente_id_sm_vc        String
+  remitente_rol_sm_vc       Rol_sm
+  tipo_sm_vc                TipoMensaje_sm
+  version_sm_vc             String?
+  archivo_nombre_sm_vc      String?
+  tamanio_sm_vc             String?
+  comentario_sm_vc          String?
+  estado_evaluacion_sm_vc   EstadoEvaluacion_sm?
+  fecha_sm_vc               DateTime            @default(now())
+  requisito_id_sm_vc        String?
+
+  remitente                 Usuario_sm   @relation("RemitenteMensajes", fields: [remitente_id_sm_vc], references: [id_sm_vc])
+  materia                   Materia_sm   @relation(fields: [materia_id_sm_vc], references: [id_sm_vc])
+  requisito                 Requisito_sm? @relation(fields: [requisito_id_sm_vc], references: [id_sm_vc])
+
+  @@index([estudiante_id_sm_vc, materia_id_sm_vc])
+  @@map("conversaciones")
+}
+
+// ═══════════════════════════════════════════════════
+// NOTIFICACIONES
+// ═══════════════════════════════════════════════════
+
+enum TipoNotificacion_sm {
+  URGENTE
+  IMPORTANTE
+  INFORMATIVA
+}
+
+model Notificacion_sm {
+  id_sm_vc              String                @id @default(uuid())
+  titulo_sm_vc          String
+  cuerpo_sm_vc          String
+  tipo_sm_vc            TipoNotificacion_sm
+  destinatario_id_sm_vc String
+  materia_id_sm_vc      String?
+  leida_sm_vc           Boolean               @default(false)
+  fecha_sm_vc           DateTime              @default(now())
+
+  destinatario          Usuario_sm @relation("DestinatarioNotificaciones", fields: [destinatario_id_sm_vc], references: [id_sm_vc])
+
+  @@index([destinatario_id_sm_vc])
+  @@map("notificaciones")
+}
+
+// ═══════════════════════════════════════════════════
+// PROYECTO DEPLOY
+// ═══════════════════════════════════════════════════
+
+model ProyectoDeploy_sm {
+  id_sm_vc                      String    @id @default(uuid())
+  estudiante_id_sm_vc           String
+  url_produccion_sm_vc          String
+  archivo_codigo_id_sm_vc       String?
+  documentacion_tecnica_id_sm_vc String?
+  fecha_registro_sm_vc          DateTime  @default(now())
+
+  estudiante                    Usuario_sm @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
+
+  @@map("proyecto_deploy")
+}

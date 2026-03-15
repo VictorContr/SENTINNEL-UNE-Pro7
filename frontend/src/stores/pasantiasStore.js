@@ -105,6 +105,13 @@ const MOCK_DEPLOY = [
   }
 ]
 
+/* Metadata enriquecida de estudiantes (reemplaza los mocks duplicados de EstudiantesPage) */
+const MOCK_ESTUDIANTES_DATA_sm_vc = [
+  { id_sm_vc: 'USR-003', cohorte_sm_vc: '2024-A', profesor_id_sm_vc: 'USR-002', empresa_sm_vc: 'TechVe C.A.' },
+  { id_sm_vc: 'USR-010', cohorte_sm_vc: '2024-A', profesor_id_sm_vc: 'USR-002', empresa_sm_vc: 'DataSoft' },
+  { id_sm_vc: 'USR-011', cohorte_sm_vc: '2024-B', profesor_id_sm_vc: 'USR-002', empresa_sm_vc: 'InnoTech' }
+]
+
 /* ═══════════════════════════════════════════════════════
    STORE
    ═══════════════════════════════════════════════════════ */
@@ -212,6 +219,35 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     if (!auth.user) return null
     return getDeployEstudiante(auth.user.id_sm_vc)
   })
+
+  /* ══════════════════════════════
+     GETTERS — ESTUDIANTES (para profesor)
+     ══════════════════════════════ */
+  function getEstudiantesDelProfesor(profesor_id_sm_vc) {
+    const enriched_sm_vc = MOCK_ESTUDIANTES_DATA_sm_vc
+      .filter((e) => e.profesor_id_sm_vc === profesor_id_sm_vc)
+      .map((e) => {
+        const user_sm_vc = auth.MOCK_USERS.find((u) => u.id_sm_vc === e.id_sm_vc)
+        if (!user_sm_vc) return null
+        const prog_sm_vc = getProgresoEstudiante(e.id_sm_vc)
+        const estado_actual_sm_vc = prog_sm_vc.find((m) => m.estado_aprobacion_sm_vc !== 'APROBADO')?.estado_aprobacion_sm_vc
+          || (prog_sm_vc.every((m) => m.estado_aprobacion_sm_vc === 'APROBADO') ? 'APROBADO' : 'PENDIENTE')
+        return {
+          ...user_sm_vc,
+          cohorte_sm_vc: e.cohorte_sm_vc,
+          empresa_sm_vc: e.empresa_sm_vc,
+          estado_actual_sm_vc,
+          materias_sm_vc: prog_sm_vc.map((m) => ({
+            nombre: m.nombre_sm_vc,
+            estado: m.estado_aprobacion_sm_vc,
+            progreso: m.progreso_decimal,
+            materia_id: m.id_sm_vc
+          }))
+        }
+      })
+      .filter(Boolean)
+    return enriched_sm_vc
+  }
 
   /* ══════════════════════════════
      ACTIONS
@@ -349,6 +385,7 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     getConversacion,
     getDeployEstudiante,
     miDeploy,
+    getEstudiantesDelProfesor,
     /* actions */
     enviarInforme,
     responderCorreccion,

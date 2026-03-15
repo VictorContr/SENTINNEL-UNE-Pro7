@@ -1,1 +1,272 @@
-// app global css in SCSS form
+/* ══════════════════════════════════════════════════════════
+   SENTINNEL — Global Stylesheet (Tailwind CSS v4 + @theme)
+   ══════════════════════════════════════════════════════════ */
+
+@import "tailwindcss";
+
+/* ── @theme: Paleta obligatoria Dark Mode SENTINNEL ── */
+@theme {
+  /* Colores principales */
+  --color-primario_vc:       #0b132b;
+  --color-primario-claro_vc: #0d1a38;
+  --color-superficie_vc:     #080f22;
+  --color-cta_vc:            #6fffe9;
+  --color-cta-hover_vc:      #a0fff0;
+  --color-acento_vc:         #5bc0be;
+  --color-texto-primario_vc: #c8dde8;
+  --color-texto-secundario_vc: #5a7fa8;
+  --color-texto-terciario_vc: #3a5a78;
+  --color-texto-muted_vc:    #2e4a6a;
+  --color-texto-dim_vc:      #1e3050;
+  --color-borde_vc:          rgba(111, 255, 233, 0.07);
+  --color-borde-hover_vc:    rgba(111, 255, 233, 0.15);
+  --color-borde-activo_vc:   rgba(111, 255, 233, 0.25);
+  --color-admin_vc:          #f0a500;
+  --color-profesor_vc:       #6fffe9;
+  --color-estudiante_vc:     #7ec8e3;
+  --color-error_vc:          #ff4b6e;
+  --color-error-claro_vc:    #ff8fa3;
+  --color-exito_vc:          #6fffe9;
+  --color-warning_vc:        #f0a500;
+
+  /* Fuentes */
+  --font-mono_vc: 'IBM Plex Mono', 'Fira Code', 'Courier New', monospace;
+  --font-sans_vc: 'IBM Plex Sans', 'Inter', sans-serif;
+
+  /* Radios */
+  --radius-sm_vc: 4px;
+  --radius-md_vc: 6px;
+  --radius-lg_vc: 10px;
+  --radius-xl_vc: 14px;
+  --radius-pill_vc: 20px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLASES UTILITARIAS COMPARTIDAS
+   Centralizadas aquí para evitar duplicación en scoped styles
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Página base ── */
+.sntnl-page_sm_vc {
+  padding: 1.75rem 2rem;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  font-family: var(--font-mono_vc);
+}
+
+/* ── Encabezado de página ── */
+.page-header_sm_vc {
+  margin-bottom: 1.25rem;
+}
+
+.page-title-row_sm_vc {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.page-title_sm_vc {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-texto-primario_vc);
+  letter-spacing: 0.06em;
+  margin: 0;
+  font-family: var(--font-mono_vc);
+}
+
+.page-subtitle_sm_vc {
+  font-size: 0.72rem;
+  color: var(--color-texto-terciario_vc);
+  margin: 0;
+  font-family: var(--font-sans_vc);
+}
+
+/* ── Tags ── */
+.code-tag_sm_vc {
+  background: rgba(111, 255, 233, 0.08);
+  color: var(--color-acento_vc);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm_vc);
+  font-size: 0.68rem;
+  font-family: var(--font-mono_vc);
+}
+
+.highlight_sm_vc {
+  color: var(--color-cta_vc);
+  font-weight: 600;
+}
+
+/* ── Inputs Quasar override (dark theme) ── */
+.sntnl-input_sm_vc :deep(.q-field__control),
+.sntnl-select_sm_vc :deep(.q-field__control) {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(91, 192, 190, 0.2) !important;
+  border-radius: var(--radius-md_vc) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sntnl-input_sm_vc :deep(.q-field__control:hover),
+.sntnl-select_sm_vc :deep(.q-field__control:hover) {
+  border-color: rgba(111, 255, 233, 0.4) !important;
+}
+
+.sntnl-input_sm_vc:deep(.q-field--focused .q-field__control),
+.sntnl-select_sm_vc:deep(.q-field--focused .q-field__control) {
+  border-color: rgba(111, 255, 233, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(111, 255, 233, 0.08) !important;
+}
+
+.sntnl-input_sm_vc :deep(.q-field__native),
+.sntnl-input_sm_vc :deep(.q-field__input),
+.sntnl-select_sm_vc :deep(.q-field__native) {
+  color: var(--color-texto-primario_vc) !important;
+  font-size: 0.82rem !important;
+  font-family: var(--font-mono_vc) !important;
+}
+
+.sntnl-input_sm_vc :deep(.q-field__native::placeholder) {
+  color: var(--color-texto-muted_vc) !important;
+}
+
+/* ── Upload zone ── */
+.upload-zone_sm_vc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  border: 2px dashed var(--color-borde-hover_vc);
+  border-radius: var(--radius-lg_vc);
+  background: rgba(111, 255, 233, 0.02);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 160px;
+  text-align: center;
+}
+
+.upload-zone_sm_vc p {
+  font-size: 0.78rem;
+  color: #4a6a88;
+  margin: 0;
+  font-family: var(--font-sans_vc);
+}
+
+.upload-zone--active_sm_vc {
+  border-color: rgba(111, 255, 233, 0.5) !important;
+  background: rgba(111, 255, 233, 0.05) !important;
+}
+
+/* ── Botón CTA ── */
+.btn-cta_sm_vc {
+  background: var(--color-cta_vc) !important;
+  color: var(--color-primario_vc) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  border-radius: var(--radius-md_vc) !important;
+  box-shadow: 0 0 20px rgba(111, 255, 233, 0.2);
+  font-family: var(--font-mono_vc) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-cta_sm_vc:hover {
+  background: var(--color-cta-hover_vc) !important;
+  box-shadow: 0 0 30px rgba(111, 255, 233, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Action button (secondary) ── */
+.btn-action_sm_vc {
+  background: rgba(111, 255, 233, 0.12) !important;
+  color: var(--color-cta_vc) !important;
+  border: 1px solid var(--color-borde-activo_vc) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.05em !important;
+  border-radius: var(--radius-md_vc) !important;
+}
+
+/* ── Tabla Quasar override ── */
+.sntnl-table_sm_vc :deep(.q-table) {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(111, 255, 233, 0.08) !important;
+  border-radius: var(--radius-lg_vc) !important;
+}
+
+.sntnl-table_sm_vc :deep(.q-table__top),
+.sntnl-table_sm_vc :deep(.q-table__bottom) {
+  background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.sntnl-table_sm_vc :deep(thead tr th) {
+  font-size: 0.6rem !important;
+  letter-spacing: 0.12em !important;
+  color: var(--color-texto-terciario_vc) !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid rgba(111, 255, 233, 0.06) !important;
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+
+.sntnl-table_sm_vc :deep(tbody tr td) {
+  font-size: 0.75rem !important;
+  color: #7aa0b8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+  font-family: var(--font-mono_vc) !important;
+}
+
+.sntnl-table_sm_vc :deep(tbody tr:hover td) {
+  background: rgba(111, 255, 233, 0.03) !important;
+}
+
+/* ── Dialog Quasar override ── */
+.sntnl-dialog_sm_vc :deep(.q-card) {
+  background: var(--color-primario-claro_vc) !important;
+  border: 1px solid rgba(111, 255, 233, 0.12) !important;
+  border-radius: 12px !important;
+  min-width: 360px;
+}
+
+/* ── Empty state ── */
+.empty-state_sm_vc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: var(--color-texto-muted_vc);
+  font-size: 0.8rem;
+  font-family: var(--font-sans_vc);
+}
+
+/* ── Status badges ── */
+.status--aprobado_sm_vc { color: var(--color-cta_vc) !important; }
+.status--entregado_sm_vc { color: var(--color-estudiante_vc) !important; }
+.status--pendiente_sm_vc { color: var(--color-texto-secundario_vc) !important; }
+.status--reprobado_sm_vc { color: var(--color-error-claro_vc) !important; }
+
+/* ── Filter chip ── */
+.filter-chip_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-pill_vc);
+  font-size: 0.65rem;
+  color: var(--color-texto-terciario_vc);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-mono_vc);
+  letter-spacing: 0.05em;
+}
+
+.filter-chip_sm_vc:hover {
+  background: rgba(111, 255, 233, 0.05);
+  color: #7aa0b8;
+}
+
+.filter-chip--active_sm_vc {
+  background: rgba(111, 255, 233, 0.05) !important;
+}

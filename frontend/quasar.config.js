@@ -44,7 +44,7 @@ export default defineConfig((/* ctx */) => {
       vueRouterMode: 'hash', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
-      // vueOptionsAPI: false,
+      vueOptionsAPI: false,
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
@@ -61,6 +61,7 @@ export default defineConfig((/* ctx */) => {
       // viteVuePluginOptions: {},
       
       vitePlugins: [
+        ['@tailwindcss/vite', {}],
         ['vite-plugin-checker', {
           eslint: {
             lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{js,mjs,cjs,vue}"',
@@ -94,7 +95,7 @@ export default defineConfig((/* ctx */) => {
       },
 
       iconSet: 'material-icons', // Quasar icon set
-      lang: 'en-US', // Quasar language pack
+      lang: 'es', // Quasar language pack — UI en español
 
       // For special cases outside of where the auto-import strategy can have an impact
       // (like functional components as one of the examples),
@@ -119,7 +120,7 @@ export default defineConfig((/* ctx */) => {
     sourceFiles: {
       rootComponent: 'src/App.vue',
       router: 'src/router/index',
-      store:  'src/stores/authStore',    // solo referencia, Pinia se registra en main.js
+      store:  'src/stores/index',
       indexHtmlTemplate: 'index.html'
     //   pwaRegisterServiceWorker: 'src-pwa/register-service-worker',
     //   pwaServiceWorker: 'src-pwa/custom-service-worker',

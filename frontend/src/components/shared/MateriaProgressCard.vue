@@ -124,7 +124,8 @@ function isRequisitoAprobado(requisito_id_sm_vc) {
   return conv.some(
     (m) =>
       m.remitente_rol_sm_vc === 'PROFESOR' &&
-      m.estado_evaluacion_sm_vc === 'APROBADO'
+      m.estado_evaluacion_sm_vc === 'APROBADO' &&
+      m.requisito_id_sm_vc === requisito_id_sm_vc
   )
 }
 

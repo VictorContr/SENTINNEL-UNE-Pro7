@@ -49,7 +49,7 @@ const estadoActual = computed(() => {
   return prog?.estado_aprobacion_sm_vc ?? 'PENDIENTE'
 })
 
-function onMensajeEnviado(msg) {
+function onMensajeEnviado() {
   $q.notify({
     type: 'positive',
     message: 'Corrección enviada.',

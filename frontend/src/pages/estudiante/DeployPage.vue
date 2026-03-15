@@ -176,12 +176,10 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
-import { useAuthStore } from 'src/stores/authStore'
 
 const router = useRouter()
 const $q = useQuasar()
 const store = usePasantiasStore()
-const auth = useAuthStore()
 
 const submitting = ref(false)
 const dragZip = ref(false)
