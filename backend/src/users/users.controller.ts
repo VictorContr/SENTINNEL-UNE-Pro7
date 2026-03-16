@@ -1,5 +1,9 @@
 import { Controller, Get, Patch, Param, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard_sm_vc, RolesGuard_sm_vc, Roles_sm_vc } from '../auth/guards';
+import {
+  JwtAuthGuard_sm_vc,
+  RolesGuard_sm_vc,
+  Roles_sm_vc,
+} from '../auth/guards';
 import { UsersService_sm_vc } from './users.service';
 
 @Controller('users')

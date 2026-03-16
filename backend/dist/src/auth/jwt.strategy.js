@@ -13,14 +13,15 @@ exports.JwtStrategy_sm_vc = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
+const config_1 = require("@nestjs/config");
 const auth_service_1 = require("./auth.service");
 let JwtStrategy_sm_vc = class JwtStrategy_sm_vc extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     authService;
-    constructor(authService) {
+    constructor(authService, config) {
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || 'sentinnel_jwt_secret_dev_2024_sm_vc',
+            secretOrKey: config.get('JWT_SECRET') || 'fallback_secret',
         });
         this.authService = authService;
     }
@@ -35,6 +36,7 @@ let JwtStrategy_sm_vc = class JwtStrategy_sm_vc extends (0, passport_1.PassportS
 exports.JwtStrategy_sm_vc = JwtStrategy_sm_vc;
 exports.JwtStrategy_sm_vc = JwtStrategy_sm_vc = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [auth_service_1.AuthService_sm_vc])
+    __metadata("design:paramtypes", [auth_service_1.AuthService_sm_vc,
+        config_1.ConfigService])
 ], JwtStrategy_sm_vc);
 //# sourceMappingURL=jwt.strategy.js.map
