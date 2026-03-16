@@ -96,7 +96,7 @@ const routes = [
   /* ── 404 catch-all ── */
   {
     path: '/:catchAll(.*)*',
-    redirect: '/notificaciones'
+    component: () => import('src/pages/ErrorNotFound.vue')
   }
 ]
 

@@ -54,34 +54,32 @@
       </div>
 
       <transition-group name="msg-slide" tag="div" class="messages-list">
-        <div
-          v-for="(msg, index) in mensajes"
+        <q-chat-message
+          v-for="msg in mensajes"
           :key="msg.id_sm_vc"
-          class="msg-row"
-          :class="msg.remitente_rol_sm_vc === 'ESTUDIANTE' ? 'msg-row--left' : 'msg-row--right'"
+          :name="msg.remitente_rol_sm_vc"
+          :stamp="formatDateTime(msg.fecha_sm_vc)"
+          :sent="msg.remitente_rol_sm_vc !== 'ESTUDIANTE'"
+          text-color="white"
+          :bg-color="msg.remitente_rol_sm_vc === 'ESTUDIANTE' ? 'teal-9' : 'amber-9'"
+          size="8"
         >
-          <!-- Conector de línea de tiempo -->
-          <div v-if="index < mensajes.length - 1" class="timeline-connector" />
+          <template v-slot:avatar>
+            <q-avatar size="32px" :color="msg.remitente_rol_sm_vc === 'ESTUDIANTE' ? 'teal-3' : 'amber-4'" :text-color="'dark'" class="q-mx-sm">
+              <q-icon :name="msg.remitente_rol_sm_vc === 'ESTUDIANTE' ? 'person' : 'school'" size="20px" />
+            </q-avatar>
+          </template>
 
-          <!-- Rol label -->
-          <div class="msg-role-label">
-            <div class="role-avatar" :class="`role-avatar--${msg.remitente_rol_sm_vc.toLowerCase()}`">
-              <q-icon
-                :name="msg.remitente_rol_sm_vc === 'ESTUDIANTE' ? 'person' : 'school'"
-                size="12px"
-              />
-            </div>
-            <span class="role-text">{{ msg.remitente_rol_sm_vc }}</span>
-            <span class="msg-timestamp">{{ formatDateTime(msg.fecha_sm_vc) }}</span>
-            <div v-if="msg.requisito_id_sm_vc" class="req-tag">
+          <template v-slot:name>
+            <span class="role-text" style="color: #6fffe9; font-weight: bold; margin-bottom: 4px; display: inline-block;">{{ msg.remitente_rol_sm_vc }}</span>
+            <div v-if="msg.requisito_id_sm_vc" class="req-tag q-ml-sm" style="display: inline-flex;">
               <q-icon name="assignment" size="11px" />
               {{ getRequisitoNombre(msg.requisito_id_sm_vc) }}
             </div>
-          </div>
+          </template>
 
           <!-- Tarjeta de archivo principal -->
-          <div class="file-card" :class="`file-card--${msg.tipo_sm_vc.toLowerCase()}`">
-            <!-- Ícono lateral de tipo -->
+          <div class="file-card" :class="`file-card--${msg.tipo_sm_vc.toLowerCase()}`" style="background: rgba(0,0,0,0.5); border: none;">
             <div class="file-type-strip" />
 
             <div class="file-icon-col">
@@ -125,7 +123,7 @@
           <!-- Evaluación resultado (solo si es corrección con estado) -->
           <div
             v-if="msg.estado_evaluacion_sm_vc"
-            class="eval-chip"
+            class="eval-chip q-mt-sm"
             :class="`eval-chip--${msg.estado_evaluacion_sm_vc.toLowerCase()}`"
           >
             <q-icon
@@ -138,7 +136,7 @@
             />
             <span>Resultado: {{ msg.estado_evaluacion_sm_vc }}</span>
           </div>
-        </div>
+        </q-chat-message>
       </transition-group>
     </div>
 

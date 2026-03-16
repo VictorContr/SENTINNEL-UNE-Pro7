@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, reactive } from 'vue'
+import { ref, computed } from 'vue'
 
 /**
  * SENTINNEL – authStore
@@ -52,7 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
   const error_sm_vc = ref(null)
 
   /* ── Reactive copy of mock users (not mutating the seed) ── */
-  const MOCK_USERS_sm_vc = reactive(
+  const MOCK_USERS_sm_vc = ref(
     MOCK_USERS_SEED_sm_vc.map((u) => ({ ...u }))
   )
 
@@ -91,7 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
       /* Simular latencia de red */
       await new Promise((r) => setTimeout(r, 900))
 
-      const found_sm_vc = MOCK_USERS_sm_vc.find(
+      const found_sm_vc = MOCK_USERS_sm_vc.value.find(
         (u) =>
           u.correo_sm_vc === correo_input_sm_vc.trim().toLowerCase() &&
           u.clave_sm_vc === clave_input_sm_vc
@@ -137,7 +137,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function ban_user_sm_vc(id_target_sm_vc) {
     /* Soft-delete: marca como inactivo en la copia reactiva */
-    const usuario_sm_vc = MOCK_USERS_sm_vc.find((u) => u.id_sm_vc === id_target_sm_vc)
+    const usuario_sm_vc = MOCK_USERS_sm_vc.value.find((u) => u.id_sm_vc === id_target_sm_vc)
     if (usuario_sm_vc) {
       usuario_sm_vc.activo_sm_vc = !usuario_sm_vc.activo_sm_vc
     }
@@ -146,7 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
   function crear_usuario_sm_vc(datos_sm_vc) {
     /* Acción mock: agrega un usuario al array reactivo local */
     const nuevo_sm_vc = {
-      id_sm_vc: `USR-${String(MOCK_USERS_sm_vc.length + 1).padStart(3, '0')}`,
+      id_sm_vc: `USR-${String(MOCK_USERS_sm_vc.value.length + 1).padStart(3, '0')}`,
       nombre_sm_vc: datos_sm_vc.nombre_sm_vc,
       correo_sm_vc: datos_sm_vc.correo_sm_vc,
       clave_sm_vc: datos_sm_vc.clave_sm_vc || 'temp123',
@@ -156,7 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
       cohorte_sm_vc: datos_sm_vc.cohorte_sm_vc || null,
       profesor_id_sm_vc: datos_sm_vc.profesor_id_sm_vc || null
     }
-    MOCK_USERS_sm_vc.push(nuevo_sm_vc)
+    MOCK_USERS_sm_vc.value.push(nuevo_sm_vc)
     return nuevo_sm_vc
   }
 

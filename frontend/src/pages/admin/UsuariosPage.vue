@@ -45,6 +45,18 @@
         </q-td>
       </template>
 
+      <!-- Nombre y Avatar -->
+      <template #body-cell-nombre_sm_vc="props">
+        <q-td :props="props">
+          <div class="row items-center q-gutter-x-sm">
+            <q-avatar size="32px" color="teal-9" text-color="teal-3" class="q-mr-xs font-bold font-mono">
+              {{ props.value.charAt(0).toUpperCase() }}
+            </q-avatar>
+            <span>{{ props.value }}</span>
+          </div>
+        </q-td>
+      </template>
+
       <!-- Rol -->
       <template #body-cell-rol_sm_vc="props">
         <q-td :props="props">
