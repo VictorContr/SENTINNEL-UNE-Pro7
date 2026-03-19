@@ -142,33 +142,33 @@ const progressColor = computed(() => {
 
 <style scoped>
 .materia-card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(111, 255, 233, 0.07);
+  background: var(--sn-surface-alpha);
+  border: 1px solid var(--sn-borde);
   border-radius: 12px;
   padding: 0 0 0.875rem;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.18s ease;
   position: relative;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--sn-font-mono);
 }
 
 .materia-card:hover:not(.materia-card--locked) {
-  border-color: rgba(111, 255, 233, 0.18);
-  background: rgba(111, 255, 233, 0.03);
+  border-color: var(--sn-borde-hover);
+  background: var(--sn-surface-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
-.materia-card--active  { border-color: rgba(126, 200, 227, 0.2); background: rgba(126, 200, 227, 0.025); }
-.materia-card--done    { border-color: rgba(111, 255, 233, 0.18); }
+.materia-card--active  { border-color: var(--sn-borde-hover); background: rgba(126, 200, 227, 0.025); }
+.materia-card--done    { border-color: var(--sn-borde-hover); }
 .materia-card--locked  { cursor: not-allowed; opacity: 0.45; }
 .materia-card--reprobado { border-color: rgba(255, 143, 163, 0.15); }
 
 /* Accent top bar */
 .card-accent-top {
   height: 2px;
-  background: rgba(111, 255, 233, 0.12);
+  background: var(--sn-surface-active);
 }
 
 .materia-card--active   .card-accent-top { background: #7ec8e3; box-shadow: 0 0 8px rgba(126, 200, 227, 0.4); }
@@ -200,7 +200,7 @@ const progressColor = computed(() => {
 .card-nombre {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #c8dde8;
+  color: var(--sn-texto-principal);
   margin: 0 0 2px;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -208,7 +208,7 @@ const progressColor = computed(() => {
   text-overflow: ellipsis;
 }
 
-.card-id { font-size: 0.58rem; color: #1e3050; margin: 0; letter-spacing: 0.08em; }
+.card-id { font-size: 0.58rem; color: var(--sn-texto-dim); margin: 0; letter-spacing: 0.08em; }
 
 .estado-pill {
   display: flex;
@@ -227,10 +227,10 @@ const progressColor = computed(() => {
 
 .card-desc {
   font-size: 0.68rem;
-  color: #3a5a78;
+  color: var(--sn-texto-terciario);
   margin: 0 1rem 0.75rem;
   line-height: 1.5;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--sn-font-sans);
 }
 
 /* Progress */
@@ -240,7 +240,7 @@ const progressColor = computed(() => {
   display: flex;
   justify-content: space-between;
   font-size: 0.58rem;
-  color: #2e4a6a;
+  color: var(--sn-texto-apagado);
   margin-bottom: 4px;
 }
 
@@ -257,16 +257,16 @@ const progressColor = computed(() => {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.62rem;
-  color: #2e4a6a;
+  color: var(--sn-texto-apagado);
   padding: 3px 0;
 }
 
-.req-pill--done { color: #5bc0be; }
-.req-pill--done .q-icon { color: #6fffe9 !important; }
+.req-pill--done { color: var(--sn-acento-sec); }
+.req-pill--done .q-icon { color: var(--sn-primario) !important; }
 .req-pill--optional .optional-tag {
   font-size: 0.5rem;
-  color: #1e3050;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--sn-texto-dim);
+  background: var(--sn-surface-alpha);
   padding: 0 4px;
   border-radius: 2px;
   margin-left: auto;
@@ -277,7 +277,7 @@ const progressColor = computed(() => {
   display: flex;
   gap: 0.75rem;
   padding: 0 1rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--sn-borde);
   margin-bottom: 0.75rem;
 }
 
@@ -286,10 +286,10 @@ const progressColor = computed(() => {
   align-items: center;
   gap: 0.3rem;
   font-size: 0.6rem;
-  color: #2e4a6a;
+  color: var(--sn-texto-apagado);
 }
 
-.stat--nota { color: #7a6020; }
+.stat--nota { color: var(--sn-advertencia); }
 
 /* Footer */
 .card-footer { padding: 0 1rem; }
@@ -299,7 +299,7 @@ const progressColor = computed(() => {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.6rem;
-  color: #1e3050;
+  color: var(--sn-texto-dim);
 }
 
 .card-action {
@@ -307,11 +307,11 @@ const progressColor = computed(() => {
   align-items: center;
   justify-content: space-between;
   font-size: 0.62rem;
-  color: #3a5a78;
+  color: var(--sn-texto-terciario);
   transition: color 0.15s;
 }
 
-.materia-card:hover:not(.materia-card--locked) .card-action { color: #6fffe9; }
+.materia-card:hover:not(.materia-card--locked) .card-action { color: var(--sn-primario); }
 
 .action-hint { font-size: 0.62rem; letter-spacing: 0.05em; }
 </style>

@@ -32,7 +32,7 @@
           <label class="field-label">URL de Producción <span class="required">*</span></label>
           <q-input
             v-model="form.url_produccion_sm_vc"
-            dense outlined dark color="teal-3"
+            dense outlined color="teal-3"
             placeholder="https://mi-proyecto.netlify.app"
             class="sntnl-input"
             :rules="[val => !!val || 'Campo requerido', val => /^https?:\/\/.+/.test(val) || 'URL inválida']"
@@ -164,26 +164,26 @@ async function registrarDeploy() {
 .sntnl-page { padding: 1.75rem 2rem; position: relative; z-index: 1; }
 .page-header { margin-bottom: 1.5rem; }
 .page-title-row { display: flex; align-items: center; margin-bottom: 0.25rem; }
-.page-title { font-size: 1.2rem; font-weight: 700; color: #c8dde8; letter-spacing: 0.06em; margin: 0; font-family: 'IBM Plex Mono', monospace; }
-.page-subtitle { font-size: 0.72rem; color: #3a5a78; margin: 0; font-family: 'IBM Plex Sans', sans-serif; }
-.code-tag { background: rgba(111,255,233,0.08); color: #5bc0be; padding: 1px 5px; border-radius: 3px; font-size: 0.68rem; font-family: 'IBM Plex Mono', monospace; }
+.page-title { font-size: 1.2rem; font-weight: 700; color: var(--sn-texto-principal); letter-spacing: 0.06em; margin: 0; font-family: var(--sn-font-mono); }
+.page-subtitle { font-size: 0.72rem; color: var(--sn-texto-terciario); margin: 0; font-family: var(--sn-font-sans); }
+.code-tag { background: rgba(111,255,233,0.08); color: var(--sn-acento-sec); padding: 1px 5px; border-radius: 3px; font-size: 0.68rem; font-family: var(--sn-font-mono); }
 .locked-state { display: flex; align-items: center; gap: 1.25rem; padding: 2rem; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.07); border-radius: 12px; max-width: 480px; }
-.locked-title { font-size: 0.88rem; font-weight: 600; color: #5a7fa8; margin: 0 0 3px; font-family: 'IBM Plex Mono', monospace; }
-.locked-desc { font-size: 0.75rem; color: #2e4a6a; margin: 0; font-family: 'IBM Plex Sans', sans-serif; line-height: 1.6; }
+.locked-title { font-size: 0.88rem; font-weight: 600; color: var(--sn-texto-secundario); margin: 0 0 3px; font-family: var(--sn-font-mono); }
+.locked-desc { font-size: 0.75rem; color: var(--sn-texto-apagado); margin: 0; font-family: var(--sn-font-sans); line-height: 1.6; }
 .deploy-form-wrap { max-width: 520px; }
-.section-notice { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: #5bc0be; background: rgba(111,255,233,0.05); border: 1px solid rgba(111,255,233,0.15); border-radius: 8px; padding: 0.6rem 0.875rem; margin-bottom: 1.5rem; font-family: 'IBM Plex Sans', sans-serif; }
+.section-notice { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: var(--sn-acento-sec); background: rgba(111,255,233,0.05); border: 1px solid rgba(111,255,233,0.15); border-radius: 8px; padding: 0.6rem 0.875rem; margin-bottom: 1.5rem; font-family: var(--sn-font-sans); }
 .deploy-form { display: flex; flex-direction: column; gap: 1.1rem; }
 .field-group { display: flex; flex-direction: column; gap: 0.35rem; }
-.field-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: #5bc0be; font-weight: 500; font-family: 'IBM Plex Mono', monospace; }
-.required { color: #ff8fa3; }
+.field-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sn-acento-sec); font-weight: 500; font-family: var(--sn-font-mono); }
+.required { color: var(--sn-error-claro); }
 :deep(.sntnl-input .q-field__control) { background: rgba(255,255,255,0.03) !important; border: 1px solid rgba(91,192,190,0.2) !important; border-radius: 6px !important; }
 :deep(.sntnl-input .q-field__control:hover) { border-color: rgba(111,255,233,0.4) !important; }
 :deep(.sntnl-input.q-field--focused .q-field__control) { border-color: rgba(111,255,233,0.7) !important; box-shadow: 0 0 0 3px rgba(111,255,233,0.08) !important; }
-:deep(.sntnl-input .q-field__native) { color: #c8dde8 !important; font-size: 0.82rem !important; font-family: 'IBM Plex Mono', monospace !important; }
-.upload-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 1.5rem; border: 2px dashed rgba(111,255,233,0.15); border-radius: 10px; background: rgba(111,255,233,0.02); cursor: pointer; transition: all 0.2s; min-height: 120px; text-align: center; }
-.upload-zone p { font-size: 0.75rem; color: #4a6a88; margin: 0; font-family: 'IBM Plex Sans', sans-serif; }
+:deep(.sntnl-input .q-field__native) { color: var(--sn-texto-principal) !important; font-size: 0.82rem !important; font-family: var(--sn-font-mono) !important; }
+.upload-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 1.5rem; border: 2px dashed var(--sn-borde-hover); border-radius: 10px; background: var(--sn-surface-alpha); cursor: pointer; transition: all 0.2s; min-height: 120px; text-align: center; }
+.upload-zone p { font-size: 0.75rem; color: var(--sn-texto-secundario); margin: 0; font-family: var(--sn-font-sans); }
 .upload-zone--active { border-color: rgba(111,255,233,0.5) !important; background: rgba(111,255,233,0.05) !important; }
-.file-name-text { font-size: 0.75rem; color: #6fffe9; font-family: 'IBM Plex Mono', monospace; }
+.file-name-text { font-size: 0.75rem; color: var(--sn-primario); font-family: var(--sn-font-mono); }
 .submit-btn { background: #6fffe9 !important; color: #0b132b !important; font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 0.1em !important; border-radius: 6px !important; padding: 0.6rem 1.5rem !important; box-shadow: 0 0 20px rgba(111,255,233,0.2); margin-top: 0.5rem; align-self: flex-start; }
 .submit-btn:hover { box-shadow: 0 0 30px rgba(111,255,233,0.35) !important; }
 </style>

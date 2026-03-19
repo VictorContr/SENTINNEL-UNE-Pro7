@@ -124,35 +124,35 @@ function formatDate(iso) { return new Date(iso).toLocaleDateString('es-VE', { da
 </script>
 
 <style scoped>
-.sntnl-page { padding: 1.75rem 2rem; position: relative; z-index: 1; min-height: 100vh; font-family: 'IBM Plex Mono', monospace; }
+.sntnl-page { padding: 1.75rem 2rem; position: relative; z-index: 1; min-height: 100vh; font-family: var(--sn-font-mono); }
 .back-btn { font-size: 0.72rem !important; }
 .student-ficha { display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem; background: rgba(255,255,255,0.025); border: 1px solid rgba(111,255,233,0.1); border-radius: 14px; margin-bottom: 2rem; flex-wrap: wrap; }
-.ficha-avatar { width: 54px; height: 54px; border-radius: 12px; background: rgba(111,255,233,0.1); border: 1px solid rgba(111,255,233,0.25); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #6fffe9; flex-shrink: 0; }
+.ficha-avatar { width: 54px; height: 54px; border-radius: 12px; background: rgba(111,255,233,0.1); border: 1px solid rgba(111,255,233,0.25); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: var(--sn-primario); flex-shrink: 0; }
 .ficha-data { flex: 1; }
-.ficha-nombre { font-size: 1.15rem; font-weight: 700; color: #c8dde8; margin: 0 0 0.4rem; letter-spacing: 0.04em; }
+.ficha-nombre { font-size: 1.15rem; font-weight: 700; color: var(--sn-texto-principal); margin: 0 0 0.4rem; letter-spacing: 0.04em; }
 .ficha-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
-.meta-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.65rem; color: #3a5a78; }
+.meta-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.65rem; color: var(--sn-texto-terciario); }
 .ficha-global-estado { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex-shrink: 0; }
-.global-estado-label { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: #2e4a6a; }
-.pct-label { font-size: 0.75rem; font-weight: 700; color: #6fffe9; }
-.section-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; font-weight: 600; color: #5bc0be; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+.global-estado-label { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sn-texto-apagado); }
+.pct-label { font-size: 0.75rem; font-weight: 700; color: var(--sn-primario); }
+.section-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--sn-acento-sec); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
 .materias-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 @media (max-width: 900px) { .materias-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); } }
 .detail-tabs-row { display: flex; gap: 0.4rem; border-bottom: 1px solid rgba(111,255,233,0.07); flex-wrap: wrap; }
-.detail-tab { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; font-size: 0.68rem; color: #3a5a78; cursor: pointer; background: transparent; border: none; border-bottom: 2px solid transparent; letter-spacing: 0.05em; font-family: 'IBM Plex Mono', monospace; transition: all 0.15s; margin-bottom: -1px; }
-.detail-tab:hover { color: #7aa0b8; }
-.detail-tab--active { color: #6fffe9; border-bottom-color: #6fffe9; background: rgba(111,255,233,0.04); }
-.tab-badge { background: rgba(111,255,233,0.12); color: #5bc0be; font-size: 0.55rem; padding: 1px 6px; border-radius: 3px; }
+.detail-tab { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; font-size: 0.68rem; color: var(--sn-texto-terciario); cursor: pointer; background: transparent; border: none; border-bottom: 2px solid transparent; letter-spacing: 0.05em; font-family: var(--sn-font-mono); transition: all 0.15s; margin-bottom: -1px; }
+.detail-tab:hover { color: var(--sn-texto-secundario); }
+.detail-tab--active { color: var(--sn-primario); border-bottom-color: var(--sn-primario); background: rgba(111,255,233,0.04); }
+.tab-badge { background: rgba(111,255,233,0.12); color: var(--sn-acento-sec); font-size: 0.55rem; padding: 1px 6px; border-radius: 3px; }
 .tab-panel { background: rgba(255,255,255,0.02); border: 1px solid rgba(111,255,233,0.07); border-top: none; border-radius: 0 0 12px 12px; min-height: 200px; }
 .tab-empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 3rem; text-align: center; }
-.tab-empty p { font-size: 0.78rem; color: #2e4a6a; margin: 0; font-family: 'IBM Plex Sans', sans-serif; }
+.tab-empty p { font-size: 0.78rem; color: var(--sn-texto-apagado); margin: 0; font-family: var(--sn-font-sans); }
 .deploy-readonly-panel { padding: 1.5rem; }
 .deploy-field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
 .deploy-field-item { display: flex; flex-direction: column; gap: 0.4rem; }
-.deploy-field-label { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: #2e4a6a; }
-.deploy-url { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: #6fffe9; text-decoration: none; word-break: break-all; }
+.deploy-field-label { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sn-texto-apagado); }
+.deploy-url { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--sn-primario); text-decoration: none; word-break: break-all; }
 .deploy-url:hover { text-decoration: underline; }
-.deploy-file-chip { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(111,255,233,0.08); border-radius: 6px; }
-.deploy-file-chip span { font-size: 0.72rem; color: #7aa0b8; flex: 1; }
-.deploy-value { font-size: 0.78rem; color: #7aa0b8; }
+.deploy-file-chip { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--sn-borde); border-radius: 6px; }
+.deploy-file-chip span { font-size: 0.72rem; color: var(--sn-texto-secundario); flex: 1; }
+.deploy-value { font-size: 0.78rem; color: var(--sn-texto-secundario); }
 </style>

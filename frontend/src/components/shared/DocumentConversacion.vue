@@ -71,7 +71,7 @@
           </template>
 
           <template v-slot:name>
-            <span class="role-text" style="color: #6fffe9; font-weight: bold; margin-bottom: 4px; display: inline-block;">{{ msg.remitente_rol_sm_vc }}</span>
+            <span class="role-text" style="color: var(--sn-primario); font-weight: bold; margin-bottom: 4px; display: inline-block;">{{ msg.remitente_rol_sm_vc }}</span>
             <div v-if="msg.requisito_id_sm_vc" class="req-tag q-ml-sm" style="display: inline-flex;">
               <q-icon name="assignment" size="11px" />
               {{ getRequisitoNombre(msg.requisito_id_sm_vc) }}
@@ -165,14 +165,14 @@
                 option-value="id_sm_vc"
                 option-label="nombre_sm_vc"
                 emit-value map-options
-                dense outlined dark color="teal-3"
+                dense outlined color="teal-3"
                 class="sntnl-select"
                 label="Seleccionar requisito"
               />
             </div>
             <div class="field-group">
               <label class="field-label">Versión</label>
-              <q-input v-model="formEstudiante.version_sm_vc" dense outlined dark color="teal-3" class="sntnl-input" placeholder="ej: v1.0" />
+              <q-input v-model="formEstudiante.version_sm_vc" dense outlined color="teal-3" class="sntnl-input" placeholder="ej: v1.0" />
             </div>
           </div>
 
@@ -187,7 +187,7 @@
 
           <div class="field-group">
             <label class="field-label">Comentario (opcional)</label>
-            <q-input v-model="formEstudiante.comentario_sm_vc" dense outlined dark color="teal-3" class="sntnl-input" placeholder="Describe los cambios realizados…" type="textarea" rows="2" autogrow />
+            <q-input v-model="formEstudiante.comentario_sm_vc" dense outlined color="teal-3" class="sntnl-input" placeholder="Describe los cambios realizados…" type="textarea" rows="2" autogrow />
           </div>
 
           <q-btn
@@ -223,7 +223,7 @@
             </div>
             <div v-if="formProfesor.estado_evaluacion_sm_vc === 'APROBADO'" class="field-group">
               <label class="field-label">Nota (sobre 20)</label>
-              <q-input v-model.number="formProfesor.nota_sm_dec" type="number" min="0" max="20" step="0.5" dense outlined dark color="teal-3" class="sntnl-input nota-input" />
+              <q-input v-model.number="formProfesor.nota_sm_dec" type="number" min="0" max="20" step="0.5" dense outlined color="teal-3" class="sntnl-input nota-input" />
             </div>
           </div>
 
@@ -240,7 +240,7 @@
             <label class="field-label">Observaciones <span class="req-mark">*</span></label>
             <q-input
               v-model="formProfesor.comentario_sm_vc"
-              dense outlined dark color="teal-3"
+              dense outlined color="teal-3"
               class="sntnl-input"
               placeholder="Describe los puntos a corregir o los criterios de aprobación…"
               type="textarea"
@@ -388,7 +388,7 @@ function formatDateTime(iso) {
   display: flex;
   flex-direction: column;
   gap: 0;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--sn-font-mono);
 }
 
 /* ── Chat Header ── */
@@ -397,8 +397,8 @@ function formatDateTime(iso) {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(111, 255, 233, 0.08);
+  background: var(--sn-fondo-elevado);
+  border-bottom: 1px solid var(--sn-borde);
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -413,8 +413,8 @@ function formatDateTime(iso) {
   width: 38px;
   height: 38px;
   border-radius: 8px;
-  background: rgba(111, 255, 233, 0.08);
-  border: 1px solid rgba(111, 255, 233, 0.15);
+  background: var(--sn-surface-active);
+  border: 1px solid var(--sn-borde-hover);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -424,14 +424,14 @@ function formatDateTime(iso) {
 .materia-nombre {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #c8dde8;
+  color: var(--sn-texto-principal);
   margin: 0 0 2px;
   letter-spacing: 0.03em;
 }
 
 .materia-id {
   font-size: 0.6rem;
-  color: #2e4a6a;
+  color: var(--sn-texto-apagado);
   margin: 0;
   letter-spacing: 0.06em;
 }
@@ -457,8 +457,8 @@ function formatDateTime(iso) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
-  background: rgba(0, 0, 0, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: var(--sn-fondo-elevado);
+  border-bottom: 1px solid var(--sn-borde);
   flex-wrap: wrap;
 }
 
@@ -467,17 +467,17 @@ function formatDateTime(iso) {
   align-items: center;
   gap: 0.3rem;
   font-size: 0.6rem;
-  color: #3a5a78;
-  background: rgba(255, 255, 255, 0.03);
+  color: var(--sn-texto-terciario);
+  background: var(--sn-surface-alpha);
   padding: 2px 8px;
   border-radius: 4px;
 }
 
-.flow-step-pill--end { color: #5bc0be; }
+.flow-step-pill--end { color: var(--sn-acento-sec); }
 
 .flow-arrow {
   font-size: 0.65rem;
-  color: #1e3050;
+  color: var(--sn-texto-dim);
 }
 
 /* ── Messages Container ── */
@@ -490,7 +490,7 @@ function formatDateTime(iso) {
 }
 
 .messages-container::-webkit-scrollbar { width: 4px; }
-.messages-container::-webkit-scrollbar-thumb { background: rgba(111, 255, 233, 0.12); border-radius: 2px; }
+.messages-container::-webkit-scrollbar-thumb { background: var(--sn-surface-active); border-radius: 2px; }
 
 .messages-list { display: flex; flex-direction: column; gap: 1.25rem; }
 
@@ -504,8 +504,8 @@ function formatDateTime(iso) {
   text-align: center;
 }
 
-.empty-chat p { font-size: 0.75rem; color: #2e4a6a; margin: 0; font-family: 'IBM Plex Sans', sans-serif; }
-.empty-hint { color: #1e3050 !important; font-size: 0.68rem !important; }
+.empty-chat p { font-size: 0.75rem; color: var(--sn-texto-apagado); margin: 0; font-family: var(--sn-font-sans); }
+.empty-hint { color: var(--sn-texto-dim) !important; font-size: 0.68rem !important; }
 
 /* ── Message Row ── */
 .msg-row {
@@ -546,20 +546,20 @@ function formatDateTime(iso) {
   justify-content: center;
 }
 
-.role-avatar--estudiante { background: rgba(126, 200, 227, 0.15); color: #7ec8e3; }
-.role-avatar--profesor   { background: rgba(240, 165, 0, 0.12);   color: #f0a500; }
+.role-avatar--estudiante { background: rgba(126, 200, 227, 0.15); color: var(--sn-estudiante); }
+.role-avatar--profesor   { background: rgba(240, 165, 0, 0.12);   color: var(--sn-advertencia); }
 
 .role-text {
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #3a5a78;
+  color: var(--sn-texto-terciario);
 }
 
 .msg-timestamp {
   font-size: 0.55rem;
-  color: #1e3050;
+  color: var(--sn-texto-dim);
   margin-left: 0.25rem;
 }
 
@@ -568,8 +568,8 @@ function formatDateTime(iso) {
   align-items: center;
   gap: 3px;
   font-size: 0.55rem;
-  color: #5bc0be;
-  background: rgba(91, 192, 190, 0.08);
+  color: var(--sn-acento-sec);
+  background: var(--sn-surface-active);
   padding: 1px 6px;
   border-radius: 3px;
 }
@@ -579,8 +579,8 @@ function formatDateTime(iso) {
   display: flex;
   align-items: flex-start;
   gap: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(111, 255, 233, 0.07);
+  background: var(--sn-surface-alpha);
+  border: 1px solid var(--sn-borde);
   border-radius: 10px;
   overflow: hidden;
   min-width: 280px;
@@ -588,7 +588,7 @@ function formatDateTime(iso) {
   transition: border-color 0.15s;
 }
 
-.file-card:hover { border-color: rgba(111, 255, 233, 0.15); }
+.file-card:hover { border-color: var(--sn-borde-hover); }
 
 .file-card--informe   { border-color: rgba(126, 200, 227, 0.1); }
 .file-card--correccion { border-color: rgba(240, 165, 0, 0.1); }
@@ -632,14 +632,14 @@ function formatDateTime(iso) {
 .file-name {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #c8dde8;
+  color: var(--sn-texto-principal);
   word-break: break-word;
 }
 
 .file-version-chip {
   font-size: 0.55rem;
   font-weight: 700;
-  color: #3a5a78;
+  color: var(--sn-texto-terciario);
   background: rgba(255, 255, 255, 0.05);
   padding: 1px 6px;
   border-radius: 3px;
@@ -660,17 +660,17 @@ function formatDateTime(iso) {
   text-transform: uppercase;
 }
 
-.tipo-label--informe   { color: #7ec8e3; }
-.tipo-label--correccion { color: #f0a500; }
+.tipo-label--informe   { color: var(--sn-estudiante); }
+.tipo-label--correccion { color: var(--sn-advertencia); }
 
-.file-size { font-size: 0.6rem; color: #2e4a6a; }
+.file-size { font-size: 0.6rem; color: var(--sn-texto-apagado); }
 
 .file-comment {
   font-size: 0.68rem;
-  color: #5a7fa8;
+  color: var(--sn-texto-secundario);
   line-height: 1.5;
   margin: 0;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--sn-font-sans);
   font-style: italic;
 }
 
@@ -697,9 +697,9 @@ function formatDateTime(iso) {
 
 .msg-row--left .eval-chip { align-self: flex-start; }
 
-.eval-chip--aprobado     { background: rgba(111, 255, 233, 0.1); color: #6fffe9; }
-.eval-chip--reprobado    { background: rgba(255, 143, 163, 0.1); color: #ff8fa3; }
-.eval-chip--observaciones { background: rgba(240, 165, 0, 0.1);  color: #f0a500; }
+.eval-chip--aprobado     { background: var(--sn-surface-active); color: var(--sn-primario); }
+.eval-chip--reprobado    { background: rgba(255, 143, 163, 0.1); color: var(--sn-error-claro); }
+.eval-chip--observaciones { background: rgba(240, 165, 0, 0.1);  color: var(--sn-advertencia); }
 
 /* ── Transitions ── */
 .msg-slide-enter-active { transition: all 0.25s ease; }
@@ -709,9 +709,9 @@ function formatDateTime(iso) {
    ACTION PANEL
    ══════════════════════════════════════ */
 .action-panel {
-  border-top: 1px solid rgba(111, 255, 233, 0.08);
+  border-top: 1px solid var(--sn-borde);
   padding: 1.25rem;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--sn-fondo-elevado);
 }
 
 .action-panel-header {
@@ -719,7 +719,7 @@ function formatDateTime(iso) {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.68rem;
-  color: #5bc0be;
+  color: var(--sn-acento-sec);
   letter-spacing: 0.06em;
   margin-bottom: 1rem;
   text-transform: uppercase;
@@ -740,16 +740,16 @@ function formatDateTime(iso) {
   font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #3a5a78;
+  color: var(--sn-texto-terciario);
   font-weight: 500;
 }
 
-.req-mark { color: #ff8fa3; }
+.req-mark { color: var(--sn-error-claro); }
 
 :deep(.sntnl-select .q-field__control),
 :deep(.sntnl-input .q-field__control) {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(91, 192, 190, 0.18) !important;
+  background: var(--sn-surface-alpha) !important;
+  border: 1px solid var(--sn-borde) !important;
   border-radius: 6px !important;
   transition: border-color 0.15s;
 }
@@ -761,9 +761,9 @@ function formatDateTime(iso) {
 
 :deep(.sntnl-select .q-field__native),
 :deep(.sntnl-input .q-field__native) {
-  color: #c8dde8 !important;
+  color: var(--sn-texto-principal) !important;
   font-size: 0.78rem !important;
-  font-family: 'IBM Plex Mono', monospace !important;
+  font-family: var(--sn-font-mono) !important;
 }
 
 .nota-input { max-width: 100px; }
@@ -774,18 +774,18 @@ function formatDateTime(iso) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--sn-surface-alpha);
   border: 1px dashed rgba(111, 255, 233, 0.18);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.72rem;
-  color: #4a6a88;
+  color: var(--sn-texto-secundario);
   transition: all 0.15s;
 }
 
 .mini-upload:hover {
   border-color: rgba(111, 255, 233, 0.4);
-  color: #6fffe9;
+  color: var(--sn-primario);
 }
 
 /* Eval options grid */
@@ -800,14 +800,14 @@ function formatDateTime(iso) {
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--sn-surface-alpha);
+  border: 1px solid var(--sn-borde);
   border-radius: 6px;
   font-size: 0.65rem;
-  color: #3a5a78;
+  color: var(--sn-texto-terciario);
   cursor: pointer;
   transition: all 0.15s;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--sn-font-mono);
   letter-spacing: 0.05em;
 }
 
@@ -816,8 +816,8 @@ function formatDateTime(iso) {
 
 /* Send buttons */
 .send-btn {
-  background: rgba(111, 255, 233, 0.12) !important;
-  color: #6fffe9 !important;
+  background: var(--sn-surface-active) !important;
+  color: var(--sn-primario) !important;
   border: 1px solid rgba(111, 255, 233, 0.25) !important;
   font-size: 0.72rem !important;
   font-weight: 600 !important;
@@ -828,7 +828,7 @@ function formatDateTime(iso) {
 
 .send-btn--profesor {
   background: rgba(240, 165, 0, 0.1) !important;
-  color: #f0a500 !important;
+  color: var(--sn-advertencia) !important;
   border-color: rgba(240, 165, 0, 0.25) !important;
 }
 
@@ -842,6 +842,6 @@ function formatDateTime(iso) {
   border-top: 1px solid rgba(240, 165, 0, 0.12);
   font-size: 0.68rem;
   color: #7a5a1a;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--sn-font-sans);
 }
 </style>

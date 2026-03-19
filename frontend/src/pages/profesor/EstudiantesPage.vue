@@ -14,11 +14,11 @@
 
     <!-- Filtros y buscador -->
     <div class="filter-row_sm_vc">
-      <q-input v-model="busqueda_sm_vc" dense outlined placeholder="Buscar estudiante…" dark color="teal-3" class="sntnl-input_sm_vc search-input_sm_vc">
+      <q-input v-model="busqueda_sm_vc" dense outlined placeholder="Buscar estudiante…" color="teal-3" class="sntnl-input_sm_vc search-input_sm_vc">
         <template #prepend><q-icon name="search" color="grey-6" size="18px" /></template>
       </q-input>
-      <q-select v-model="filtro_cohorte_sm_vc" :options="cohorte_options_sm_vc" dense outlined dark color="teal-3" label="Cohorte" clearable class="sntnl-select_sm_vc filter-select_sm_vc" emit-value map-options />
-      <q-select v-model="filtro_materia_sm_vc" :options="materia_options_sm_vc" dense outlined dark color="teal-3" label="Materia Activa" clearable class="sntnl-select_sm_vc filter-select_sm_vc" emit-value map-options />
+      <q-select v-model="filtro_cohorte_sm_vc" :options="cohorte_options_sm_vc" dense outlined color="teal-3" label="Cohorte" clearable class="sntnl-select_sm_vc filter-select_sm_vc" emit-value map-options />
+      <q-select v-model="filtro_materia_sm_vc" :options="materia_options_sm_vc" dense outlined color="teal-3" label="Materia Activa" clearable class="sntnl-select_sm_vc filter-select_sm_vc" emit-value map-options />
     </div>
 
     <!-- Grid de tarjetas -->
@@ -116,25 +116,25 @@ function ver_trazabilidad_sm_vc(estudiante_sm_vc) {
 .search-input_sm_vc { min-width: 240px; }
 .filter-select_sm_vc { min-width: 150px; }
 .students-grid_sm_vc { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-:deep(.student-card_sm_vc) { background: rgba(255, 255, 255, 0.03) !important; border: 1px solid rgba(111, 255, 233, 0.08) !important; border-radius: 12px !important; cursor: pointer; transition: all 0.15s ease; overflow: hidden; }
-:deep(.student-card_sm_vc:hover) { border-color: rgba(111, 255, 233, 0.2) !important; background: rgba(111, 255, 233, 0.04) !important; transform: translateY(-2px); }
+:deep(.student-card_sm_vc) { background: var(--sn-surface-alpha) !important; border: 1px solid var(--sn-borde) !important; border-radius: 12px !important; cursor: pointer; transition: all 0.15s ease; overflow: hidden; }
+:deep(.student-card_sm_vc:hover) { border-color: var(--sn-borde-activo) !important; background: var(--sn-surface-hover) !important; transform: translateY(-2px); }
 .card-inner_sm_vc { display: flex; align-items: center; gap: 0.875rem; padding: 1rem !important; }
-.student-avatar_sm_vc { width: 42px; height: 42px; border-radius: var(--radius-lg_vc); background: rgba(111, 255, 233, 0.1); border: 1px solid rgba(111, 255, 233, 0.2); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--color-cta_vc); flex-shrink: 0; font-family: var(--font-mono_vc); }
+.student-avatar_sm_vc { width: 42px; height: 42px; border-radius: var(--sn-radius-lg); background: var(--sn-surface-active); border: 1px solid var(--sn-borde-activo); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--sn-primario); flex-shrink: 0; font-family: var(--sn-font-mono); }
 .student-info_sm_vc { flex: 1; min-width: 0; }
-.student-name_sm_vc { font-size: 0.82rem; font-weight: 600; color: var(--color-texto-primario_vc); margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-mono_vc); }
-.student-id_sm_vc { font-size: 0.6rem; color: var(--color-texto-muted_vc); margin: 0 0 6px; font-family: var(--font-mono_vc); }
+.student-name_sm_vc { font-size: 0.82rem; font-weight: 600; color: var(--sn-texto-principal); margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--sn-font-mono); }
+.student-id_sm_vc { font-size: 0.6rem; color: var(--sn-texto-apagado); margin: 0 0 6px; font-family: var(--sn-font-mono); }
 .student-meta_sm_vc { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.meta-chip_sm_vc { display: flex; align-items: center; gap: 3px; font-size: 0.58rem; color: #4a6a88; background: rgba(255, 255, 255, 0.04); padding: 1px 6px; border-radius: var(--radius-sm_vc); font-family: var(--font-mono_vc); }
-.status--aprobado_sm_vc { color: var(--color-cta_vc) !important; }
-.status--entregado_sm_vc { color: var(--color-estudiante_vc) !important; }
-.status--pendiente_sm_vc { color: var(--color-texto-secundario_vc) !important; }
-.status--reprobado_sm_vc { color: var(--color-error-claro_vc) !important; }
+.meta-chip_sm_vc { display: flex; align-items: center; gap: 3px; font-size: 0.58rem; color: var(--sn-texto-secundario); background: var(--sn-surface-alpha); padding: 1px 6px; border-radius: var(--sn-radius-sm); font-family: var(--sn-font-mono); }
+.status--aprobado_sm_vc { color: var(--sn-primario) !important; }
+.status--entregado_sm_vc { color: var(--sn-estudiante) !important; }
+.status--pendiente_sm_vc { color: var(--sn-texto-secundario) !important; }
+.status--reprobado_sm_vc { color: var(--sn-error-claro) !important; }
 .card-arrow_sm_vc { opacity: 0.5; }
-.card-progress_sm_vc { padding: 0 1rem 0.875rem !important; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.04); }
+.card-progress_sm_vc { padding: 0 1rem 0.875rem !important; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--sn-borde); }
 .progress-bar-wrap_sm_vc { display: flex; flex-direction: column; gap: 3px; }
-.progress-bar-label_sm_vc { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--color-texto-terciario_vc); font-family: var(--font-mono_vc); }
-.prog-status--aprobado_sm_vc { color: var(--color-cta_vc); }
-.prog-status--entregado_sm_vc { color: var(--color-estudiante_vc); }
-.prog-status--pendiente_sm_vc { color: #4a6a88; }
-.prog-status--reprobado_sm_vc { color: var(--color-error-claro_vc); }
+.progress-bar-label_sm_vc { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--sn-texto-terciario); font-family: var(--sn-font-mono); }
+.prog-status--aprobado_sm_vc { color: var(--sn-primario); }
+.prog-status--entregado_sm_vc { color: var(--sn-estudiante); }
+.prog-status--pendiente_sm_vc { color: var(--sn-texto-secundario); }
+.prog-status--reprobado_sm_vc { color: var(--sn-error-claro); }
 </style>

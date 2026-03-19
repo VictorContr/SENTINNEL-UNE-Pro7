@@ -16,7 +16,7 @@
       <q-input
         v-model="busqueda_sm_vc" dense outlined
         placeholder="Buscar usuario…"
-        class="sntnl-input_sm_vc search-input_sm_vc" dark color="teal-3"
+        class="sntnl-input_sm_vc search-input_sm_vc" color="teal-3"
       >
         <template #prepend><q-icon name="search" color="grey-6" size="18px" /></template>
       </q-input>
@@ -29,7 +29,7 @@
     <!-- Tabla Quasar -->
     <q-table
       :rows="usuarios_filtrados_sm_vc" :columns="columns_sm_vc"
-      row-key="id_sm_vc" flat dark
+      row-key="id_sm_vc" flat
       class="sntnl-table_sm_vc"
       :rows-per-page-options="[10, 25, 50]"
       no-data-label="No hay usuarios registrados"
@@ -126,21 +126,21 @@
           <q-form @submit.prevent="guardar_nuevo_usuario_sm_vc" class="dialog-form_sm_vc">
             <div class="field-group_sm_vc">
               <label class="field-label_sm_vc">Nombre Completo <span class="req-mark_sm_vc">*</span></label>
-              <q-input v-model="form_nuevo_sm_vc.nombre_sm_vc" dense outlined dark color="teal-3"
+              <q-input v-model="form_nuevo_sm_vc.nombre_sm_vc" dense outlined color="teal-3"
                 class="sntnl-input_sm_vc" placeholder="Ej: Juan Pérez"
                 :rules="[val => !!val || 'Campo requerido']" />
             </div>
 
             <div class="field-group_sm_vc">
               <label class="field-label_sm_vc">Correo Institucional <span class="req-mark_sm_vc">*</span></label>
-              <q-input v-model="form_nuevo_sm_vc.correo_sm_vc" dense outlined dark color="teal-3"
+              <q-input v-model="form_nuevo_sm_vc.correo_sm_vc" dense outlined color="teal-3"
                 class="sntnl-input_sm_vc" placeholder="usuario@une.edu.ve" type="email"
                 :rules="[val => !!val || 'Campo requerido', val => /.+@.+/.test(val) || 'Correo inválido']" />
             </div>
 
             <div class="field-group_sm_vc">
               <label class="field-label_sm_vc">Rol <span class="req-mark_sm_vc">*</span></label>
-              <q-select v-model="form_nuevo_sm_vc.rol_sm_vc" dense outlined dark color="teal-3"
+              <q-select v-model="form_nuevo_sm_vc.rol_sm_vc" dense outlined color="teal-3"
                 class="sntnl-select_sm_vc"
                 :options="['ADMINISTRADOR', 'PROFESOR', 'ESTUDIANTE']"
                 :rules="[val => !!val || 'Selecciona un rol']" />
@@ -148,19 +148,19 @@
 
             <div class="field-group_sm_vc">
               <label class="field-label_sm_vc">Contraseña Temporal</label>
-              <q-input v-model="form_nuevo_sm_vc.clave_sm_vc" dense outlined dark color="teal-3"
+              <q-input v-model="form_nuevo_sm_vc.clave_sm_vc" dense outlined color="teal-3"
                 class="sntnl-input_sm_vc" placeholder="temp123" type="password" />
             </div>
 
             <div v-if="form_nuevo_sm_vc.rol_sm_vc === 'ESTUDIANTE'" class="field-group_sm_vc">
               <label class="field-label_sm_vc">Cohorte</label>
-              <q-input v-model="form_nuevo_sm_vc.cohorte_sm_vc" dense outlined dark color="teal-3"
+              <q-input v-model="form_nuevo_sm_vc.cohorte_sm_vc" dense outlined color="teal-3"
                 class="sntnl-input_sm_vc" placeholder="2024-A" />
             </div>
 
             <div v-if="form_nuevo_sm_vc.rol_sm_vc === 'ESTUDIANTE'" class="field-group_sm_vc">
               <label class="field-label_sm_vc">Profesor Asignado</label>
-              <q-select v-model="form_nuevo_sm_vc.profesor_id_sm_vc" dense outlined dark color="teal-3"
+              <q-select v-model="form_nuevo_sm_vc.profesor_id_sm_vc" dense outlined color="teal-3"
                 class="sntnl-select_sm_vc" emit-value map-options
                 :options="profesores_options_sm_vc" clearable />
             </div>
@@ -280,19 +280,19 @@ function guardar_nuevo_usuario_sm_vc() {
 .toolbar-row_sm_vc { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
 .search-input_sm_vc { min-width: 260px; }
 .status-chip_sm_vc { font-size: 0.58rem !important; letter-spacing: 0.08em; }
-.role-badge_sm_vc { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: var(--radius-sm_vc); font-weight: 600; }
-.role-badge--administrador_sm_vc { background: rgba(240, 165, 0, 0.12); color: var(--color-admin_vc); }
-.role-badge--profesor_sm_vc { background: rgba(111, 255, 233, 0.1); color: var(--color-cta_vc); }
-.role-badge--estudiante_sm_vc { background: rgba(126, 200, 227, 0.1); color: var(--color-estudiante_vc); }
+.role-badge_sm_vc { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: var(--sn-radius-sm); font-weight: 600; }
+.role-badge--administrador_sm_vc { background: rgba(240, 165, 0, 0.12); color: var(--sn-admin); }
+.role-badge--profesor_sm_vc { background: var(--sn-surface-active); color: var(--sn-primario); }
+.role-badge--estudiante_sm_vc { background: rgba(126, 200, 227, 0.1); color: var(--sn-estudiante); }
 
 /* ── Dialog ── */
-.sntnl-dialog-card_sm_vc { background: var(--color-primario-claro_vc) !important; border: 1px solid rgba(111, 255, 233, 0.12) !important; border-radius: 12px !important; }
-.dialog-header_sm_vc { display: flex; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--color-texto-primario_vc); letter-spacing: 0.06em; font-family: var(--font-mono_vc); }
-.dialog-body_sm_vc p { font-size: 0.8rem; color: var(--color-texto-secundario_vc); line-height: 1.7; font-family: var(--font-sans_vc); }
-.dialog-body_sm_vc strong { color: var(--color-texto-primario_vc); }
+.sntnl-dialog-card_sm_vc { background: var(--sn-fondo-panel) !important; border: 1px solid var(--sn-borde-hover) !important; border-radius: 12px !important; }
+.dialog-header_sm_vc { display: flex; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--sn-texto-principal); letter-spacing: 0.06em; font-family: var(--sn-font-mono); }
+.dialog-body_sm_vc p { font-size: 0.8rem; color: var(--sn-texto-secundario); line-height: 1.7; font-family: var(--sn-font-sans); }
+.dialog-body_sm_vc strong { color: var(--sn-texto-principal); }
 .dialog-actions_sm_vc { padding: 0.75rem 1rem; gap: 0.5rem; }
 .dialog-form_sm_vc { display: flex; flex-direction: column; gap: 0.75rem; }
 .field-group_sm_vc { display: flex; flex-direction: column; gap: 0.25rem; }
-.field-label_sm_vc { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-acento_vc); font-weight: 500; font-family: var(--font-mono_vc); }
-.req-mark_sm_vc { color: var(--color-error-claro_vc); }
+.field-label_sm_vc { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sn-acento-sec); font-weight: 500; font-family: var(--sn-font-mono); }
+.req-mark_sm_vc { color: var(--sn-error-claro); }
 </style>

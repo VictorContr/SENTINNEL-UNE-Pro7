@@ -81,16 +81,16 @@ export default defineConfig((/* ctx */) => {
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
     framework: {
       config: {
-        dark: true,
+        dark: false, // Light Mode por defecto — toggle controlado por configStore
         brand: {
-          primary:   '#6fffe9',
+          primary:   '#0d7a6f',
           secondary: '#5bc0be',
-          accent:    '#6fffe9',
+          accent:    '#0fa899',
           dark:      '#0b132b',
-          positive:  '#6fffe9',
-          negative:  '#ff4b6e',
-          info:      '#7ec8e3',
-          warning:   '#f0a500'
+          positive:  '#059669',
+          negative:  '#dc2626',
+          info:      '#0284c7',
+          warning:   '#d97706'
         }
       },
 

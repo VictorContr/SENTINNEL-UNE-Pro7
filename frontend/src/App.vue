@@ -4,6 +4,11 @@
 
 <script setup>
 /* App.vue — SENTINNEL root component */
+/* Inicialización del tema ANTES del primer render visible */
+import { useConfigStore } from 'src/stores/configStore'
+
+const configStore_sm_vc = useConfigStore()
+configStore_sm_vc.initTheme_sm_vc()
 </script>
 
 <style>
@@ -17,9 +22,9 @@
 html, body {
   margin: 0;
   padding: 0;
-  background-color: #0b132b;
-  color: #c8dde8;
-  font-family: 'IBM Plex Mono', 'Fira Code', 'Courier New', monospace;
+  background-color: var(--sn-fondo);
+  color: var(--sn-texto-principal);
+  font-family: var(--sn-font-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -27,44 +32,49 @@ html, body {
 /* ── Scrollbar global ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(111, 255, 233, 0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(111, 255, 233, 0.2); }
+::-webkit-scrollbar-thumb { background: var(--sn-borde-hover); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--sn-borde-activo); }
 
-/* ── Quasar overrides: Selection color ── */
+/* ── Selection color ── */
 ::selection {
-  background: rgba(111, 255, 233, 0.2);
-  color: #6fffe9;
+  background: var(--sn-surface-active);
+  color: var(--sn-primario);
 }
 
-/* ── Quasar dark mode q-notify override ── */
+/* ── Quasar q-notify override ── */
 .q-notification {
-  background: #0d1a38 !important;
-  border: 1px solid rgba(111, 255, 233, 0.15) !important;
-  color: #c8dde8 !important;
-  font-family: 'IBM Plex Mono', monospace !important;
+  background: var(--sn-fondo-panel) !important;
+  border: 1px solid var(--sn-borde) !important;
+  color: var(--sn-texto-principal) !important;
+  font-family: var(--sn-font-mono) !important;
   font-size: 0.78rem !important;
 }
 
 /* ── Quasar q-tooltip ── */
 .q-tooltip {
-  font-family: 'IBM Plex Mono', monospace !important;
+  font-family: var(--sn-font-mono) !important;
   font-size: 0.62rem !important;
   letter-spacing: 0.04em !important;
 }
 
-/* ── q-menu dark ── */
+/* ── q-menu ── */
 .q-menu {
-  background: #0d1a38 !important;
+  background: var(--sn-fondo-panel) !important;
 }
 
-/* ── q-item hover in dark menus ── */
+/* ── q-item hover ── */
 .q-item:hover {
-  background: rgba(111, 255, 233, 0.04) !important;
+  background: var(--sn-surface-hover) !important;
 }
 
 /* ── q-chip ── */
 .q-chip {
-  font-family: 'IBM Plex Mono', monospace !important;
+  font-family: var(--sn-font-mono) !important;
   font-size: 0.65rem !important;
+}
+
+/* ── q-field label (global fix para theme) ── */
+.q-field__label {
+  color: var(--sn-texto-apagado) !important;
 }
 </style>

@@ -4,8 +4,8 @@ export declare class UsersController_sm_vc {
     constructor(usersService: UsersService_sm_vc);
     findAll_sm_vc(): Promise<{
         id_sm_vc: string;
-        nombre_sm_vc: string;
         correo_sm_vc: string;
+        nombre_sm_vc: string;
         rol_sm_vc: import("@prisma/client").$Enums.Rol_sm;
         activo_sm_vc: boolean;
         cohorte_sm_vc: string | null;
@@ -14,8 +14,8 @@ export declare class UsersController_sm_vc {
     }[]>;
     findOne_sm_vc(id_sm_vc: string): Promise<{
         id_sm_vc: string;
-        nombre_sm_vc: string;
         correo_sm_vc: string;
+        nombre_sm_vc: string;
         rol_sm_vc: import("@prisma/client").$Enums.Rol_sm;
         activo_sm_vc: boolean;
         cohorte_sm_vc: string | null;
