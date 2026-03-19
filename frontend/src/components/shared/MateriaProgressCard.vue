@@ -2,10 +2,11 @@
   <div
     class="materia-card"
     :class="{
-      'materia-card--active':  materia.estado_aprobacion_sm_vc === 'ENTREGADO',
-      'materia-card--done':    materia.estado_aprobacion_sm_vc === 'APROBADO',
-      'materia-card--locked':  materia.bloqueada,
-      'materia-card--reprobado': materia.estado_aprobacion_sm_vc === 'REPROBADO'
+      'materia-card--active': materia.estado_aprobacion_sm_vc === 'ENTREGADO',
+      'materia-card--done': materia.estado_aprobacion_sm_vc === 'APROBADO',
+      'materia-card--locked': materia.bloqueada,
+      'materia-card--reprobado':
+        materia.estado_aprobacion_sm_vc === 'REPROBADO',
     }"
     @click="!materia.bloqueada && emit('click', materia)"
   >
@@ -13,7 +14,9 @@
     <div class="card-accent-top" />
 
     <!-- Orden / número -->
-    <div class="card-orden">{{ String(materia.orden_sm_int).padStart(2, '0') }}</div>
+    <div class="card-orden">
+      {{ String(materia.orden_sm_int).padStart(2, "0") }}
+    </div>
 
     <!-- Header -->
     <div class="card-header">
@@ -27,7 +30,7 @@
         :style="{
           color: materia.meta_estado?.color,
           background: materia.meta_estado?.bg,
-          borderColor: materia.meta_estado?.color + '40'
+          borderColor: materia.meta_estado?.color + '40',
         }"
       >
         <q-icon :name="materia.meta_estado?.icon" size="11px" />
@@ -44,10 +47,10 @@
     <div class="progress-section">
       <div class="progress-numbers">
         <span>Requisitos</span>
-        <span>{{ materia.requisitos_aprobados_sm_int }}/{{ materia.total_requisitos_sm_int }}</span>
+        <span>{{ requisitosAprobados_sm_vc }}/{{ totalRequisitos_sm_vc }}</span>
       </div>
       <q-linear-progress
-        :value="materia.progreso_decimal ?? 0"
+        :value="progresoDinamico_sm_vc"
         :color="progressColor"
         track-color="blue-grey-10"
         rounded
@@ -61,10 +64,17 @@
         v-for="req in materia.requisitos"
         :key="req.id_sm_vc"
         class="req-pill"
-        :class="{ 'req-pill--done': isRequisitoAprobado(req.id_sm_vc), 'req-pill--optional': !req.obligatorio_sm_vc }"
+        :class="{
+          'req-pill--done': isRequisitoCompletado_sm_vc(req.id_sm_vc),
+          'req-pill--optional': !req.obligatorio_sm_vc,
+        }"
       >
         <q-icon
-          :name="isRequisitoAprobado(req.id_sm_vc) ? 'check_circle' : 'radio_button_unchecked'"
+          :name="
+            isRequisitoCompletado_sm_vc(req.id_sm_vc)
+              ? 'check_circle'
+              : 'radio_button_unchecked'
+          "
           size="11px"
         />
         <span>{{ req.nombre_sm_vc }}</span>
@@ -84,7 +94,11 @@
       </div>
       <div v-if="materia.intentos_sm_int > 0" class="stat">
         <q-icon name="refresh" size="12px" color="blue-grey-6" />
-        <span>{{ materia.intentos_sm_int }} intento{{ materia.intentos_sm_int > 1 ? 's' : '' }}</span>
+        <span
+          >{{ materia.intentos_sm_int }} intento{{
+            materia.intentos_sm_int > 1 ? "s" : ""
+          }}</span
+        >
       </div>
     </div>
 
@@ -96,7 +110,11 @@
       </span>
       <div v-else class="card-action">
         <span class="action-hint">
-          {{ materia.estado_aprobacion_sm_vc === 'APROBADO' ? 'Ver historial' : 'Abrir materia' }}
+          {{
+            materia.estado_aprobacion_sm_vc === "APROBADO"
+              ? "Ver historial"
+              : "Abrir materia"
+          }}
         </span>
         <q-icon name="arrow_forward" size="14px" color="teal-3" />
       </div>
@@ -105,39 +123,66 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { usePasantiasStore } from 'src/stores/pasantiasStore'
+import { computed } from "vue";
+import { usePasantiasStore } from "src/stores/pasantiasStore";
 
 const props = defineProps({
   materia: { type: Object, required: true },
   estudianteId: { type: String, required: true },
   showDescription: { type: Boolean, default: false },
-  showRequisitos: { type: Boolean, default: true }
-})
+  showRequisitos: { type: Boolean, default: true },
+});
 
-const emit = defineEmits(['click'])
-const pasantiasStore = usePasantiasStore()
+const emit = defineEmits(["click"]);
+const pasantiasStore = usePasantiasStore();
 
-/* Determina si un requisito específico tiene mensaje aprobado */
-function isRequisitoAprobado(requisito_id_sm_vc) {
-  const conv = pasantiasStore.getConversacion(props.estudianteId, props.materia.id_sm_vc)
-  return conv.some(
+/* Determina si un requisito ha sido completado (Entregado o Aprobado) */
+function isRequisitoCompletado_sm_vc(requisito_id_sm_vc) {
+  const conv = pasantiasStore.getConversacion(
+    props.estudianteId,
+    props.materia.id_sm_vc,
+  );
+  // Verificamos si existe un INFORME entregado para este requisito, o si ya fue APROBADO por el profesor
+  const tieneMensajeOaprobado = conv.some(
     (m) =>
-      m.remitente_rol_sm_vc === 'PROFESOR' &&
-      m.estado_evaluacion_sm_vc === 'APROBADO' &&
-      m.requisito_id_sm_vc === requisito_id_sm_vc
-  )
+      m.requisito_id_sm_vc === requisito_id_sm_vc &&
+      (m.tipo_sm_vc === "INFORME" || m.estado_evaluacion_sm_vc === "APROBADO"),
+  );
+
+  // Si la materia está APROBADA, consideramos todos los requisitos como completos
+  if (props.materia.estado_aprobacion_sm_vc === "APROBADO") {
+    return true;
+  }
+
+  return tieneMensajeOaprobado;
 }
+
+/* ── CÁLCULO DINÁMICO DEL PROGRESO ── */
+const requisitosAprobados_sm_vc = computed(() => {
+  if (!props.materia.requisitos) return 0;
+  return props.materia.requisitos.filter((req) =>
+    isRequisitoCompletado_sm_vc(req.id_sm_vc),
+  ).length;
+});
+
+const totalRequisitos_sm_vc = computed(() => {
+  return props.materia.requisitos ? props.materia.requisitos.length : 0;
+});
+
+const progresoDinamico_sm_vc = computed(() => {
+  if (totalRequisitos_sm_vc.value === 0) return 0;
+  return requisitosAprobados_sm_vc.value / totalRequisitos_sm_vc.value;
+});
 
 const progressColor = computed(() => {
   const map = {
-    APROBADO: 'teal-4',
-    ENTREGADO: 'light-blue-5',
-    PENDIENTE: 'blue-grey-6',
-    REPROBADO: 'red-5'
-  }
-  return map[props.materia.estado_aprobacion_sm_vc] ?? 'blue-grey-6'
-})
+    APROBADO: "teal-4",
+    ENTREGADO: "light-blue-5",
+    PENDIENTE: "blue-grey-6",
+    REPROBADO: "red-5",
+  };
+  return map[props.materia.estado_aprobacion_sm_vc] ?? "blue-grey-6";
+});
 </script>
 
 <style scoped>
@@ -160,10 +205,20 @@ const progressColor = computed(() => {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
-.materia-card--active  { border-color: var(--sn-borde-hover); background: rgba(126, 200, 227, 0.025); }
-.materia-card--done    { border-color: var(--sn-borde-hover); }
-.materia-card--locked  { cursor: not-allowed; opacity: 0.45; }
-.materia-card--reprobado { border-color: rgba(255, 143, 163, 0.15); }
+.materia-card--active {
+  border-color: var(--sn-borde-hover);
+  background: rgba(126, 200, 227, 0.025);
+}
+.materia-card--done {
+  border-color: var(--sn-borde-hover);
+}
+.materia-card--locked {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.materia-card--reprobado {
+  border-color: rgba(255, 143, 163, 0.15);
+}
 
 /* Accent top bar */
 .card-accent-top {
@@ -171,9 +226,17 @@ const progressColor = computed(() => {
   background: var(--sn-surface-active);
 }
 
-.materia-card--active   .card-accent-top { background: #7ec8e3; box-shadow: 0 0 8px rgba(126, 200, 227, 0.4); }
-.materia-card--done     .card-accent-top { background: #6fffe9; box-shadow: 0 0 10px rgba(111, 255, 233, 0.5); }
-.materia-card--reprobado .card-accent-top { background: #ff8fa3; }
+.materia-card--active .card-accent-top {
+  background: #7ec8e3;
+  box-shadow: 0 0 8px rgba(126, 200, 227, 0.4);
+}
+.materia-card--done .card-accent-top {
+  background: #6fffe9;
+  box-shadow: 0 0 10px rgba(111, 255, 233, 0.5);
+}
+.materia-card--reprobado .card-accent-top {
+  background: #ff8fa3;
+}
 
 .card-orden {
   position: absolute;
@@ -195,7 +258,10 @@ const progressColor = computed(() => {
   padding: 0.875rem 1rem 0.5rem;
 }
 
-.card-name-block { flex: 1; min-width: 0; }
+.card-name-block {
+  flex: 1;
+  min-width: 0;
+}
 
 .card-nombre {
   font-size: 0.88rem;
@@ -208,7 +274,12 @@ const progressColor = computed(() => {
   text-overflow: ellipsis;
 }
 
-.card-id { font-size: 0.58rem; color: var(--sn-texto-dim); margin: 0; letter-spacing: 0.08em; }
+.card-id {
+  font-size: 0.58rem;
+  color: var(--sn-texto-dim);
+  margin: 0;
+  letter-spacing: 0.08em;
+}
 
 .estado-pill {
   display: flex;
@@ -234,7 +305,9 @@ const progressColor = computed(() => {
 }
 
 /* Progress */
-.progress-section { padding: 0 1rem 0.6rem; }
+.progress-section {
+  padding: 0 1rem 0.6rem;
+}
 
 .progress-numbers {
   display: flex;
@@ -261,8 +334,12 @@ const progressColor = computed(() => {
   padding: 3px 0;
 }
 
-.req-pill--done { color: var(--sn-acento-sec); }
-.req-pill--done .q-icon { color: var(--sn-primario) !important; }
+.req-pill--done {
+  color: var(--sn-acento-sec);
+}
+.req-pill--done .q-icon {
+  color: var(--sn-primario) !important;
+}
 .req-pill--optional .optional-tag {
   font-size: 0.5rem;
   color: var(--sn-texto-dim);
@@ -289,10 +366,14 @@ const progressColor = computed(() => {
   color: var(--sn-texto-apagado);
 }
 
-.stat--nota { color: var(--sn-advertencia); }
+.stat--nota {
+  color: var(--sn-advertencia);
+}
 
 /* Footer */
-.card-footer { padding: 0 1rem; }
+.card-footer {
+  padding: 0 1rem;
+}
 
 .locked-msg {
   display: flex;
@@ -311,7 +392,12 @@ const progressColor = computed(() => {
   transition: color 0.15s;
 }
 
-.materia-card:hover:not(.materia-card--locked) .card-action { color: var(--sn-primario); }
+.materia-card:hover:not(.materia-card--locked) .card-action {
+  color: var(--sn-primario);
+}
 
-.action-hint { font-size: 0.62rem; letter-spacing: 0.05em; }
+.action-hint {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+}
 </style>
