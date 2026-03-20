@@ -5,21 +5,24 @@
 <script setup>
 /* App.vue — SENTINNEL root component */
 /* Inicialización del tema ANTES del primer render visible */
-import { useConfigStore } from 'src/stores/configStore'
+import { useConfigStore } from "src/stores/configStore";
 
-const configStore_sm_vc = useConfigStore()
-configStore_sm_vc.initTheme_sm_vc()
+const configStore_sm_vc = useConfigStore();
+configStore_sm_vc.initTheme_sm_vc();
 </script>
 
 <style>
 /* ── Google Fonts cargadas desde index.html via <link> ── */
 
 /* ── Global resets ── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   background-color: var(--sn-fondo);
@@ -30,10 +33,20 @@ html, body {
 }
 
 /* ── Scrollbar global ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--sn-borde-hover); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--sn-borde-activo); }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sn-borde-hover);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sn-borde-activo);
+}
 
 /* ── Selection color ── */
 ::selection {

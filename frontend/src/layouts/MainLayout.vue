@@ -422,6 +422,10 @@ const route_meta_sm_vc = {
   notificaciones: { label: "Notificaciones", icon: "notifications" },
   "admin-usuarios": { label: "Gestión de Usuarios", icon: "manage_accounts" },
   "admin-carga-masiva": { label: "Carga Masiva", icon: "upload" },
+  "admin-cambio-periodo": {
+    label: "Cambio de Periodo",
+    icon: "calendar_today",
+  },
   "profesor-estudiantes": { label: "Estudiantes Asignados", icon: "groups" },
   "profesor-trazabilidad": {
     label: "Trazabilidad del Estudiante",
@@ -474,6 +478,13 @@ const admin_menu_sm_vc = [
     caption: "Importar datos por pasos",
     icon: "upload_file",
     to: "/admin/carga-masiva",
+  },
+  {
+    name: "admin-cambio-periodo",
+    label: "Periodo Académico",
+    caption: "Gestión del periodo global",
+    icon: "calendar_today",
+    to: "/admin/cambio-periodo",
   },
 ];
 

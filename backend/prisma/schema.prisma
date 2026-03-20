@@ -11,6 +11,17 @@ datasource db {
 }
 
 // ==========================================
+// CONFIGURACIÓN GLOBAL DEL SISTEMA
+// ==========================================
+model ConfiguracionSistema {
+  id_sm_vc                  Int      @id @default(1) // Singleton (siempre ID 1)
+  periodo_actual_sm_vc      String   @db.VarChar(10) // Ej: "P-165"
+  fecha_actualizacion_sm_vc DateTime @updatedAt
+
+  @@map("tdconfiguracionsistema_sm_vc")
+}
+
+// ==========================================
 // ENUMS (Tipos de datos estrictos en PostgreSQL)
 // ==========================================
 enum RolUsuario {
