@@ -10,70 +10,70 @@
    ══════════════════════════════════════════════════════════ */
 :root {
   /* Fondos */
-  --sn-fondo:            #f8fafc;
-  --sn-fondo-panel:      #ffffff;
-  --sn-fondo-elevado:    #f1f5f9;
+  --sn-fondo: #f8fafc;
+  --sn-fondo-panel: #ffffff;
+  --sn-fondo-elevado: #f1f5f9;
 
   /* Colores de acento */
-  --sn-primario:         #0d7a6f;
-  --sn-primario-hover:   #0a5f57;
-  --sn-acento:           #0fa899;
-  --sn-acento-sec:       #0e8e82;
+  --sn-primario: #0d7a6f;
+  --sn-primario-hover: #0a5f57;
+  --sn-acento: #0fa899;
+  --sn-acento-sec: #0e8e82;
 
   /* Texto */
-  --sn-texto-principal:  #0f172a;
-  --sn-texto-secundario: #475569;
-  --sn-texto-terciario:  #64748b;
-  --sn-texto-apagado:    #94a3b8;
-  --sn-texto-dim:        #cbd5e1;
+  --sn-texto-principal: #0f172a;
+  --sn-texto-secundario: #334155;
+  --sn-texto-terciario: #475569;
+  --sn-texto-apagado: #64748b;
+  --sn-texto-dim: #94a3b8;
 
   /* Bordes */
-  --sn-borde:            rgba(0, 0, 0, 0.1);
-  --sn-borde-hover:      rgba(0, 0, 0, 0.2);
-  --sn-borde-activo:     rgba(13, 122, 111, 0.35);
+  --sn-borde: rgba(0, 0, 0, 0.1);
+  --sn-borde-hover: rgba(0, 0, 0, 0.2);
+  --sn-borde-activo: rgba(13, 122, 111, 0.35);
 
   /* Semánticos */
-  --sn-error:            #dc2626;
-  --sn-error-claro:      #ef4444;
-  --sn-exito:            #059669;
-  --sn-advertencia:      #d97706;
+  --sn-error: #dc2626;
+  --sn-error-claro: #ef4444;
+  --sn-exito: #059669;
+  --sn-advertencia: #d97706;
 
   /* Roles */
-  --sn-admin:            #d97706;
-  --sn-profesor:         #0d7a6f;
-  --sn-estudiante:       #0284c7;
+  --sn-admin: #d97706;
+  --sn-profesor: #0d7a6f;
+  --sn-estudiante: #0284c7;
 
   /* Fondos de superficie con opacidad (para cards, overlays, etc.) */
-  --sn-surface-alpha:    rgba(0, 0, 0, 0.03);
-  --sn-surface-hover:    rgba(0, 0, 0, 0.06);
-  --sn-surface-active:   rgba(13, 122, 111, 0.08);
+  --sn-surface-alpha: rgba(0, 0, 0, 0.03);
+  --sn-surface-hover: rgba(0, 0, 0, 0.06);
+  --sn-surface-active: rgba(13, 122, 111, 0.08);
 
   /* Glass / Overlays */
-  --sn-glass-bg:         rgba(255, 255, 255, 0.85);
-  --sn-glass-border:     rgba(0, 0, 0, 0.08);
+  --sn-glass-bg: rgba(255, 255, 255, 0.85);
+  --sn-glass-border: rgba(0, 0, 0, 0.08);
 
   /* Sombras */
-  --sn-shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.08);
-  --sn-shadow-md:        0 4px 12px rgba(0, 0, 0, 0.1);
-  --sn-shadow-lg:        0 8px 24px rgba(0, 0, 0, 0.12);
+  --sn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --sn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --sn-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 
   /* Fuentes */
-  --sn-font-mono: 'IBM Plex Mono', 'Fira Code', 'Courier New', monospace;
-  --sn-font-sans: 'IBM Plex Sans', 'Inter', sans-serif;
+  --sn-font-mono: "IBM Plex Mono", "Fira Code", "Courier New", monospace;
+  --sn-font-sans: "IBM Plex Sans", "Inter", sans-serif;
 
   /* Radios */
-  --sn-radius-sm:   4px;
-  --sn-radius-md:   6px;
-  --sn-radius-lg:   10px;
-  --sn-radius-xl:   14px;
+  --sn-radius-sm: 4px;
+  --sn-radius-md: 6px;
+  --sn-radius-lg: 10px;
+  --sn-radius-xl: 14px;
   --sn-radius-pill: 20px;
 
   /* Glow del CTA — en light es más sutil */
-  --sn-cta-glow:    0 0 12px rgba(13, 122, 111, 0.15);
+  --sn-cta-glow: 0 0 12px rgba(13, 122, 111, 0.15);
   --sn-cta-glow-hover: 0 0 20px rgba(13, 122, 111, 0.25);
 
   /* Grid decorativo */
-  --sn-grid-line:   rgba(0, 0, 0, 0.025);
+  --sn-grid-line: rgba(0, 0, 0, 0.025);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -82,59 +82,59 @@
    ══════════════════════════════════════════════════════════ */
 .dark {
   /* Fondos */
-  --sn-fondo:            #0b132b;
-  --sn-fondo-panel:      #0d1a38;
-  --sn-fondo-elevado:    #080f22;
+  --sn-fondo: #0b132b;
+  --sn-fondo-panel: #0d1a38;
+  --sn-fondo-elevado: #080f22;
 
   /* Colores de acento */
-  --sn-primario:         #6fffe9;
-  --sn-primario-hover:   #a0fff0;
-  --sn-acento:           #6fffe9;
-  --sn-acento-sec:       #5bc0be;
+  --sn-primario: #6fffe9;
+  --sn-primario-hover: #a0fff0;
+  --sn-acento: #6fffe9;
+  --sn-acento-sec: #5bc0be;
 
   /* Texto */
-  --sn-texto-principal:  #c8dde8;
-  --sn-texto-secundario: #5a7fa8;
-  --sn-texto-terciario:  #3a5a78;
-  --sn-texto-apagado:    #2e4a6a;
-  --sn-texto-dim:        #1e3050;
+  --sn-texto-principal: #e2e8f0;
+  --sn-texto-secundario: #cbd5e1;
+  --sn-texto-terciario: #94a3b8;
+  --sn-texto-apagado: #64748b;
+  --sn-texto-dim: #475569;
 
   /* Bordes */
-  --sn-borde:            rgba(111, 255, 233, 0.07);
-  --sn-borde-hover:      rgba(111, 255, 233, 0.15);
-  --sn-borde-activo:     rgba(111, 255, 233, 0.25);
+  --sn-borde: rgba(111, 255, 233, 0.07);
+  --sn-borde-hover: rgba(111, 255, 233, 0.15);
+  --sn-borde-activo: rgba(111, 255, 233, 0.25);
 
   /* Semánticos */
-  --sn-error:            #ff4b6e;
-  --sn-error-claro:      #ff8fa3;
-  --sn-exito:            #6fffe9;
-  --sn-advertencia:      #f0a500;
+  --sn-error: #ff4b6e;
+  --sn-error-claro: #ff8fa3;
+  --sn-exito: #6fffe9;
+  --sn-advertencia: #f0a500;
 
   /* Roles */
-  --sn-admin:            #f0a500;
-  --sn-profesor:         #6fffe9;
-  --sn-estudiante:       #7ec8e3;
+  --sn-admin: #f0a500;
+  --sn-profesor: #6fffe9;
+  --sn-estudiante: #7ec8e3;
 
   /* Fondos de superficie con opacidad */
-  --sn-surface-alpha:    rgba(255, 255, 255, 0.025);
-  --sn-surface-hover:    rgba(111, 255, 233, 0.03);
-  --sn-surface-active:   rgba(111, 255, 233, 0.08);
+  --sn-surface-alpha: rgba(255, 255, 255, 0.025);
+  --sn-surface-hover: rgba(111, 255, 233, 0.03);
+  --sn-surface-active: rgba(111, 255, 233, 0.08);
 
   /* Glass / Overlays */
-  --sn-glass-bg:         rgba(255, 255, 255, 0.03);
-  --sn-glass-border:     rgba(111, 255, 233, 0.1);
+  --sn-glass-bg: rgba(255, 255, 255, 0.03);
+  --sn-glass-border: rgba(111, 255, 233, 0.1);
 
   /* Sombras */
-  --sn-shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.3);
-  --sn-shadow-md:        0 4px 12px rgba(0, 0, 0, 0.4);
-  --sn-shadow-lg:        0 8px 24px rgba(0, 0, 0, 0.5);
+  --sn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --sn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --sn-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 
   /* Glow del CTA */
-  --sn-cta-glow:    0 0 20px rgba(111, 255, 233, 0.2);
+  --sn-cta-glow: 0 0 20px rgba(111, 255, 233, 0.2);
   --sn-cta-glow-hover: 0 0 30px rgba(111, 255, 233, 0.35);
 
   /* Grid decorativo */
-  --sn-grid-line:   rgba(111, 255, 233, 0.015);
+  --sn-grid-line: rgba(111, 255, 233, 0.015);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -142,43 +142,43 @@
    Permite usar clases como bg-sn-fondo, text-sn-primario, etc.
    ══════════════════════════════════════════════════════════ */
 @theme {
-  --color-sn-fondo:            var(--sn-fondo);
-  --color-sn-fondo-panel:      var(--sn-fondo-panel);
-  --color-sn-fondo-elevado:    var(--sn-fondo-elevado);
-  --color-sn-primario:         var(--sn-primario);
-  --color-sn-primario-hover:   var(--sn-primario-hover);
-  --color-sn-acento:           var(--sn-acento);
-  --color-sn-acento-sec:       var(--sn-acento-sec);
-  --color-sn-texto-principal:  var(--sn-texto-principal);
+  --color-sn-fondo: var(--sn-fondo);
+  --color-sn-fondo-panel: var(--sn-fondo-panel);
+  --color-sn-fondo-elevado: var(--sn-fondo-elevado);
+  --color-sn-primario: var(--sn-primario);
+  --color-sn-primario-hover: var(--sn-primario-hover);
+  --color-sn-acento: var(--sn-acento);
+  --color-sn-acento-sec: var(--sn-acento-sec);
+  --color-sn-texto-principal: var(--sn-texto-principal);
   --color-sn-texto-secundario: var(--sn-texto-secundario);
-  --color-sn-texto-terciario:  var(--sn-texto-terciario);
-  --color-sn-texto-apagado:    var(--sn-texto-apagado);
-  --color-sn-texto-dim:        var(--sn-texto-dim);
-  --color-sn-borde:            var(--sn-borde);
-  --color-sn-borde-hover:      var(--sn-borde-hover);
-  --color-sn-borde-activo:     var(--sn-borde-activo);
-  --color-sn-error:            var(--sn-error);
-  --color-sn-error-claro:      var(--sn-error-claro);
-  --color-sn-exito:            var(--sn-exito);
-  --color-sn-advertencia:      var(--sn-advertencia);
-  --color-sn-admin:            var(--sn-admin);
-  --color-sn-profesor:         var(--sn-profesor);
-  --color-sn-estudiante:       var(--sn-estudiante);
-  --color-sn-surface-alpha:    var(--sn-surface-alpha);
-  --color-sn-surface-hover:    var(--sn-surface-hover);
-  --color-sn-surface-active:   var(--sn-surface-active);
-  --color-sn-glass-bg:         var(--sn-glass-bg);
-  --color-sn-glass-border:     var(--sn-glass-border);
+  --color-sn-texto-terciario: var(--sn-texto-terciario);
+  --color-sn-texto-apagado: var(--sn-texto-apagado);
+  --color-sn-texto-dim: var(--sn-texto-dim);
+  --color-sn-borde: var(--sn-borde);
+  --color-sn-borde-hover: var(--sn-borde-hover);
+  --color-sn-borde-activo: var(--sn-borde-activo);
+  --color-sn-error: var(--sn-error);
+  --color-sn-error-claro: var(--sn-error-claro);
+  --color-sn-exito: var(--sn-exito);
+  --color-sn-advertencia: var(--sn-advertencia);
+  --color-sn-admin: var(--sn-admin);
+  --color-sn-profesor: var(--sn-profesor);
+  --color-sn-estudiante: var(--sn-estudiante);
+  --color-sn-surface-alpha: var(--sn-surface-alpha);
+  --color-sn-surface-hover: var(--sn-surface-hover);
+  --color-sn-surface-active: var(--sn-surface-active);
+  --color-sn-glass-bg: var(--sn-glass-bg);
+  --color-sn-glass-border: var(--sn-glass-border);
 
   /* Fuentes */
   --font-mono_vc: var(--sn-font-mono);
   --font-sans_vc: var(--sn-font-sans);
 
   /* Radios */
-  --radius-sm_vc:   var(--sn-radius-sm);
-  --radius-md_vc:   var(--sn-radius-md);
-  --radius-lg_vc:   var(--sn-radius-lg);
-  --radius-xl_vc:   var(--sn-radius-xl);
+  --radius-sm_vc: var(--sn-radius-sm);
+  --radius-md_vc: var(--sn-radius-md);
+  --radius-lg_vc: var(--sn-radius-lg);
+  --radius-xl_vc: var(--sn-radius-xl);
   --radius-pill_vc: var(--sn-radius-pill);
 }
 
@@ -186,11 +186,14 @@
    4. TRANSICIONES GLOBALES DE TEMA
    Suaviza el cambio entre Light ↔ Dark
    ══════════════════════════════════════════════════════════ */
-*, *::before, *::after {
-  transition: background-color 0.25s ease,
-              color 0.2s ease,
-              border-color 0.2s ease,
-              box-shadow 0.2s ease;
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.25s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -255,7 +258,9 @@
   background: var(--sn-surface-alpha) !important;
   border: 1px solid var(--sn-borde) !important;
   border-radius: var(--sn-radius-md) !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sntnl-input_sm_vc :deep(.q-field__control:hover),
@@ -392,10 +397,18 @@
 }
 
 /* ── Status badges ── */
-.status--aprobado_sm_vc  { color: var(--sn-exito) !important; }
-.status--entregado_sm_vc { color: var(--sn-estudiante) !important; }
-.status--pendiente_sm_vc { color: var(--sn-texto-secundario) !important; }
-.status--reprobado_sm_vc { color: var(--sn-error-claro) !important; }
+.status--aprobado_sm_vc {
+  color: var(--sn-exito) !important;
+}
+.status--entregado_sm_vc {
+  color: var(--sn-estudiante) !important;
+}
+.status--pendiente_sm_vc {
+  color: var(--sn-texto-secundario) !important;
+}
+.status--reprobado_sm_vc {
+  color: var(--sn-error-claro) !important;
+}
 
 /* ── Filter chip ── */
 .filter-chip_sm_vc {
