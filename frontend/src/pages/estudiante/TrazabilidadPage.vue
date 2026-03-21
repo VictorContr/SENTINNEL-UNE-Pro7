@@ -60,7 +60,7 @@
         <DocumentConversacion
           :materia-id="materiaActiva.id_sm_vc"
           :estudiante-id="auth.user.id_sm_vc"
-          :readonly="false"
+          :readonly="materiaActiva.estado_aprobacion_sm_vc === 'APROBADO'"
           :estado-progreso="materiaActiva.estado_aprobacion_sm_vc"
           @mensajeEnviado="onMensajeEnviado"
         />
@@ -88,8 +88,8 @@ const materiaActiva = ref(null)
 const progresoGlobal = computed(() => {
   const items = store.miProgreso
   if (!items.length) return 0
-  const aprobadas = items.filter((m) => m.estado_aprobacion_sm_vc === 'APROBADO').length
-  return Math.round((aprobadas / items.length) * 100)
+  const suma_progresos = items.reduce((sum, current) => sum + (current.progreso_decimal || 0), 0)
+  return Math.round((suma_progresos / items.length) * 100)
 })
 
 function handleMateriaClick(materia) {

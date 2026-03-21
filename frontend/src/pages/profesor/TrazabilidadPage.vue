@@ -49,7 +49,7 @@
         <p>Selecciona una materia para ver la conversación documental.</p>
       </div>
       <DocumentConversacion v-else :materia-id="materiaSeleccionada.id_sm_vc"
-        :estudiante-id="estudianteId" :readonly="false"
+        :estudiante-id="estudianteId" :readonly="materiaSeleccionada.estado_aprobacion_sm_vc === 'APROBADO'"
         :estado-progreso="materiaSeleccionada.estado_aprobacion_sm_vc" />
     </div>
 
@@ -108,8 +108,8 @@ const progresoEstudiante = computed(() => store.getProgresoEstudiante(estudiante
 const progresoGlobal = computed(() => {
   const items = progresoEstudiante.value
   if (!items.length) return 0
-  const aprobadas = items.filter((m) => m.estado_aprobacion_sm_vc === 'APROBADO').length
-  return Math.round((aprobadas / items.length) * 100)
+  const suma_progresos = items.reduce((sum, current) => sum + (current.progreso_decimal || 0), 0)
+  return Math.round((suma_progresos / items.length) * 100)
 })
 const deployEstudiante = computed(() => store.getDeployEstudiante(estudianteId.value))
 const materiaSeleccionada = ref(null)

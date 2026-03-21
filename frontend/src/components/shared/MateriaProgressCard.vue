@@ -124,7 +124,6 @@
 
 <script setup>
 import { computed } from "vue";
-import { usePasantiasStore } from "src/stores/pasantiasStore";
 
 const props = defineProps({
   materia: { type: Object, required: true },
@@ -134,27 +133,17 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["click"]);
-const pasantiasStore = usePasantiasStore();
 
-/* Determina si un requisito ha sido completado (Entregado o Aprobado) */
+/* Determina si un requisito ha sido completado (basado en el detalle de aprobación o entregas previas) */
 function isRequisitoCompletado_sm_vc(requisito_id_sm_vc) {
-  const conv = pasantiasStore.getConversacion(
-    props.estudianteId,
-    props.materia.id_sm_vc,
-  );
-  // Verificamos si existe un INFORME entregado para este requisito, o si ya fue APROBADO por el profesor
-  const tieneMensajeOaprobado = conv.some(
-    (m) =>
-      m.requisito_id_sm_vc === requisito_id_sm_vc &&
-      (m.tipo_sm_vc === "INFORME" || m.estado_evaluacion_sm_vc === "APROBADO"),
-  );
-
   // Si la materia está APROBADA, consideramos todos los requisitos como completos
   if (props.materia.estado_aprobacion_sm_vc === "APROBADO") {
     return true;
   }
 
-  return tieneMensajeOaprobado;
+  // Verificamos en el nuevo esquema de aprobaciones granulares
+  const detalles = props.materia.progreso?.requisitos_aprobados_detalle_sm ?? [];
+  return detalles.some((d) => d.requisito_id_sm_vc === requisito_id_sm_vc);
 }
 
 /* ── CÁLCULO DINÁMICO DEL PROGRESO ── */

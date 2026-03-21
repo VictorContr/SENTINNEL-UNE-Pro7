@@ -193,7 +193,8 @@
                   APROBADO: 'check_circle',
                   REPROBADO: 'cancel',
                   OBSERVACIONES: 'warning',
-                }[msg.estado_evaluacion_sm_vc]
+                  EVALUACION_PARCIAL: 'fact_check',
+                }[msg.estado_evaluacion_sm_vc] || 'info'
               "
               size="14px"
             />
@@ -306,6 +307,19 @@
       <!-- ── Formulario PROFESOR ── -->
       <template v-if="userRol === 'PROFESOR'">
         <div class="action-form">
+          <!-- Botón de Evaluación Granular -->
+          <div class="q-mb-md" style="display: flex; justify-content: flex-end;">
+            <q-btn
+              outline
+              color="teal-3"
+              icon="checklist"
+              label="Evaluar por Requisitos"
+              no-caps
+              size="sm"
+              @click="mostrarModalRequisitos = true"
+            />
+          </div>
+
           <div class="form-row">
             <div class="field-group">
               <label class="field-label"
@@ -401,6 +415,51 @@
       </template>
     </div>
 
+    <!-- ── Modal de Evaluación por Requisitos ── -->
+    <q-dialog v-model="mostrarModalRequisitos">
+      <q-card class="bg-dark text-white sntnl-card-modal" style="min-width: 450px; font-family: var(--sn-font-mono);">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-subtitle1 text-teal-3 text-weight-bold" style="display: flex; align-items: center;">
+            <q-icon name="checklist" size="sm" class="q-mr-sm" />
+            Evaluar Requisitos (Por Partes)
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense color="grey-5" v-close-popup />
+        </q-card-section>
+
+        <q-card-section>
+          <div class="q-mb-sm text-caption text-grey-5">
+            Activa las casillas de los requisitos que ya cumplen tus criterios de evaluación.
+          </div>
+          <q-list dark bordered separator class="rounded-borders">
+            <q-item v-for="req in materia?.requisitos" :key="req.id_sm_vc" tag="label" v-ripple>
+              <q-item-section avatar>
+                <q-checkbox v-model="requisitosSeleccionados_sm" :val="req.id_sm_vc" color="teal-3" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label style="font-size: 0.8rem">{{ req.nombre_sm_vc }}</q-item-label>
+                <q-item-label caption class="text-grey-5" style="font-size: 0.65rem">
+                  ID: {{ req.id_sm_vc }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <div v-if="requisitosSeleccionados_sm.includes(req.id_sm_vc)" class="text-teal-3" style="font-size: 0.65rem; display: flex; align-items: center;">
+                  <q-icon name="event_available" class="q-mr-xs" size="10px" />
+                  {{ getFechaAprobacionReq(req.id_sm_vc) }}
+                </div>
+                <div v-else class="text-grey-7" style="font-size: 0.65rem">Pendiente</div>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pt-none q-pb-md q-pr-md">
+          <q-btn outline label="Cancelar" color="grey-5" v-close-popup no-caps />
+          <q-btn unelevated label="Guardar Evaluaciones" color="teal-3" @click="guardarRequisitosGranular" no-caps />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <!-- Readonly banner -->
     <div v-if="readonly" class="readonly-banner">
       <q-icon name="lock" size="14px" color="grey-5" />
@@ -474,8 +533,8 @@ const evalOptions = [
   },
   {
     value: "APROBADO",
-    label: "Aprobado",
-    icon: "check_circle",
+    label: "Aprobar Materia",
+    icon: "done_all",
     color: "#6fffe9",
   },
   { value: "REPROBADO", label: "Reprobado", icon: "cancel", color: "#ff8fa3" },
@@ -511,7 +570,43 @@ function emitEnviarInforme() {
   };
 }
 
-/* ── Form: Profesor ── */
+/* ── Modal & Form: Profesor ── */
+const mostrarModalRequisitos = ref(false);
+const requisitosSeleccionados_sm = ref([]);
+
+watch(mostrarModalRequisitos, (val) => {
+  if (val) {
+    const prog = pasantiasStore.progreso_sm.find(
+      p => p.estudiante_id_sm_vc === props.estudianteId && p.materia_id_sm_vc === props.materiaId
+    );
+    const detalles = prog?.requisitos_aprobados_detalle_sm ?? [];
+    requisitosSeleccionados_sm.value = detalles.map(d => d.requisito_id_sm_vc);
+  }
+});
+
+function getFechaAprobacionReq(req_id) {
+  const prog = pasantiasStore.progreso_sm.find(
+    p => p.estudiante_id_sm_vc === props.estudianteId && p.materia_id_sm_vc === props.materiaId
+  );
+  const detalle = prog?.requisitos_aprobados_detalle_sm?.find(d => d.requisito_id_sm_vc === req_id);
+  if (detalle?.fecha_aprobacion_sm_vc) {
+    return formatDateTime(detalle.fecha_aprobacion_sm_vc).split(',')[0];
+  }
+  return 'Hoy';
+}
+
+function guardarRequisitosGranular() {
+  const msg = pasantiasStore.aprobarRequisitosGranular({
+    estudiante_id_sm_vc: props.estudianteId,
+    materia_id_sm_vc: props.materiaId,
+    requisitos_seleccionados_ids: requisitosSeleccionados_sm.value
+  });
+  if (msg) {
+    emit("mensajeEnviado", msg);
+  }
+  mostrarModalRequisitos.value = false;
+}
+
 const fileInputProfRef = ref(null);
 const formProfesor = ref({
   estado_evaluacion_sm_vc: null,

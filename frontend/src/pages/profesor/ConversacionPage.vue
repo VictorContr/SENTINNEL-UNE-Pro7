@@ -19,7 +19,7 @@
       <DocumentConversacion
         :materia-id="materiaId"
         :estudiante-id="estudianteId"
-        :readonly="false"
+        :readonly="estadoActual === 'APROBADO'"
         :estado-progreso="estadoActual"
         @mensajeEnviado="onMensajeEnviado"
       />
