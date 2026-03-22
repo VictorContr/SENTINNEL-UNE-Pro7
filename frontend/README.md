@@ -87,13 +87,37 @@ pnpm run lint
 
 ---
 
-## 🌳 Workflow Git: Subir SOLO el Frontend desde Dev
+## 🌳 Workflow Git: Actualizar Rama `frontend` aisladamente
 
-Si estás trabajando en una rama como `Santiago-Dev` o `Victor-Dev` y necesitas empujar **únicamente** la carpeta `frontend` a la rama remota `frontend` (sin afectar el backend), ejecuta el siguiente comando **desde la raíz del proyecto**:
+Si ambas ramas tienen la misma estructura de Monorepo (con carpetas `/frontend` y `/backend`), y necesitas actualizar la rama **local** `frontend` trayendo únicamente los cambios de tu carpeta de desarrollo para subirlos:
 
-```bash
-git subtree push --prefix=frontend origin frontend
-```
+### 🛠️ Pasos de Sincronización Local y Push (Desde la raíz del proyecto):
 
-> 💡 **¿Qué hace esto?**
-> Filtra el historial de commits para aislar solo los cambios de la carpeta `frontend/` y los inyecta directamente en la rama remota de despliegue, previniendo conflictos y manteniendo la rama limpia.
+1. **Cámbiate a la rama de destino**:
+   ```bash
+   git checkout frontend
+   ```
+
+2. **Copia/Extrae únicamente la carpeta `frontend`** de tu rama Dev (ej. `Victor-Dev-2` o `Santiago-Dev-1`):
+   ```bash
+   git checkout <Tu-Rama-Dev> -- frontend/
+   ```
+
+3. **Guarda los cambios**:
+   ```bash
+   git add frontend/
+   git commit -m "frontend update"
+   ```
+
+4. **Sube los cambios al repositorio remoto**:
+   ```bash
+   git push origin frontend
+   ```
+
+5. **Regresa a tu rama de trabajo**:
+   ```bash
+   git checkout <Tu-Rama-Dev>
+   ```
+
+> 💡 **¿Por qué este método?**  
+> Al copiar solo el directorio `frontend/` en la rama `frontend`, evitas mezclar código o commits del `backend` que pertenezcan a otras ramas, manteniendo la rama de frontend exclusiva y libre de conflictos cruzados de servicios.
