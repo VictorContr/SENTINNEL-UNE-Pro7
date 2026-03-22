@@ -1,176 +1,138 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     CambioPeriodoPage.vue — Vista admin para el periodo académico.
+     Thin Page: delega toda la lógica al periodoStore (Mock-First).
+     Elimina Tailwind hardcodeado y usa CSS Custom Properties de SENTINNEL.
+     ══════════════════════════════════════════════════════════════════ -->
 <template>
-  <div class="q-pa-md">
-    <!-- Tarjeta principal con glassmorphism -->
-    <div class="bg-tarjeta_vc backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto">
-      
-      <!-- Header de la tarjeta -->
-      <div class="text-center mb-6">
-        <h2 class="text-texto-claro_vc text-xl font-bold mb-2">
-          Configuración del Periodo Académico
-        </h2>
-        <p class="text-texto-secundario_vc text-sm">
-          Gestiona el periodo académico global del sistema
-        </p>
+  <q-page class="sntnl-page_sm_vc">
+    <div class="page-header_sm_vc">
+      <div class="page-title-row_sm_vc">
+        <q-icon name="calendar_today" size="22px" color="amber-4" class="q-mr-sm" />
+        <h1 class="page-title_sm_vc">Periodo Académico</h1>
       </div>
+      <p class="page-subtitle_sm_vc">
+        Gestiona el periodo global del sistema — todos los módulos se ven afectados.
+      </p>
+    </div>
 
-      <!-- Estado actual del periodo -->
-      <div class="bg-fondo-secundario_vc rounded-lg p-4 mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-texto-secundario_vc text-xs uppercase tracking-wider mb-1">
-              Periodo Actual
-            </p>
-            <p class="text-texto-claro_vc text-2xl font-bold">
-              {{ periodoStore.periodoFormateado_vc() }}
-            </p>
-          </div>
-          <div class="text-acento_vc">
-            <q-icon name="calendar_today" size="32px" />
-          </div>
+    <div class="periodo-card_sm_vc">
+      <!-- Estado actual -->
+      <div class="periodo-actual_sm_vc">
+        <div>
+          <p class="periodo-label_sm_vc">Periodo Actual</p>
+          <p class="periodo-valor_sm_vc">{{ store_sm_vc.periodoFormateado_sm_vc() }}</p>
         </div>
+        <q-icon name="calendar_today" size="32px" color="teal-3" />
       </div>
 
       <!-- Formulario de actualización -->
-      <q-form @submit="handleSubmit" class="space-y-4">
-        <q-input
-          v-model="nuevoPeriodo"
-          label="Nuevo Periodo Académico"
-          placeholder="Ej: P-166"
-          outlined
-          dark
-          color="acento_vc"
-          :loading="periodoStore.loading_vc"
-          :rules="[
-            val => !!val || 'El periodo es obligatorio',
-            val => val.length >= 4 || 'Mínimo 4 caracteres',
-            val => /^P-\d+$/.test(val) || 'Formato inválido (ej: P-166)'
-          ]"
-          hint="Formato: P-XXX (donde XXX es el número del periodo)"
-        >
-          <template v-slot:prepend>
-            <q-icon name="edit" color="acento_vc" />
-          </template>
-        </q-input>
+      <q-form @submit.prevent="handleSubmit_sm_vc" class="periodo-form_sm_vc">
+        <div class="field-group_sm_vc">
+          <label class="field-label_sm_vc">
+            Nuevo Periodo <span class="req-mark_sm_vc">*</span>
+          </label>
+          <q-input
+            v-model="nuevoPeriodo_sm_vc"
+            dense outlined color="teal-3"
+            class="sntnl-input_sm_vc"
+            placeholder="Ej: P-166"
+            :loading="store_sm_vc.loading_sm_vc"
+            :rules="[
+              val => !!val || 'El periodo es obligatorio',
+              val => val.length >= 4 || 'Mínimo 4 caracteres',
+              val => /^P-\d+$/.test(val) || 'Formato inválido (ej: P-166)'
+            ]"
+            hint="Formato: P-XXX"
+          >
+            <template #prepend>
+              <q-icon name="edit" color="teal-3" />
+            </template>
+          </q-input>
+        </div>
 
-        <!-- Botón de actualización -->
         <q-btn
           type="submit"
-          :loading="periodoStore.loading_vc"
-          :disable="!nuevoPeriodo || periodoStore.loading_vc"
-          class="full-width"
-          size="md"
-          :style="{ backgroundColor: 'var(--color-cta_vc)' }"
-          text-color="white"
-        >
-          <q-icon name="update" class="q-mr-sm" />
-          Actualizar Periodo
-        </q-btn>
+          :loading="store_sm_vc.loading_sm_vc"
+          :disable="!nuevoPeriodo_sm_vc || store_sm_vc.loading_sm_vc"
+          unelevated no-caps
+          label="Actualizar Periodo" icon="update"
+          class="btn-cta_sm_vc" />
       </q-form>
 
-      <!-- Información adicional -->
-      <div class="mt-6 p-4 bg-fondo-terciario_vc rounded-lg">
-        <div class="flex items-start space-x-3">
-          <q-icon name="info" color="acento_vc" size="20px" class="mt-0.5" />
-          <div>
-            <p class="text-texto-secundario_vc text-xs mb-1">
-              Importante
-            </p>
-            <p class="text-texto-apagado_vc text-xs leading-relaxed">
-              El cambio de periodo académico afecta a toda la plataforma. 
-              Asegúrate de tener el valor correcto antes de confirmar.
-            </p>
-          </div>
-        </div>
+      <!-- Aviso informativo -->
+      <div class="info-notice_sm_vc">
+        <q-icon name="info" color="teal-3" size="18px" />
+        <p class="info-texto_sm_vc">
+          El cambio de periodo afecta a toda la plataforma.
+          Verifica el valor antes de confirmar.
+        </p>
       </div>
     </div>
-  </div>
+  </q-page>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { usePeriodoStore } from 'src/stores/periodoStore';
+import { ref, onMounted } from 'vue'
+import { usePeriodoStore } from 'src/stores/periodoStore'
 
-// Store de periodo académico
-const periodoStore = usePeriodoStore();
+const store_sm_vc = usePeriodoStore()
+const nuevoPeriodo_sm_vc = ref('')
 
-// Estado local del formulario
-const nuevoPeriodo = ref('');
+const handleSubmit_sm_vc = async () => {
+  const ok_sm_vc = await store_sm_vc.actualizarPeriodo_sm_vc(nuevoPeriodo_sm_vc.value)
+  if (ok_sm_vc) nuevoPeriodo_sm_vc.value = ''
+}
 
-/**
- * Maneja el envío del formulario para actualizar el periodo
- * @param {Event} event - Evento de submit del formulario
- */
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  
-  const exito = await periodoStore.actualizarPeriodo_vc(nuevoPeriodo.value);
-  
-  if (exito) {
-    // Limpia el formulario después de una actualización exitosa
-    nuevoPeriodo.value = '';
-  }
-};
-
-/**
- * Carga el periodo actual al montar el componente
- */
-onMounted(async () => {
-  await periodoStore.cargarPeriodoActual_vc();
-});
+onMounted(() => store_sm_vc.cargarPeriodoActual_sm_vc())
 </script>
 
 <style scoped>
-/* Estilos específicos para el dark mode exclusivo */
-.bg-tarjeta_vc {
-  background-color: var(--sn-fondo-panel);
+.periodo-card_sm_vc {
+  max-width: 440px;
+  background: var(--sn-fondo-panel);
   border: 1px solid var(--sn-borde-activo);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.75rem;
+  display: flex; flex-direction: column; gap: 1.25rem;
+  box-shadow: var(--sn-shadow-md);
 }
-
-.bg-fondo-secundario_vc {
-  background-color: var(--sn-fondo-elevado);
-  border: 1px solid var(--sn-borde);
+.periodo-actual_sm_vc {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--sn-fondo-elevado);
+  border: 1px solid var(--sn-borde); border-radius: 8px;
 }
-
-.bg-fondo-terciario_vc {
-  background-color: rgba(111, 255, 233, 0.05);
-  border: 1px solid rgba(111, 255, 233, 0.1);
+.periodo-label_sm_vc {
+  font-size: .62rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--sn-texto-apagado); margin: 0 0 4px; font-family: var(--sn-font-mono);
 }
-
-.text-texto-claro_vc {
-  color: var(--sn-texto-principal);
+.periodo-valor_sm_vc {
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--sn-primario); margin: 0; font-family: var(--sn-font-mono);
 }
-
-.text-texto-secundario_vc {
-  color: var(--sn-texto-secundario);
+.periodo-form_sm_vc { display: flex; flex-direction: column; gap: .75rem; }
+.field-group_sm_vc { display: flex; flex-direction: column; gap: .3rem; }
+.field-label_sm_vc {
+  font-size: .62rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--sn-acento-sec); font-weight: 500; font-family: var(--sn-font-mono);
 }
-
-.text-texto-apagado_vc {
-  color: var(--sn-texto-apagado);
+.req-mark_sm_vc { color: var(--sn-error-claro); }
+:deep(.sntnl-input_sm_vc .q-field__control) {
+  background: var(--sn-surface-alpha) !important;
+  border: 1px solid var(--sn-borde) !important; border-radius: 6px !important;
 }
-
-.text-acento_vc {
-  color: var(--sn-primario);
+:deep(.sntnl-input_sm_vc .q-field__native) {
+  color: var(--sn-texto-principal) !important;
+  font-size: .82rem !important; font-family: var(--sn-font-mono) !important;
 }
-
-/* Animaciones sutiles */
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
+.info-notice_sm_vc {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .875rem 1rem;
+  background: rgba(111,255,233,.04);
+  border: 1px solid rgba(111,255,233,.1); border-radius: 8px;
 }
-
-.q-field--outlined .q-field__control {
-  border-radius: 8px;
-}
-
-.q-btn {
-  border-radius: 8px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  transition: all 0.2s ease;
-}
-
-.q-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(111, 255, 233, 0.3);
+.info-texto_sm_vc {
+  font-size: .72rem; color: var(--sn-texto-terciario);
+  margin: 0; line-height: 1.6; font-family: var(--sn-font-sans);
 }
 </style>

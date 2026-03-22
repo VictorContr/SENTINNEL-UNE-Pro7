@@ -1,118 +1,94 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import axios from "axios";
-import { useQuasar } from "quasar";
+// ══════════════════════════════════════════════════════════════════
+// periodoStore.js — Store Mock-First del Periodo Académico Global
+// Elimina Axios real y simula latencia de red con Promesas + delay.
+// Gestiona el estado reactivo del periodo activo para toda la SPA.
+// ══════════════════════════════════════════════════════════════════
 
-/**
- * Store de Periodo Académico - Gestión del periodo académico global
- * Maneja el estado reactivo del periodo actual y las operaciones de administración
- */
-export const usePeriodoStore = defineStore("periodo", () => {
-  // Estado reactivo del periodo actual
-  const periodoActual_vc = ref("P-165");
-  const loading_vc = ref(false);
-  const q = useQuasar();
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { useQuasar } from 'quasar'
 
-  /**
-   * Carga el periodo académico actual desde el backend
-   * Actualiza el estado reactivo con el valor obtenido
-   */
-  const cargarPeriodoActual_vc = async () => {
+const DELAY_MOCK_sm_vc = 800
+
+const simularDelay_sm_vc = () =>
+  new Promise((r) => setTimeout(r, DELAY_MOCK_sm_vc))
+
+export const usePeriodoStore = defineStore('periodo', () => {
+  const $q_sm_vc = useQuasar()
+
+  const periodoActual_sm_vc = ref('P-165')
+  const loading_sm_vc = ref(false)
+
+  /* ── Formatea el periodo para visualización ── */
+  const periodoFormateado_sm_vc = () =>
+    periodoActual_sm_vc.value.replace('P-', 'Periodo ')
+
+  /* ── Simula GET /api/admin/configuracion/periodo ── */
+  const cargarPeriodoActual_sm_vc = async () => {
+    loading_sm_vc.value = true
     try {
-      loading_vc.value = true;
-      const response = await axios.get("/api/admin/configuracion/periodo");
-      periodoActual_vc.value = response.data.periodo_actual_sm_vc;
-    } catch (error) {
-      console.error("Error al cargar periodo actual:", error);
-      q.notify({
-        type: "negative",
-        message: "No se pudo cargar el periodo académico actual",
-        position: "top",
-      });
+      await simularDelay_sm_vc()
+      // Mock: el valor ya está inicializado en el ref, no hay nada que cargar
+    } catch (err_sm_vc) {
+      $q_sm_vc.notify({
+        type: 'negative',
+        message: 'No se pudo cargar el periodo académico.',
+        position: 'top-right'
+      })
     } finally {
-      loading_vc.value = false;
+      loading_sm_vc.value = false
     }
-  };
+  }
 
-  /**
-   * Actualiza el periodo académico actual
-   * @param {string} nuevoPeriodo - Nuevo periodo a establecer (ej: "P-166")
-   * @returns {Promise<boolean>} - true si la actualización fue exitosa
-   */
-  const actualizarPeriodo_vc = async (nuevoPeriodo) => {
+  /* ── Simula PUT /api/admin/configuracion/periodo ── */
+  const actualizarPeriodo_sm_vc = async (nuevo_sm_vc) => {
+    if (!nuevo_sm_vc || nuevo_sm_vc.length < 4) {
+      $q_sm_vc.notify({
+        type: 'warning',
+        message: 'El periodo debe tener al menos 4 caracteres.',
+        position: 'top-right'
+      })
+      return false
+    }
+
+    if (!/^P-\d+$/.test(nuevo_sm_vc)) {
+      $q_sm_vc.notify({
+        type: 'warning',
+        message: 'Formato inválido. Usa el patrón P-XXX (ej: P-166).',
+        position: 'top-right'
+      })
+      return false
+    }
+
+    loading_sm_vc.value = true
     try {
-      loading_vc.value = true;
-
-      // Validación básica del formato
-      if (!nuevoPeriodo || nuevoPeriodo.length < 4) {
-        q.notify({
-          type: "negative",
-          message: "El periodo debe tener al menos 4 caracteres",
-          position: "top",
-        });
-        return false;
-      }
-
-      const response = await axios.put("/api/admin/configuracion/periodo", {
-        periodo_actual_sm_vc: nuevoPeriodo,
-      });
-
-      // Actualiza el estado local con la respuesta del servidor
-      periodoActual_vc.value = response.data.periodo_actual_sm_vc;
-
-      q.notify({
-        type: "positive",
-        message: `Periodo académico actualizado a: ${response.data.periodo_actual_sm_vc}`,
-        position: "top",
-      });
-      return true;
-    } catch (error) {
-      console.error("Error al actualizar periodo:", error);
-
-      // Manejo de errores específicos
-      if (error.response?.status === 400) {
-        q.notify({
-          type: "negative",
-          message: error.response.data.message || "Datos inválidos",
-          position: "top",
-        });
-      } else if (error.response?.status === 403) {
-        q.notify({
-          type: "negative",
-          message: "No tienes permisos para realizar esta acción",
-          position: "top",
-        });
-      } else {
-        q.notify({
-          type: "negative",
-          message: "Error al actualizar el periodo académico",
-          position: "top",
-        });
-      }
-      return false;
+      await simularDelay_sm_vc()
+      periodoActual_sm_vc.value = nuevo_sm_vc
+      $q_sm_vc.notify({
+        type: 'positive',
+        message: `Periodo actualizado a: ${periodoFormateado_sm_vc()}`,
+        icon: 'calendar_today',
+        position: 'top-right',
+        timeout: 3500
+      })
+      return true
+    } catch (err_sm_vc) {
+      $q_sm_vc.notify({
+        type: 'negative',
+        message: 'Error al actualizar el periodo académico.',
+        position: 'top-right'
+      })
+      return false
     } finally {
-      loading_vc.value = false;
+      loading_sm_vc.value = false
     }
-  };
-
-  /**
-   * Formatea el periodo para visualización (ej: "P-165" → "Periodo 165")
-   * @returns {string} - Periodo formateado para mostrar
-   */
-  const periodoFormateado_vc = () => {
-    return periodoActual_vc.value.replace("P-", "Periodo ");
-  };
+  }
 
   return {
-    // Estado
-    periodoActual_vc,
-    loading_vc,
-
-    // Acciones
-    cargarPeriodoActual_vc,
-    actualizarPeriodo_vc,
-
-    // Getters computados
-    periodoFormateado_vc,
-  };
-});
+    periodoActual_sm_vc,
+    loading_sm_vc,
+    periodoFormateado_sm_vc,
+    cargarPeriodoActual_sm_vc,
+    actualizarPeriodo_sm_vc
+  }
+})
