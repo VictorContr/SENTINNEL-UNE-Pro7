@@ -2,19 +2,19 @@
 
 <!--
 Comentario general:
-Este archivo define la construcción de los Layouts en SENTINNEL. Exige el uso del ecosistema estructural de Quasar para la navegación y ordena la reactividad de la arquitectura de la plantilla basada en el rol del usuario activo.
+Este archivo define la construcción de los Layouts en SENTINNEL. Exige el uso estructural maestro de Quasar para la navegación, dictando que los menús dependan reactivamente del JWT quemado temporal dentro del prototipo simulado.
 -->
 
-## 📐 Estructuras Maestras y Roles
-Los componentes de diseño principal no deben lidiar con lógica aislada de módulos. Solo resuelven el mapeo global de la aplicación.
+## 📐 Estructuras Maestras y Roles Simulados
+Los Layouts no gestionan estados hipercomplejos, se dedican a enclavar secciones perimetrales dinámicas. 
 
 ### Responsabilidades Asignadas:
-1. **Poderío Quasar:** Emplear exclusivamente componentes envolventes como `<q-layout>`, `<q-header>`, `<q-drawer>` y `<q-page-container>`.
-2. **Navegación Dinámica:** Los enlaces del menú (sidebars) deben mostrarse u ocultarse condicionalmente tras interceptar el rol o estado de verificación del usuario actual desde el JWT o Pinia.
-3. **Responsive Delegado:** Construir interfaces que se plieguen nativamente en dispositivos móviles gracias al grid propio de Quasar.
+1. **Poderío Quasar:** Emplear exclusivamente componentes fundacionales listos: `<q-layout>`, `<q-header>`, `<q-drawer>`, `<q-page-container>`.
+2. **Navegación Dinámica Mockeada:** Acceder al Store en Pinia para leer el rol prefabricado de la sesión temporal y decidir qué hipervínculos arrojar al perfil de profesor o estudiante.
+3. **Responsive Delegado:** Implementar el panel offcanvas móvil a través de las bondades directas de Quasar.
 
 ## ⚖️ Reglas Globales y Exigencias
 - **Stack:** Vue 3 (`<script setup>`), Quasar v2, Tailwind v4, Pinia.
-- **Nomenclatura:** Toda métrica, variable o función lleva el sufijo `_sm_vc`.
-- **ES6 Moderno:** Arrow Functions puras (`const alternarPanel_sm_vc = () => {}`).
-- **Documentación:** Bloque de comentario principal restringido a 150 palabras métricas.
+- **Nomenclatura:** Reflejar orden agregando explícitamente el `_sm_vc` a las variables (ej. `const panelMoviendose_sm_vc = ref(false)`). **Los nombres de archivos no llevan el sufijo.**
+- **ES6 Moderno:** Metódica por constantes funcionales (`const detectarCierre_sm_vc = () => {}`).
+- **Documentación:** Texto de base resumido que no exceda las 150 palabras.

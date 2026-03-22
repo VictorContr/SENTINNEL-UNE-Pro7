@@ -2,23 +2,22 @@
 
 <!--
 Comentario general:
-Esta guía establece los estándares de configuración del Router en la SPA de SENTINNEL. Exige protección JWT estricta y optimiza el empaquetado inicial usando carga perezosa para todas las vistas, protegiendo así el sistema interno de usuarios no autorizados.
+Esta guía establece los estándares de configuración del Router en la SPA de SENTINNEL. Optimiza las cargas usando Lazy Loading estricto y salvaguarda las rutas utilizando un perfilamiento de Guardias basados en un modelo de JWT "quemado" que emula la persistencia.
 -->
 
 ## 🚦 Flujo y Custodia de Navegación
 
-### 1. Lazy Loading Obligatorio
-Ninguna vista debe importarse al inicio del archivo global. Usa la importación de componentes asíncrona para dividir el peso de la app:
-`component: () => import('pages/Dashboard_sm_vc.vue')`
+### 1. Lazy Loading Estricto
+Toda importación a una vista en rama secundaria será fraccionada y cargada a demanda.
+Ejemplo: `component: () => import('pages/GestionUsuarios.vue')`
 
-### 2. Navigation Guards (JWT)
-Uso mandatorio de interceptores globales (ej. `router.beforeEach`) o de ruta para:
-- Detectar intención de acceso a rutas privadas.
-- Validar la existencia y firma del Token JWT.
-- Abortar navegación y redirigir limpiamente a `/login` si no hay permisos.
+### 2. Navigation Guards (Sesiones Artificiales)
+- Un mock login inyectará un string artificial estático en Session/Local Storage (v.gr., `'JWT_MOCK_PROFESOR_ACTIVO_91XX'`).
+- Un `router.beforeEach` se convertirá en portero implacable interrogando si la falsa credencial consta en almacenamiento y empatando contra sus requisitos meta.
+- Redirección veloz a `/entrar` si el filtro falla.
 
 ## ⚖️ Reglas Globales y Exigencias
-- **Stack:** Vue Router v4 bajo Vue 3.
-- **Nomenclatura:** Parámetros y funciones con sufijo `_sm_vc` (ej. `const rutaProtegida_sm_vc = (...) => {}`).
-- **ES6 Moderno:** Se destierra la palabra `function`. Todo es declarado por constantes y flechas.
-- **Documentación:** Texto instructivo inicial de no más de 150 palabras.
+- **Stack:** Vue Router v4 en Vue 3.
+- **Nomenclatura:** Obligatoriedad transversal en código terminada en `_sm_vc` (ej. `const validarCredencial_sm_vc = (...) => {}`). **Los archivos `.vue` no usan este sufijo.**
+- **ES6 Moderno:** Arrow functions para todo middleware sintáctico.
+- **Documentación:** Encabezado documentado con máximo 150 palabras de concisión descriptiva.

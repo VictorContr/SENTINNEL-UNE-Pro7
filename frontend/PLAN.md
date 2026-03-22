@@ -6,22 +6,26 @@ Este documento rige la arquitectura central y la estrategia de refactorización 
 -->
 
 ## 🎯 Objetivo Arquitectónico
-Transformar el frontend actual en una aplicación modular, escalable y mantenible. Nuestro principal oponente son los componentes monolíticos. El desarrollo debe separar de manera estricta la capa visual de la capa lógica de negocio.
+Transformar el frontend actual en una aplicación modular, escalable y mantenible, erradicando los componentes monolíticos. El desarrollo debe separar de manera estricta la capa visual de la capa lógica de negocio.
+
+## 🧪 Arquitectura de Prototipo Funcional (Mock-First)
+El sistema operará temporalmente como un **Prototipo Funcional Autónomo** desconectado del backend (NestJS). 
+Para la UI, el backend debe parecer 100% real. Pinia se encargará de inyectar datos predefinidos estáticos (Mocks) y simulará la latencia de red mediante Promesas con retrasos artificiales, logrando un flujo operativo completo sin depender de un servidor externo.
 
 ## 🏗️ Estrategia y Refactorización
-1. **Erradicación de God Components:** Todo componente que mezcle responsabilidad de interfaz, modales pesados y peticiones HTTP debe ser desmantelado usando el principio de Responsabilidad Única (SRP).
-2. **Centralización Asíncrona:** El flujo de Axios no tiene cabida en los componentes visuales. Pinia centralizará las peticiones al backend.
-3. **Sinergia Quasar/Tailwind:** Quasar v2 aportará todos los elementos complejos (modales, tablas, inputs). Tailwind CSS v4 se reserva exclusivamente para alineación, márgenes y diseño profundo.
+1. **Erradicación de God Components:** Desmantelar componentes gigantes bajo el principio de Responsabilidad Única (SRP).
+2. **Centralización Asíncrona:** El flujo de Axios no entra en las vistas visuales. Pinia controlará el Mocking.
+3. **Sinergia Quasar/Tailwind:** Quasar v2 administrará componentes atómicos complejos. Tailwind CSS v4 ajustará posicionamiento.
 
 ## 📂 Propósito por Directorio
-- `/pages`: Vistas orquestadoras (Thin Pages).
-- `/components`: Piezas de UI atómicas e independientes.
-- `/layouts`: Estructuras maestras para navegación por roles.
-- `/router`: Control de acceso y Lazy Loading.
-- `/stores`: Manejo de estado global, Getters y Axios.
+- `/pages`: Vistas orquestadoras aisladas (Thin Pages).
+- `/components`: Piezas de UI atómicas.
+- `/layouts`: Esqueletos y menús de navegación por roles.
+- `/router`: Protección de la app y simulaciones de sesión.
+- `/stores`: Manejo de Estado y simulación total del Backend.
 
 ## ⚖️ Reglas Globales y Exigencias
-- **Stack:** Vue 3 (`<script setup>`), Quasar Framework v2, Tailwind CSS v4, Pinia.
-- **Nomenclatura:** Variables, funciones, stores y clases propias exigen el sufijo `_sm_vc`.
-- **ES6 Moderno:** Prohibido el uso de `function`. Se exige uso de Arrow Functions (`const inicializar_sm_vc = () => {}`). Solo se tolera la excepción en asincronía si se prefiere (`async function`), aunque se prioriza `const metodo_sm_vc = async () => {}`.
-- **Documentación:** Cada sección de código lleva un comentario inicial en español, claro y no mayor a 150 palabras.
+- **Stack:** Vue 3 (`<script setup>`), Quasar v2, Tailwind v4, Pinia.
+- **Nomenclatura:** Variables, estados y métodos finalizan obligatoriamente con `_sm_vc`. **Excepción:** Los nombres de archivos y componentes (ej. `.vue`, `.js`) **NO** deben llevar el sufijo.
+- **ES6 Moderno:** Uso absoluto de Arrow Functions (`const inicializar_sm_vc = () => {}`). La palabra reservada `function` queda prohibida.
+- **Documentación:** Comentario inicial explicativo en bloque inferior a 150 palabras.

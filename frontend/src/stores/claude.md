@@ -1,20 +1,19 @@
-# 📦 Directrices para Estado y Pinia (/stores/claude.md)
+# 📦 Directrices para Estado y Pinia Mock-First (/stores/claude.md)
 
 <!--
 Comentario general:
-Este documento es la ley absoluta para el manejo de estados en SENTINNEL. Define a Pinia como el núcleo asíncrono y de lógica de negocio, delegándole exclusivamente el trato de Axios, la mutación de arrays complejos y las capturas de error global.
+La ley madre del prototipo SENTINNEL: Pinia asume temporalmente la carga del backend inexistente. Gestiona Mocks, clona retrasos de la red a través de setTimeouts y blinda errores predecibles, preparando un terreno neutro al que solo se le reemplazarán las conexiones Axios a futuro.
 -->
 
-## 🧠 El Cerebro Asíncrono de SENTINNEL
+## 🧠 El Falso Fuste (El Servidor Fantasma)
 
-### Responsabilidades Asignadas:
-1. **Exclusividad Axios:** Ningún componente [.vue](cci:7://file:///var/www/html/Programacion%207/Project/frontend/src/components/shared/DocumentConversacion.vue:0:0-0:0) invocará a Axios. Toda comunicación de red va en la raíz de las `actions` de Pinia.
-2. **Failsafes (Try/Catch):** Toda petición asíncrona vivirá bajo un implacable bloque `try/catch`. 
-3. **Loading Flags:** Se insta a gestionar una variable de estado reactivo global o sectorizada: `cargando_sm_vc = true` al inicio de la petición y `false` en en la resolución (`finally`).
-4. **Cálculos Complejos a Getters:** Las transformaciones de colecciones masivas o reglas de negocio condicionadas se resuelven a través de Getters cacheados.
+### Responsabilidades de Mocking:
+1. **Emulación Asíncrona (Promesas + setTimeout):** Las acciones (ej. `enviarInforme_sm_vc`) operarán bajo promesas falsas de resolución controladas para introducir retrasos realistas (600ms - 1200ms) de modo que la UI destelle animadores de carga de manera consecuente.
+2. **Data Fija Fidedigna:** Listas, arrays anidados e identidades serán despachadas localmente en este entorno para asegurar operabilidad completa, sin colapsar las `Thin Pages`.
+3. **Mapeo de Estados Failsafe:** Obligatoriedad de enclavar `try/catch` ficticio. Toda petición activará `cargando_sm_vc = true` al invocar, y se apaciguará en zona de `finally`.
 
 ## ⚖️ Reglas Globales y Exigencias
-- **Stack:** Pinia con Composition API.
-- **Nomenclatura:** Estado global finaliza en `_sm_vc` (ej. `const informesRechazados_sm_vc = ref([])`). 
-- **ES6 Moderno:** Regla férrea de Arrow Functions. `const solicitarAPI_sm_vc = async () => {}`.
-- **Documentación:** Encabezado documentado con máximo 150 palabras directas en español.
+- **Stack:** Pinia con Composition API en Vue 3.
+- **Nomenclatura:** Acciones, Getter, Variables se coronan con `_sm_vc` (ej. `const simularPeticion_sm_vc = async () => {}`). **El nombre del archivo del store no lleva el sufijo.**
+- **ES6 Moderno:** Extirpada la palabra `function`. Predominio total de expresiones Arrow Func.
+- **Documentación:** Explicación técnica delimitada al estricto rango de 150 palabras iniciales.
