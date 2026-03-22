@@ -72,7 +72,7 @@
 <script setup>
 import { ref } from 'vue'
 
-const props = defineProps({
+defineProps({
   requisitos: { type: Array, default: () => [] }
 })
 

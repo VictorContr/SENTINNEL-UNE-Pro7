@@ -42,7 +42,7 @@
         <!-- URL de producción -->
         <div class="deploy-field-item_sm_vc">
           <label class="deploy-field-label_sm_vc">URL de Producción</label>
-          
+          <a
             :href="deployEstudiante_sm_vc.url_produccion_sm_vc"
             target="_blank"
             class="deploy-url_sm_vc">

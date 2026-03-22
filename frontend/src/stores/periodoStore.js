@@ -29,7 +29,7 @@ export const usePeriodoStore = defineStore('periodo', () => {
     try {
       await simularDelay_sm_vc()
       // Mock: el valor ya está inicializado en el ref, no hay nada que cargar
-    } catch (err_sm_vc) {
+    } catch {
       $q_sm_vc.notify({
         type: 'negative',
         message: 'No se pudo cargar el periodo académico.',
@@ -72,7 +72,7 @@ export const usePeriodoStore = defineStore('periodo', () => {
         timeout: 3500
       })
       return true
-    } catch (err_sm_vc) {
+    } catch {
       $q_sm_vc.notify({
         type: 'negative',
         message: 'Error al actualizar el periodo académico.',
