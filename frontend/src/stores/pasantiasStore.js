@@ -322,6 +322,38 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     return registro_sm_vc
   }
 
+  const procesarCambioPeriodo_sm_vc = (nuevo_periodo_sm_vc) => {
+    progreso_sm_vc.value.forEach((p_sm_vc) => {
+      if (p_sm_vc.estado_aprobacion_sm_vc !== 'APROBADO' && p_sm_vc.estado_aprobacion_sm_vc !== 'REPROBADO') {
+        const materia_sm_vc = getMateriaById(p_sm_vc.materia_id_sm_vc)
+        if (!materia_sm_vc) return
+        
+        const requisitosTotales_sm_vc = materia_sm_vc.requisitos.length
+        const requisitosAprobados_sm_vc = p_sm_vc.requisitos_aprobados_detalle_sm_vc?.length ?? 0
+
+        if (requisitosAprobados_sm_vc < requisitosTotales_sm_vc) {
+          p_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO'
+          
+          conversaciones_sm_vc.value.push({
+            id_sm_vc: `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            estudiante_id_sm_vc: p_sm_vc.estudiante_id_sm_vc,
+            materia_id_sm_vc: p_sm_vc.materia_id_sm_vc,
+            remitente_id_sm_vc: 'SISTEMA',
+            remitente_rol_sm_vc: 'SISTEMA',
+            tipo_sm_vc: 'SISTEMA',
+            version_sm_vc: 'SIS',
+            archivo_nombre_sm_vc: 'Transición de Periodo',
+            tamanio_sm_vc: '—',
+            comentario_sm_vc: `[ALERTA] El estudiante no completó el 100% de los requisitos al finalizar el periodo. Ha sido REPROBADO y pasará a cursar la materia en el nuevo periodo: ${nuevo_periodo_sm_vc}.`,
+            estado_evaluacion_sm_vc: 'REPROBADO',
+            fecha_sm_vc: new Date().toISOString(),
+            requisito_id_sm_vc: null
+          })
+        }
+      }
+    })
+  }
+
   return {
     /* State — expuesto con _sm_vc */
     materias_sm_vc,
@@ -344,6 +376,7 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     responderCorreccion,
     aprobarRequisitosGranular,
     registrarDeploy,
+    procesarCambioPeriodo_sm_vc,
     ESTADO_APROBACION
   }
 })

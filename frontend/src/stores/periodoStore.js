@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { usePasantiasStore } from './pasantiasStore'
 
 const DELAY_MOCK_sm_vc = 800
 
@@ -64,6 +65,11 @@ export const usePeriodoStore = defineStore('periodo', () => {
     try {
       await simularDelay_sm_vc()
       periodoActual_sm_vc.value = nuevo_sm_vc
+      
+      // Conectar con pasantiasStore para reprobar los incompletos
+      const pasantias_sm_vc = usePasantiasStore()
+      pasantias_sm_vc.procesarCambioPeriodo_sm_vc(nuevo_sm_vc)
+
       $q_sm_vc.notify({
         type: 'positive',
         message: `Periodo actualizado a: ${periodoFormateado_sm_vc()}`,
