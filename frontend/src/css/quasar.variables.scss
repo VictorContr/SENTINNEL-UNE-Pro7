@@ -1,0 +1,16 @@
+// Quasar SCSS (& Sass) Variables
+// --------------------------------------------------
+// SENTINNEL — Variables adaptadas para Light Mode predeterminado
+// El Dark Mode se controla vía CSS Custom Properties y el configStore
+
+$primary   : #0d7a6f;   // teal oscuro — accesible sobre fondo blanco
+$secondary : #5bc0be;
+$accent    : #0fa899;
+
+$dark      : #0b132b;   // usado internamente por Quasar para dark mode
+$dark-page : #0b132b;
+
+$positive  : #059669;
+$negative  : #dc2626;
+$info      : #0284c7;
+$warning   : #d97706;
