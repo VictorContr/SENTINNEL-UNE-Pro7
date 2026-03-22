@@ -1,0 +1,437 @@
+/* ══════════════════════════════════════════════════════════
+   SENTINNEL — Global Stylesheet (Tailwind CSS v4 + @theme)
+   Sistema dual Light / Dark con CSS Custom Properties
+   ══════════════════════════════════════════════════════════ */
+
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════
+   1. CSS CUSTOM PROPERTIES — LIGHT MODE (predeterminado)
+   ══════════════════════════════════════════════════════════ */
+:root {
+  /* Fondos */
+  --sn-fondo: #f8fafc;
+  --sn-fondo-panel: #ffffff;
+  --sn-fondo-elevado: #f1f5f9;
+
+  /* Colores de acento */
+  --sn-primario: #0d7a6f;
+  --sn-primario-hover: #0a5f57;
+  --sn-acento: #0fa899;
+  --sn-acento-sec: #0e8e82;
+
+  /* Texto */
+  --sn-texto-principal: #0f172a;
+  --sn-texto-secundario: #334155;
+  --sn-texto-terciario: #475569;
+  --sn-texto-apagado: #64748b;
+  --sn-texto-dim: #94a3b8;
+
+  /* Bordes */
+  --sn-borde: rgba(0, 0, 0, 0.1);
+  --sn-borde-hover: rgba(0, 0, 0, 0.2);
+  --sn-borde-activo: rgba(13, 122, 111, 0.35);
+
+  /* Semánticos */
+  --sn-error: #dc2626;
+  --sn-error-claro: #ef4444;
+  --sn-exito: #059669;
+  --sn-advertencia: #d97706;
+
+  /* Roles */
+  --sn-admin: #d97706;
+  --sn-profesor: #0d7a6f;
+  --sn-estudiante: #0284c7;
+
+  /* Fondos de superficie con opacidad (para cards, overlays, etc.) */
+  --sn-surface-alpha: rgba(0, 0, 0, 0.03);
+  --sn-surface-hover: rgba(0, 0, 0, 0.06);
+  --sn-surface-active: rgba(13, 122, 111, 0.08);
+
+  /* Glass / Overlays */
+  --sn-glass-bg: rgba(255, 255, 255, 0.85);
+  --sn-glass-border: rgba(0, 0, 0, 0.08);
+
+  /* Sombras */
+  --sn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --sn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --sn-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Fuentes */
+  --sn-font-mono: "IBM Plex Mono", "Fira Code", "Courier New", monospace;
+  --sn-font-sans: "IBM Plex Sans", "Inter", sans-serif;
+
+  /* Radios */
+  --sn-radius-sm: 4px;
+  --sn-radius-md: 6px;
+  --sn-radius-lg: 10px;
+  --sn-radius-xl: 14px;
+  --sn-radius-pill: 20px;
+
+  /* Glow del CTA — en light es más sutil */
+  --sn-cta-glow: 0 0 12px rgba(13, 122, 111, 0.15);
+  --sn-cta-glow-hover: 0 0 20px rgba(13, 122, 111, 0.25);
+
+  /* Grid decorativo */
+  --sn-grid-line: rgba(0, 0, 0, 0.025);
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. CSS CUSTOM PROPERTIES — DARK MODE (clase .dark)
+   Los valores originales del proyecto SENTINNEL
+   ══════════════════════════════════════════════════════════ */
+.dark {
+  /* Fondos */
+  --sn-fondo: #0b132b;
+  --sn-fondo-panel: #0d1a38;
+  --sn-fondo-elevado: #080f22;
+
+  /* Colores de acento */
+  --sn-primario: #6fffe9;
+  --sn-primario-hover: #a0fff0;
+  --sn-acento: #6fffe9;
+  --sn-acento-sec: #5bc0be;
+
+  /* Texto */
+  --sn-texto-principal: #e2e8f0;
+  --sn-texto-secundario: #cbd5e1;
+  --sn-texto-terciario: #94a3b8;
+  --sn-texto-apagado: #64748b;
+  --sn-texto-dim: #475569;
+
+  /* Bordes */
+  --sn-borde: rgba(111, 255, 233, 0.07);
+  --sn-borde-hover: rgba(111, 255, 233, 0.15);
+  --sn-borde-activo: rgba(111, 255, 233, 0.25);
+
+  /* Semánticos */
+  --sn-error: #ff4b6e;
+  --sn-error-claro: #ff8fa3;
+  --sn-exito: #6fffe9;
+  --sn-advertencia: #f0a500;
+
+  /* Roles */
+  --sn-admin: #f0a500;
+  --sn-profesor: #6fffe9;
+  --sn-estudiante: #7ec8e3;
+
+  /* Fondos de superficie con opacidad */
+  --sn-surface-alpha: rgba(255, 255, 255, 0.025);
+  --sn-surface-hover: rgba(111, 255, 233, 0.03);
+  --sn-surface-active: rgba(111, 255, 233, 0.08);
+
+  /* Glass / Overlays */
+  --sn-glass-bg: rgba(255, 255, 255, 0.03);
+  --sn-glass-border: rgba(111, 255, 233, 0.1);
+
+  /* Sombras */
+  --sn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --sn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --sn-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* Glow del CTA */
+  --sn-cta-glow: 0 0 20px rgba(111, 255, 233, 0.2);
+  --sn-cta-glow-hover: 0 0 30px rgba(111, 255, 233, 0.35);
+
+  /* Grid decorativo */
+  --sn-grid-line: rgba(111, 255, 233, 0.015);
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. @theme — Registro de tokens en Tailwind v4
+   Permite usar clases como bg-sn-fondo, text-sn-primario, etc.
+   ══════════════════════════════════════════════════════════ */
+@theme {
+  --color-sn-fondo: var(--sn-fondo);
+  --color-sn-fondo-panel: var(--sn-fondo-panel);
+  --color-sn-fondo-elevado: var(--sn-fondo-elevado);
+  --color-sn-primario: var(--sn-primario);
+  --color-sn-primario-hover: var(--sn-primario-hover);
+  --color-sn-acento: var(--sn-acento);
+  --color-sn-acento-sec: var(--sn-acento-sec);
+  --color-sn-texto-principal: var(--sn-texto-principal);
+  --color-sn-texto-secundario: var(--sn-texto-secundario);
+  --color-sn-texto-terciario: var(--sn-texto-terciario);
+  --color-sn-texto-apagado: var(--sn-texto-apagado);
+  --color-sn-texto-dim: var(--sn-texto-dim);
+  --color-sn-borde: var(--sn-borde);
+  --color-sn-borde-hover: var(--sn-borde-hover);
+  --color-sn-borde-activo: var(--sn-borde-activo);
+  --color-sn-error: var(--sn-error);
+  --color-sn-error-claro: var(--sn-error-claro);
+  --color-sn-exito: var(--sn-exito);
+  --color-sn-advertencia: var(--sn-advertencia);
+  --color-sn-admin: var(--sn-admin);
+  --color-sn-profesor: var(--sn-profesor);
+  --color-sn-estudiante: var(--sn-estudiante);
+  --color-sn-surface-alpha: var(--sn-surface-alpha);
+  --color-sn-surface-hover: var(--sn-surface-hover);
+  --color-sn-surface-active: var(--sn-surface-active);
+  --color-sn-glass-bg: var(--sn-glass-bg);
+  --color-sn-glass-border: var(--sn-glass-border);
+
+  /* Fuentes */
+  --font-mono_vc: var(--sn-font-mono);
+  --font-sans_vc: var(--sn-font-sans);
+
+  /* Radios */
+  --radius-sm_vc: var(--sn-radius-sm);
+  --radius-md_vc: var(--sn-radius-md);
+  --radius-lg_vc: var(--sn-radius-lg);
+  --radius-xl_vc: var(--sn-radius-xl);
+  --radius-pill_vc: var(--sn-radius-pill);
+}
+
+/* ══════════════════════════════════════════════════════════
+   4. TRANSICIONES GLOBALES DE TEMA
+   Suaviza el cambio entre Light ↔ Dark
+   ══════════════════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.25s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLASES UTILITARIAS COMPARTIDAS
+   Centralizadas aquí para evitar duplicación en scoped styles
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Página base ── */
+.sntnl-page_sm_vc {
+  padding: 1.75rem 2rem;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  font-family: var(--sn-font-mono);
+}
+
+/* ── Encabezado de página ── */
+.page-header_sm_vc {
+  margin-bottom: 1.25rem;
+}
+
+.page-title-row_sm_vc {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.page-title_sm_vc {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--sn-texto-principal);
+  letter-spacing: 0.06em;
+  margin: 0;
+  font-family: var(--sn-font-mono);
+}
+
+.page-subtitle_sm_vc {
+  font-size: 0.72rem;
+  color: var(--sn-texto-terciario);
+  margin: 0;
+  font-family: var(--sn-font-sans);
+}
+
+/* ── Tags ── */
+.code-tag_sm_vc {
+  background: var(--sn-surface-active);
+  color: var(--sn-acento-sec);
+  padding: 1px 5px;
+  border-radius: var(--sn-radius-sm);
+  font-size: 0.68rem;
+  font-family: var(--sn-font-mono);
+}
+
+.highlight_sm_vc {
+  color: var(--sn-primario);
+  font-weight: 600;
+}
+
+/* ── Inputs Quasar override (theme-aware) ── */
+.sntnl-input_sm_vc :deep(.q-field__control),
+.sntnl-select_sm_vc :deep(.q-field__control) {
+  background: var(--sn-surface-alpha) !important;
+  border: 1px solid var(--sn-borde) !important;
+  border-radius: var(--sn-radius-md) !important;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sntnl-input_sm_vc :deep(.q-field__control:hover),
+.sntnl-select_sm_vc :deep(.q-field__control:hover) {
+  border-color: var(--sn-borde-hover) !important;
+}
+
+.sntnl-input_sm_vc :deep(.q-field--focused .q-field__control),
+.sntnl-select_sm_vc :deep(.q-field--focused .q-field__control) {
+  border-color: var(--sn-borde-activo) !important;
+  box-shadow: 0 0 0 3px var(--sn-surface-active) !important;
+}
+
+.sntnl-input_sm_vc :deep(.q-field__native),
+.sntnl-input_sm_vc :deep(.q-field__input),
+.sntnl-select_sm_vc :deep(.q-field__native) {
+  color: var(--sn-texto-principal) !important;
+  font-size: 0.82rem !important;
+  font-family: var(--sn-font-mono) !important;
+}
+
+.sntnl-input_sm_vc :deep(.q-field__native::placeholder) {
+  color: var(--sn-texto-apagado) !important;
+}
+
+/* ── Upload zone ── */
+.upload-zone_sm_vc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  border: 2px dashed var(--sn-borde-hover);
+  border-radius: var(--sn-radius-lg);
+  background: var(--sn-surface-alpha);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 160px;
+  text-align: center;
+}
+
+.upload-zone_sm_vc p {
+  font-size: 0.78rem;
+  color: var(--sn-texto-secundario);
+  margin: 0;
+  font-family: var(--sn-font-sans);
+}
+
+.upload-zone--active_sm_vc {
+  border-color: var(--sn-borde-activo) !important;
+  background: var(--sn-surface-active) !important;
+}
+
+/* ── Botón CTA ── */
+.btn-cta_sm_vc {
+  background: var(--sn-primario) !important;
+  color: var(--sn-fondo) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  border-radius: var(--sn-radius-md) !important;
+  box-shadow: var(--sn-cta-glow);
+  font-family: var(--sn-font-mono) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-cta_sm_vc:hover {
+  background: var(--sn-primario-hover) !important;
+  box-shadow: var(--sn-cta-glow-hover) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Action button (secondary) ── */
+.btn-action_sm_vc {
+  background: var(--sn-surface-active) !important;
+  color: var(--sn-primario) !important;
+  border: 1px solid var(--sn-borde-activo) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.05em !important;
+  border-radius: var(--sn-radius-md) !important;
+}
+
+/* ── Tabla Quasar override ── */
+.sntnl-table_sm_vc :deep(.q-table) {
+  background: var(--sn-surface-alpha) !important;
+  border: 1px solid var(--sn-borde) !important;
+  border-radius: var(--sn-radius-lg) !important;
+}
+
+.sntnl-table_sm_vc :deep(.q-table__top),
+.sntnl-table_sm_vc :deep(.q-table__bottom) {
+  background: var(--sn-fondo-elevado) !important;
+}
+
+.sntnl-table_sm_vc :deep(thead tr th) {
+  font-size: 0.6rem !important;
+  letter-spacing: 0.12em !important;
+  color: var(--sn-texto-terciario) !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid var(--sn-borde) !important;
+  background: var(--sn-fondo-elevado) !important;
+}
+
+.sntnl-table_sm_vc :deep(tbody tr td) {
+  font-size: 0.75rem !important;
+  color: var(--sn-texto-secundario) !important;
+  border-bottom: 1px solid var(--sn-borde) !important;
+  font-family: var(--sn-font-mono) !important;
+}
+
+.sntnl-table_sm_vc :deep(tbody tr:hover td) {
+  background: var(--sn-surface-hover) !important;
+}
+
+/* ── Dialog Quasar override ── */
+.sntnl-dialog_sm_vc :deep(.q-card) {
+  background: var(--sn-fondo-panel) !important;
+  border: 1px solid var(--sn-borde) !important;
+  border-radius: 12px !important;
+  min-width: 360px;
+}
+
+/* ── Empty state ── */
+.empty-state_sm_vc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: var(--sn-texto-apagado);
+  font-size: 0.8rem;
+  font-family: var(--sn-font-sans);
+}
+
+/* ── Status badges ── */
+.status--aprobado_sm_vc {
+  color: var(--sn-exito) !important;
+}
+.status--entregado_sm_vc {
+  color: var(--sn-estudiante) !important;
+}
+.status--pendiente_sm_vc {
+  color: var(--sn-texto-secundario) !important;
+}
+.status--reprobado_sm_vc {
+  color: var(--sn-error-claro) !important;
+}
+
+/* ── Filter chip ── */
+.filter-chip_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  background: var(--sn-surface-alpha);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radius-pill);
+  font-size: 0.65rem;
+  color: var(--sn-texto-terciario);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--sn-font-mono);
+  letter-spacing: 0.05em;
+}
+
+.filter-chip_sm_vc:hover {
+  background: var(--sn-surface-hover);
+  color: var(--sn-texto-secundario);
+}
+
+.filter-chip--active_sm_vc {
+  background: var(--sn-surface-active) !important;
+}
