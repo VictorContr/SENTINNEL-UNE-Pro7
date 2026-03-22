@@ -57,15 +57,24 @@ VITE_MAX_PDF_SIZE_vc=10485760
 
 ## 📂 Estructura de Carpetas (`/src`)
 
-- **`assets/`**: Recursos estáticos (imágenes, logos).
-- **`boot/`**: Plugins de inicialización de Quasar (Axios, Toastification).
-- **`components/`**: Componentes reutilizables (Botones, Modales). Contiene subcarpeta `shared/`.
-- **`css/`**: Estilos globales y tokens de TailwindCSS.
-- **`layouts/`**: Plantillas de vistas (Sidebar, Navbar, Layout de Alumno/Profesor).
-- **`pages/`**: Vistas por rol (`admin/`, `estudiante/`, `profesor/`).
-- **`router/`**: Configuración de rutas estáticas y dinámicas.
-- **`stores/`**: Manejo de estado centralizado (Pinia).
-- **`views/`**: Vistas complementarias o auxiliares.
+```text
+src/
+├── assets/         # Recursos estáticos (imágenes, logos)
+├── boot/           # Plugins de inicialización de Quasar (Axios, Toastification)
+├── components/     # Componentes Vue reutilizables
+│   └── shared/     # Componentes compartidos agrupados por módulo
+│       ├── conv/     # UI para flujos de feedback y mensajería
+│       ├── deploy/   # Componentes de carga técnica (URLs/Zip)
+│       └── usuarios/ # Formularios ABM y listados de perfiles
+├── css/            # Estilos globales y tokens de TailwindCSS
+├── layouts/        # Plantillas estructurales (ej. MainLayout.vue)
+├── pages/          # Vistas principales de enrutamiento
+│   ├── admin/      # Dashboards y ABM de Coordinadores
+│   ├── estudiante/ # Pantallas de trazabilidad del Pasante
+│   └── profesor/   # Módulo de corrección y veredicto del Docente
+├── router/         # Reglas estáticas y dinámicas de Vue Router
+└── stores/         # Stores atómicos de Pinia (sufijo `_vc`)
+```
 
 ---
 
