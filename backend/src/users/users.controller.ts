@@ -12,7 +12,7 @@ export class UsersController_sm_vc {
   constructor(private readonly usersService: UsersService_sm_vc) {}
 
   @Get()
-  @Roles_sm_vc('ADMINISTRADOR')
+  @Roles_sm_vc('ADMIN')
   async findAll_sm_vc() {
     return this.usersService.findAll_sm_vc();
   }
@@ -23,7 +23,7 @@ export class UsersController_sm_vc {
   }
 
   @Patch(':id/ban')
-  @Roles_sm_vc('ADMINISTRADOR')
+  @Roles_sm_vc('ADMIN')
   async toggleBan_sm_vc(@Param('id') id_sm_vc: string) {
     return this.usersService.toggleBan_sm_vc(id_sm_vc);
   }

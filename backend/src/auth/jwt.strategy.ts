@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService_sm_vc } from './auth.service';
 
 interface JwtPayload_sm_vc {
-  sub: string;
+  sub: number;
   correo: string;
   rol: string;
 }
