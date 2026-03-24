@@ -7,9 +7,9 @@
 
 ## 🎯 De qué trata SENTINNEL (Elevator Pitch)
 
-SENTINNEL elimina la burocracia del papel y los correos informales, sustituyéndolos por un flujo estrictamente secuencial (**Step-by-Step**) de tres materias: *Investigación y Desarrollo*, *Seminario de Grado* y *Trabajo de Grado I*.
+SENTINNEL elimina la burocracia del papel y los correos informales, sustituyéndolos por un flujo estrictamente secuencial (**Step-by-Step**) de tres materias: _Investigación y Desarrollo_, _Seminario de Grado_ y _Trabajo de Grado I_.
 
-Garantiza la trazabilidad total, donde un estudiante solo puede avanzar si sus entregables PDF son aprobados por un docente, integrando además un módulo de *Software Deploy* para la evidencia técnica del proyecto.
+Garantiza la trazabilidad total, donde un estudiante solo puede avanzar si sus entregables PDF son aprobados por un docente, integrando además un módulo de _Software Deploy_ para la evidencia técnica del proyecto.
 
 ---
 
@@ -25,12 +25,14 @@ Garantiza la trazabilidad total, donde un estudiante solo puede avanzar si sus e
 ## 🛠️ Stack Tecnológico
 
 ### Core & UI
+
 - **Framework**: `Vue 3.5+` (Composition API con `<script setup>` obligatorio).
 - **UI Engine**: `Quasar Framework 2.x` (Componentes de alta densidad).
 - **Styling**: `Tailwind CSS v4` (Design Tokens integrados en `.css`).
 - **Iconografía**: Emoji-Logos (🎓) y Heroicons.
 
 ### Comunicación y Estado
+
 - **State Management**: `Pinia` (Stores con sufijo `_vc`, ej: `estudiantesStore_vc`).
 - **API Client**: `Axios` con Interceptores Globales para inyección de Bearer Tokens JWT.
 - **Feedback**: `Vue Toastification` (Notificaciones asíncronas).
@@ -40,17 +42,20 @@ Garantiza la trazabilidad total, donde un estudiante solo puede avanzar si sus e
 ## ⚙️ Configuración del Entorno
 
 ### Requisitos previos
+
 - **Node.js**: `v20+` (LTS Iron).
-- **Gestor**: Se recomienda `pnpm` (Monorepo-friendly).
+- **Gestor**: Se recomienda `npm` (Monorepo-friendly).
 
 ### Variables de Entorno (`.env`)
+
 Crea un archivo `.env` en la raíz de `frontend/` con las siguientes variables:
+
 ```env
 # URL del Servidor API (NestJS)
 VITE_API_BACKEND_vc=http://tu-api-url.com
 
 # Límite de carga de PDF (Default 10MB)
-VITE_MAX_PDF_SIZE_vc=10485760 
+VITE_MAX_PDF_SIZE_vc=10485760
 ```
 
 ---
@@ -82,16 +87,16 @@ src/
 
 ```bash
 # 1. Instalar dependencias
-pnpm install
+npm install
 
 # 2. Levantar servidor de desarrollo (Hot Reload)
-pnpm run dev
+npm run dev
 
 # 3. Construir para producción
-pnpm run build
+npm run build
 
 # 4. Correr Linter
-pnpm run lint
+npm run lint
 ```
 
 ---
@@ -103,22 +108,26 @@ Si ambas ramas tienen la misma estructura de Monorepo (con carpetas `/frontend` 
 ### 🛠️ Pasos de Sincronización Local y Push (Desde la raíz del proyecto):
 
 1. **Cámbiate a la rama de destino**:
+
    ```bash
    git checkout frontend
    ```
 
 2. **Copia/Extrae únicamente la carpeta `frontend`** de tu rama Dev (ej. `Victor-Dev-2` o `Santiago-Dev-1`):
+
    ```bash
    git checkout <Tu-Rama-Dev> -- frontend/
    ```
 
 3. **Guarda los cambios**:
+
    ```bash
    git add frontend/
    git commit -m "frontend update"
    ```
 
 4. **Sube los cambios al repositorio remoto**:
+
    ```bash
    git push origin frontend
    ```
