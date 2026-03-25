@@ -1,189 +1,127 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     DeployPage.vue (profesor) — Vista del deploy de un estudiante.
+     Muestra el panel de solo lectura si ya existe deploy, o el
+     formulario de registro. Thin Page; delega al pasantiasStore.
+     ══════════════════════════════════════════════════════════════════ -->
 <template>
-  <q-page class="sntnl-page">
-    <q-btn flat no-caps icon="arrow_back" label="Volver" color="grey-5" size="sm" class="q-mb-md" @click="router.back()" />
-    <div class="page-header">
-      <div class="page-title-row">
+  <q-page class="sntnl-page_sm_vc">
+    <q-btn
+      flat no-caps icon="arrow_back" label="Volver"
+      color="grey-5" size="sm" class="q-mb-md"
+      @click="router_sm_vc.back()" />
+
+    <div class="page-header_sm_vc">
+      <div class="page-title-row_sm_vc">
         <q-icon name="rocket_launch" size="22px" color="teal-3" class="q-mr-sm" />
-        <h1 class="page-title">Registrar Deploy Final</h1>
+        <h1 class="page-title_sm_vc">Deploy del Proyecto Final</h1>
       </div>
-      <p class="page-subtitle">Solo habilitado si tu última materia está aprobada.</p>
+      <p class="page-subtitle_sm_vc">
+        Estudiante: <span class="code-tag_sm_vc">{{ estudianteId_sm_vc }}</span>
+      </p>
     </div>
 
-    <!-- Estado bloqueado si no están todas aprobadas -->
-    <div v-if="!habilitado" class="locked-state">
-      <q-icon name="lock" size="40px" color="blue-grey-7" />
+    <!-- Sin deploy registrado -->
+    <div v-if="!deployEstudiante_sm_vc" class="locked-state_sm_vc">
+      <q-icon name="pending" size="40px" color="blue-grey-7" />
       <div>
-        <p class="locked-title">Formulario bloqueado</p>
-        <p class="locked-desc">Debes aprobar las 3 materias de pasantía antes de registrar tu deploy.</p>
+        <p class="locked-title_sm_vc">Sin deploy registrado</p>
+        <p class="locked-desc_sm_vc">
+          El estudiante aún no ha registrado la URL de producción ni subido el código fuente.
+        </p>
       </div>
     </div>
 
-    <!-- Formulario de deploy -->
-    <div v-else class="deploy-form-wrap">
-      <div class="section-notice">
-        <q-icon name="check_circle" size="16px" color="teal-4" />
-        <span>Todas tus materias están aprobadas. Puedes registrar tu proyecto final.</span>
+    <!-- Deploy registrado — vista readonly -->
+    <div v-else class="deploy-readonly-panel_sm_vc">
+      <div class="section-title_sm_vc">
+        <q-icon name="rocket_launch" size="16px" color="teal-3" />
+        <span>Proyecto Final Registrado</span>
       </div>
 
-      <q-form @submit.prevent="registrarDeploy" class="deploy-form">
-
-        <!-- URL de Producción -->
-        <div class="field-group">
-          <label class="field-label">URL de Producción <span class="required">*</span></label>
-          <q-input
-            v-model="form.url_produccion_sm_vc"
-            dense outlined color="teal-3"
-            placeholder="https://mi-proyecto.netlify.app"
-            class="sntnl-input"
-            :rules="[val => !!val || 'Campo requerido', val => /^https?:\/\/.+/.test(val) || 'URL inválida']"
-          >
-            <template #prepend><q-icon name="link" color="teal-3" size="18px" /></template>
-          </q-input>
+      <div class="deploy-field-grid_sm_vc">
+        <!-- URL de producción -->
+        <div class="deploy-field-item_sm_vc">
+          <label class="deploy-field-label_sm_vc">URL de Producción</label>
+          <a
+            :href="deployEstudiante_sm_vc.url_produccion_sm_vc"
+            target="_blank"
+            class="deploy-url_sm_vc">
+            <q-icon name="open_in_new" size="13px" />
+            {{ deployEstudiante_sm_vc.url_produccion_sm_vc }}
+          </a>
         </div>
 
-        <!-- Archivo .zip (código fuente) -->
-        <div class="field-group">
-          <label class="field-label">Código Fuente (.zip) <span class="required">*</span></label>
-          <div
-            class="upload-zone"
-            :class="{ 'upload-zone--active': dragZip }"
-            @dragover.prevent="dragZip = true"
-            @dragleave="dragZip = false"
-            @drop.prevent="handleDrop($event, 'zip')"
-          >
-            <template v-if="!form.archivo_codigo_id_sm_vc">
-              <q-icon name="folder_zip" size="28px" color="teal-3" />
-              <p>Arrastra tu <span class="code-tag">.zip</span> aquí o</p>
-              <q-btn flat no-caps label="Seleccionar .zip" color="teal-3" size="sm" @click="inputZip?.click()" />
-              <input ref="inputZip" type="file" accept=".zip" hidden @change="handleFile($event, 'zip')" />
-            </template>
-            <template v-else>
-              <q-icon name="task" size="24px" color="teal-4" />
-              <p class="file-name-text">{{ form.archivo_codigo_id_sm_vc.name }}</p>
-              <q-btn flat no-caps label="Cambiar" color="grey-5" size="xs" @click="form.archivo_codigo_id_sm_vc = null" />
-            </template>
+        <!-- Código fuente .zip -->
+        <div class="deploy-field-item_sm_vc">
+          <label class="deploy-field-label_sm_vc">Código Fuente (.zip)</label>
+          <div class="deploy-file-chip_sm_vc">
+            <q-icon name="folder_zip" size="14px" color="teal-3" />
+            <span>{{ deployEstudiante_sm_vc.archivo_codigo_id_sm_vc }}</span>
+            <q-btn flat dense no-caps label="Descargar" color="teal-3" size="xs" />
           </div>
         </div>
 
-        <!-- Documentación técnica (.pdf) -->
-        <div class="field-group">
-          <label class="field-label">Documentación Técnica (.pdf) <span class="required">*</span></label>
-          <div
-            class="upload-zone"
-            :class="{ 'upload-zone--active': dragPdf }"
-            @dragover.prevent="dragPdf = true"
-            @dragleave="dragPdf = false"
-            @drop.prevent="handleDrop($event, 'pdf')"
-          >
-            <template v-if="!form.documentacion_tecnica_id_sm_vc">
-              <q-icon name="picture_as_pdf" size="28px" color="amber-4" />
-              <p>Arrastra tu <span class="code-tag">.pdf</span> aquí o</p>
-              <q-btn flat no-caps label="Seleccionar .pdf" color="amber-4" size="sm" @click="inputPdf?.click()" />
-              <input ref="inputPdf" type="file" accept=".pdf" hidden @change="handleFile($event, 'pdf')" />
-            </template>
-            <template v-else>
-              <q-icon name="task" size="24px" color="amber-4" />
-              <p class="file-name-text">{{ form.documentacion_tecnica_id_sm_vc.name }}</p>
-              <q-btn flat no-caps label="Cambiar" color="grey-5" size="xs" @click="form.documentacion_tecnica_id_sm_vc = null" />
-            </template>
+        <!-- Documentación .pdf -->
+        <div class="deploy-field-item_sm_vc">
+          <label class="deploy-field-label_sm_vc">Documentación (.pdf)</label>
+          <div class="deploy-file-chip_sm_vc">
+            <q-icon name="picture_as_pdf" size="14px" color="amber-4" />
+            <span>{{ deployEstudiante_sm_vc.documentacion_tecnica_id_sm_vc }}</span>
+            <q-btn flat dense no-caps label="Ver PDF" color="amber-4" size="xs" />
           </div>
         </div>
 
-        <!-- Submit -->
-        <q-btn
-          type="submit"
-          unelevated no-caps
-          label="Registrar Deploy"
-          icon="rocket_launch"
-          class="submit-btn"
-          :loading="submitting"
-        />
-      </q-form>
+        <!-- Fecha de registro -->
+        <div class="deploy-field-item_sm_vc">
+          <label class="deploy-field-label_sm_vc">Fecha de Registro</label>
+          <span class="deploy-value_sm_vc">
+            {{ formatDate_sm_vc(deployEstudiante_sm_vc.fecha_registro_sm_vc) }}
+          </span>
+        </div>
+      </div>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePasantiasStore } from 'src/stores/pasantiasStore'
 
-const router = useRouter()
-const $q = useQuasar()
+const route_sm_vc = useRoute()
+const router_sm_vc = useRouter()
+const store_sm_vc = usePasantiasStore()
 
-/* Para el prototipo: simular que la última materia está aprobada */
-const habilitado = ref(true)
-const submitting = ref(false)
-const dragZip = ref(false)
-const dragPdf = ref(false)
-const inputZip = ref(null)
-const inputPdf = ref(null)
+const estudianteId_sm_vc = computed(() => route_sm_vc.params.id_sm_vc)
 
-const form = ref({
-  url_produccion_sm_vc: '',
-  archivo_codigo_id_sm_vc: null,       // mapea a FK archivo .zip
-  documentacion_tecnica_id_sm_vc: null  // mapea a FK archivo .pdf
-})
+const deployEstudiante_sm_vc = computed(() =>
+  store_sm_vc.getDeployEstudiante(estudianteId_sm_vc.value)
+)
 
-function handleFile(e, tipo) {
-  const file = e.target.files[0]
-  if (!file) return
-  if (tipo === 'zip') form.value.archivo_codigo_id_sm_vc = file
-  else form.value.documentacion_tecnica_id_sm_vc = file
-}
-
-function handleDrop(e, tipo) {
-  dragZip.value = false; dragPdf.value = false
-  const file = e.dataTransfer.files[0]
-  if (!file) return
-  if (tipo === 'zip') form.value.archivo_codigo_id_sm_vc = file
-  else form.value.documentacion_tecnica_id_sm_vc = file
-}
-
-async function registrarDeploy() {
-  if (!form.value.archivo_codigo_id_sm_vc || !form.value.documentacion_tecnica_id_sm_vc) {
-    $q.notify({ type: 'warning', message: 'Debes subir el .zip y el .pdf.', position: 'top-right' })
-    return
-  }
-  submitting.value = true
-  await new Promise((r) => setTimeout(r, 1200))
-  submitting.value = false
-  $q.notify({
-    type: 'positive',
-    message: '¡Deploy registrado exitosamente!',
-    caption: form.value.url_produccion_sm_vc,
-    icon: 'rocket_launch',
-    position: 'top-right',
-    timeout: 5000
+const formatDate_sm_vc = (iso_sm_vc) =>
+  new Date(iso_sm_vc).toLocaleDateString('es-VE', {
+    day: '2-digit', month: 'short', year: 'numeric'
   })
-  router.push('/estudiante/trazabilidad')
-}
 </script>
 
 <style scoped>
-.sntnl-page { padding: 1.75rem 2rem; position: relative; z-index: 1; }
-.page-header { margin-bottom: 1.5rem; }
-.page-title-row { display: flex; align-items: center; margin-bottom: 0.25rem; }
-.page-title { font-size: 1.2rem; font-weight: 700; color: var(--sn-texto-principal); letter-spacing: 0.06em; margin: 0; font-family: var(--sn-font-mono); }
-.page-subtitle { font-size: 0.72rem; color: var(--sn-texto-terciario); margin: 0; font-family: var(--sn-font-sans); }
-.code-tag { background: rgba(111,255,233,0.08); color: var(--sn-acento-sec); padding: 1px 5px; border-radius: 3px; font-size: 0.68rem; font-family: var(--sn-font-mono); }
-.locked-state { display: flex; align-items: center; gap: 1.25rem; padding: 2rem; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.07); border-radius: 12px; max-width: 480px; }
-.locked-title { font-size: 0.88rem; font-weight: 600; color: var(--sn-texto-secundario); margin: 0 0 3px; font-family: var(--sn-font-mono); }
-.locked-desc { font-size: 0.75rem; color: var(--sn-texto-apagado); margin: 0; font-family: var(--sn-font-sans); line-height: 1.6; }
-.deploy-form-wrap { max-width: 520px; }
-.section-notice { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: var(--sn-acento-sec); background: rgba(111,255,233,0.05); border: 1px solid rgba(111,255,233,0.15); border-radius: 8px; padding: 0.6rem 0.875rem; margin-bottom: 1.5rem; font-family: var(--sn-font-sans); }
-.deploy-form { display: flex; flex-direction: column; gap: 1.1rem; }
-.field-group { display: flex; flex-direction: column; gap: 0.35rem; }
-.field-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sn-acento-sec); font-weight: 500; font-family: var(--sn-font-mono); }
-.required { color: var(--sn-error-claro); }
-:deep(.sntnl-input .q-field__control) { background: rgba(255,255,255,0.03) !important; border: 1px solid rgba(91,192,190,0.2) !important; border-radius: 6px !important; }
-:deep(.sntnl-input .q-field__control:hover) { border-color: rgba(111,255,233,0.4) !important; }
-:deep(.sntnl-input.q-field--focused .q-field__control) { border-color: rgba(111,255,233,0.7) !important; box-shadow: 0 0 0 3px rgba(111,255,233,0.08) !important; }
-:deep(.sntnl-input .q-field__native) { color: var(--sn-texto-principal) !important; font-size: 0.82rem !important; font-family: var(--sn-font-mono) !important; }
-.upload-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 1.5rem; border: 2px dashed var(--sn-borde-hover); border-radius: 10px; background: var(--sn-surface-alpha); cursor: pointer; transition: all 0.2s; min-height: 120px; text-align: center; }
-.upload-zone p { font-size: 0.75rem; color: var(--sn-texto-secundario); margin: 0; font-family: var(--sn-font-sans); }
-.upload-zone--active { border-color: rgba(111,255,233,0.5) !important; background: rgba(111,255,233,0.05) !important; }
-.file-name-text { font-size: 0.75rem; color: var(--sn-primario); font-family: var(--sn-font-mono); }
-.submit-btn { background: #6fffe9 !important; color: #0b132b !important; font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 0.1em !important; border-radius: 6px !important; padding: 0.6rem 1.5rem !important; box-shadow: 0 0 20px rgba(111,255,233,0.2); margin-top: 0.5rem; align-self: flex-start; }
-.submit-btn:hover { box-shadow: 0 0 30px rgba(111,255,233,0.35) !important; }
+.sntnl-page_sm_vc { padding: 1.75rem 2rem; position: relative; z-index: 1; font-family: var(--sn-font-mono); }
+.page-header_sm_vc { margin-bottom: 1.5rem; }
+.page-title-row_sm_vc { display: flex; align-items: center; margin-bottom: .25rem; }
+.page-title_sm_vc { font-size: 1.2rem; font-weight: 700; color: var(--sn-texto-principal); letter-spacing: .06em; margin: 0; }
+.page-subtitle_sm_vc { font-size: .72rem; color: var(--sn-texto-terciario); margin: 0; }
+.code-tag_sm_vc { background: rgba(111,255,233,.08); color: var(--sn-acento-sec); padding: 1px 5px; border-radius: 3px; font-size: .68rem; }
+.locked-state_sm_vc { display: flex; align-items: center; gap: 1.25rem; padding: 2rem; background: rgba(255,255,255,.02); border: 1px dashed rgba(255,255,255,.07); border-radius: 12px; max-width: 480px; }
+.locked-title_sm_vc { font-size: .88rem; font-weight: 600; color: var(--sn-texto-secundario); margin: 0 0 3px; }
+.locked-desc_sm_vc { font-size: .75rem; color: var(--sn-texto-apagado); margin: 0; font-family: var(--sn-font-sans); line-height: 1.6; }
+.section-title_sm_vc { display: flex; align-items: center; gap: .5rem; font-size: .72rem; font-weight: 600; color: var(--sn-acento-sec); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.deploy-readonly-panel_sm_vc { max-width: 640px; }
+.deploy-field-grid_sm_vc { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+.deploy-field-item_sm_vc { display: flex; flex-direction: column; gap: .4rem; }
+.deploy-field-label_sm_vc { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sn-texto-apagado); font-family: var(--sn-font-mono); }
+.deploy-url_sm_vc { display: flex; align-items: center; gap: .35rem; font-size: .78rem; color: var(--sn-primario); text-decoration: none; word-break: break-all; }
+.deploy-url_sm_vc:hover { text-decoration: underline; }
+.deploy-file-chip_sm_vc { display: flex; align-items: center; gap: .4rem; padding: .4rem .75rem; background: rgba(255,255,255,.03); border: 1px solid var(--sn-borde); border-radius: 6px; }
+.deploy-file-chip_sm_vc span { font-size: .72rem; color: var(--sn-texto-secundario); flex: 1; }
+.deploy-value_sm_vc { font-size: .78rem; color: var(--sn-texto-secundario); }
 </style>

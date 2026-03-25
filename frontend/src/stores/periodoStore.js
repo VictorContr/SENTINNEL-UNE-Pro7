@@ -1,118 +1,144 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import axios from "axios";
-import { useQuasar } from "quasar";
+// ══════════════════════════════════════════════════════════════════
+// periodoStore.js — Store Mock-First del Periodo Académico Global
+// Extendido para manejar fechaInicio y fechaCierre del periodo.
+// Mantiene compatibilidad con periodoFormateado_sm_vc().
+// ══════════════════════════════════════════════════════════════════
 
-/**
- * Store de Periodo Académico - Gestión del periodo académico global
- * Maneja el estado reactivo del periodo actual y las operaciones de administración
- */
-export const usePeriodoStore = defineStore("periodo", () => {
-  // Estado reactivo del periodo actual
-  const periodoActual_vc = ref("P-165");
-  const loading_vc = ref(false);
-  const q = useQuasar();
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { useQuasar } from 'quasar'
+import { usePasantiasStore } from './pasantiasStore'
 
-  /**
-   * Carga el periodo académico actual desde el backend
-   * Actualiza el estado reactivo con el valor obtenido
-   */
-  const cargarPeriodoActual_vc = async () => {
-    try {
-      loading_vc.value = true;
-      const response = await axios.get("/api/admin/configuracion/periodo");
-      periodoActual_vc.value = response.data.periodo_actual_sm_vc;
-    } catch (error) {
-      console.error("Error al cargar periodo actual:", error);
-      q.notify({
-        type: "negative",
-        message: "No se pudo cargar el periodo académico actual",
-        position: "top",
-      });
-    } finally {
-      loading_vc.value = false;
+const DELAY_MOCK_sm_vc = 800
+
+const simularDelay_sm_vc = () =>
+  new Promise((r) => setTimeout(r, DELAY_MOCK_sm_vc))
+
+export const usePeriodoStore = defineStore('periodo', () => {
+  const $q_sm_vc = useQuasar()
+
+  /* ── Estado ── */
+  const periodoActual_sm_vc = ref('P-165')
+  const fechaInicio_sm_vc   = ref('')   // formato YYYY/MM
+  const fechaCierre_sm_vc   = ref('')   // formato YYYY/MM
+  const loading_sm_vc       = ref(false)
+
+  /* ── Formatea el periodo actual para visualización ── */
+  const periodoFormateado_sm_vc = () => {
+    const base_sm_vc = periodoActual_sm_vc.value.replace('P-', 'Periodo ')
+    if (fechaInicio_sm_vc.value && fechaCierre_sm_vc.value) {
+      const anio_sm_vc = fechaInicio_sm_vc.value.split('/')[0]
+      const mesInicio_sm_vc = formatearMesSolo_sm_vc(fechaInicio_sm_vc.value)
+      const mesCierre_sm_vc = formatearMesSolo_sm_vc(fechaCierre_sm_vc.value)
+      return `${base_sm_vc} (de ${mesInicio_sm_vc} a ${mesCierre_sm_vc} ${anio_sm_vc})`
     }
-  };
+    return base_sm_vc
+  }
 
-  /**
-   * Actualiza el periodo académico actual
-   * @param {string} nuevoPeriodo - Nuevo periodo a establecer (ej: "P-166")
-   * @returns {Promise<boolean>} - true si la actualización fue exitosa
-   */
-  const actualizarPeriodo_vc = async (nuevoPeriodo) => {
+  /* ── Simula GET /api/admin/configuracion/periodo ── */
+  const cargarPeriodoActual_sm_vc = async () => {
+    loading_sm_vc.value = true
     try {
-      loading_vc.value = true;
-
-      // Validación básica del formato
-      if (!nuevoPeriodo || nuevoPeriodo.length < 4) {
-        q.notify({
-          type: "negative",
-          message: "El periodo debe tener al menos 4 caracteres",
-          position: "top",
-        });
-        return false;
-      }
-
-      const response = await axios.put("/api/admin/configuracion/periodo", {
-        periodo_actual_sm_vc: nuevoPeriodo,
-      });
-
-      // Actualiza el estado local con la respuesta del servidor
-      periodoActual_vc.value = response.data.periodo_actual_sm_vc;
-
-      q.notify({
-        type: "positive",
-        message: `Periodo académico actualizado a: ${response.data.periodo_actual_sm_vc}`,
-        position: "top",
-      });
-      return true;
-    } catch (error) {
-      console.error("Error al actualizar periodo:", error);
-
-      // Manejo de errores específicos
-      if (error.response?.status === 400) {
-        q.notify({
-          type: "negative",
-          message: error.response.data.message || "Datos inválidos",
-          position: "top",
-        });
-      } else if (error.response?.status === 403) {
-        q.notify({
-          type: "negative",
-          message: "No tienes permisos para realizar esta acción",
-          position: "top",
-        });
-      } else {
-        q.notify({
-          type: "negative",
-          message: "Error al actualizar el periodo académico",
-          position: "top",
-        });
-      }
-      return false;
+      await simularDelay_sm_vc()
+      // Mock: los valores ya están inicializados en los refs
+    } catch {
+      $q_sm_vc.notify({
+        type: 'negative',
+        message: 'No se pudo cargar el periodo académico.',
+        position: 'top-right'
+      })
     } finally {
-      loading_vc.value = false;
+      loading_sm_vc.value = false
     }
-  };
+  }
 
-  /**
-   * Formatea el periodo para visualización (ej: "P-165" → "Periodo 165")
-   * @returns {string} - Periodo formateado para mostrar
-   */
-  const periodoFormateado_vc = () => {
-    return periodoActual_vc.value.replace("P-", "Periodo ");
-  };
+  /* ── Simula PUT /api/admin/configuracion/periodo ── */
+  // Acepta un objeto { fechaInicio: 'YYYY/MM', fechaCierre: 'YYYY/MM' }
+  const actualizarPeriodo_sm_vc = async ({ fechaInicio, fechaCierre }) => {
+    // Validación de presencia
+    if (!fechaInicio || !fechaCierre) {
+      $q_sm_vc.notify({
+        type: 'warning',
+        message: 'Debes seleccionar ambas fechas (inicio y cierre).',
+        position: 'top-right', icon: 'warning'
+      })
+      return false
+    }
+
+    // Validación de rango: cierre debe ser estrictamente posterior al inicio
+    if (fechaCierre <= fechaInicio) {
+      $q_sm_vc.notify({
+        type: 'negative',
+        message: 'La fecha de cierre debe ser posterior a la de inicio.',
+        position: 'top-right', icon: 'error'
+      })
+      return false
+    }
+
+    loading_sm_vc.value = true
+    try {
+      await simularDelay_sm_vc()
+
+      // Actualizar estado del store
+      fechaInicio_sm_vc.value = fechaInicio
+      fechaCierre_sm_vc.value = fechaCierre
+
+      // Generar código de periodo incrementándolo en +1 (Mock)
+      // Ej: P-165 → P-166 (lógica real sería asíncrona del backend)
+      const numActual_sm_vc = parseInt(periodoActual_sm_vc.value.replace('P-', ''), 10) || 165
+      periodoActual_sm_vc.value = `P-${numActual_sm_vc + 1}`
+
+      // Conectar con pasantiasStore para reprobar los incompletos
+      const pasantias_sm_vc = usePasantiasStore()
+      pasantias_sm_vc.procesarCambioPeriodo_sm_vc(periodoActual_sm_vc.value)
+
+      $q_sm_vc.notify({
+        type: 'positive',
+        message: `Periodo actualizado correctamente`,
+        caption: `${formatearMes_sm_vc(fechaInicio)} → ${formatearMes_sm_vc(fechaCierre)}`,
+        icon: 'calendar_today',
+        position: 'top-right',
+        timeout: 4000
+      })
+      return true
+    } catch {
+      $q_sm_vc.notify({
+        type: 'negative',
+        message: 'Error al actualizar el periodo académico.',
+        position: 'top-right'
+      })
+      return false
+    } finally {
+      loading_sm_vc.value = false
+    }
+  }
+
+  /* ── Utilidad interna: formatea YYYY/MM → "Mes YYYY" ── */
+  const formatearMes_sm_vc = (valor_sm_vc) => {
+    if (!valor_sm_vc) return ''
+    const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
+    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, 1)
+    const mes_str_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long' })
+    const mesCap_sm_vc = mes_str_sm_vc.charAt(0).toUpperCase() + mes_str_sm_vc.slice(1)
+    return `${mesCap_sm_vc} ${anio_sm_vc}`
+  }
+
+  /* ── Utilidad interna: formatea YYYY/MM → "Mes" capitalizado ── */
+  const formatearMesSolo_sm_vc = (valor_sm_vc) => {
+    if (!valor_sm_vc) return ''
+    const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
+    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, 1)
+    const mes_str_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long' })
+    return mes_str_sm_vc.charAt(0).toUpperCase() + mes_str_sm_vc.slice(1)
+  }
 
   return {
-    // Estado
-    periodoActual_vc,
-    loading_vc,
-
-    // Acciones
-    cargarPeriodoActual_vc,
-    actualizarPeriodo_vc,
-
-    // Getters computados
-    periodoFormateado_vc,
-  };
-});
+    periodoActual_sm_vc,
+    fechaInicio_sm_vc,
+    fechaCierre_sm_vc,
+    loading_sm_vc,
+    periodoFormateado_sm_vc,
+    cargarPeriodoActual_sm_vc,
+    actualizarPeriodo_sm_vc
+  }
+})

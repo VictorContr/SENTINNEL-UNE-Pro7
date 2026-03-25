@@ -130,7 +130,7 @@
 
           <p class="info-description_sm_vc">
             Plataforma centralizada para la gestión, supervisión y trazabilidad
-            completa del proceso de <strong>informes de pasantías</strong> universitarias.
+            completa del proceso de <strong>informes de pasantías</strong> de la universidad Nueva Esparta para la carrera de Computación.
           </p>
 
           <div class="flow-steps_sm_vc">
@@ -169,12 +169,14 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'src/stores/authStore'
 import { useConfigStore } from 'src/stores/configStore'
+import { useQuasar } from 'quasar'
 
 /* ── Store & Router ── */
 const auth = useAuthStore()
 const configStore_sm_vc = useConfigStore()
 const router_sm_vc = useRouter()
 const route_sm_vc = useRoute()
+const $q_vc = useQuasar()
 
 /* ── Theme state ── */
 const isDark_sm_vc = computed(() => configStore_sm_vc.isDark_sm_vc)
@@ -250,11 +252,11 @@ function init_canvas_sm_vc() {
   const ctx_sm_vc = canvas_sm_vc.getContext('2d')
 
   const resize_sm_vc = () => {
-    canvas_sm_vc.width = window.innerWidth
-    canvas_sm_vc.height = window.innerHeight
+    canvas_sm_vc.width = $q_vc.screen.width
+    canvas_sm_vc.height = $q_vc.screen.height
   }
   resize_sm_vc()
-  window.addEventListener('resize', resize_sm_vc)
+  watch(() => [$q_vc.screen.width, $q_vc.screen.height], resize_sm_vc)
 
   const cols_sm_vc = 40
   const rows_sm_vc = 25

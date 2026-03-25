@@ -47,10 +47,10 @@
     <div class="progress-section">
       <div class="progress-numbers">
         <span>Requisitos</span>
-        <span>{{ requisitosAprobados_sm_vc }}/{{ totalRequisitos_sm_vc }}</span>
+        <span>{{ materia.requisitos_aprobados_sm_int }}/{{ materia.total_requisitos_sm_int }}</span>
       </div>
       <q-linear-progress
-        :value="progresoDinamico_sm_vc"
+        :value="materia.progreso_decimal"
         :color="progressColor"
         track-color="blue-grey-10"
         rounded
@@ -135,33 +135,13 @@ const props = defineProps({
 const emit = defineEmits(["click"]);
 
 /* Determina si un requisito ha sido completado (basado en el detalle de aprobación o entregas previas) */
-function isRequisitoCompletado_sm_vc(requisito_id_sm_vc) {
-  // Si la materia está APROBADA, consideramos todos los requisitos como completos
+const isRequisitoCompletado_sm_vc = (requisito_id_sm_vc) => {
   if (props.materia.estado_aprobacion_sm_vc === "APROBADO") {
     return true;
   }
-
-  // Verificamos en el nuevo esquema de aprobaciones granulares
-  const detalles = props.materia.progreso?.requisitos_aprobados_detalle_sm ?? [];
-  return detalles.some((d) => d.requisito_id_sm_vc === requisito_id_sm_vc);
-}
-
-/* ── CÁLCULO DINÁMICO DEL PROGRESO ── */
-const requisitosAprobados_sm_vc = computed(() => {
-  if (!props.materia.requisitos) return 0;
-  return props.materia.requisitos.filter((req) =>
-    isRequisitoCompletado_sm_vc(req.id_sm_vc),
-  ).length;
-});
-
-const totalRequisitos_sm_vc = computed(() => {
-  return props.materia.requisitos ? props.materia.requisitos.length : 0;
-});
-
-const progresoDinamico_sm_vc = computed(() => {
-  if (totalRequisitos_sm_vc.value === 0) return 0;
-  return requisitosAprobados_sm_vc.value / totalRequisitos_sm_vc.value;
-});
+  const detalles_sm_vc = props.materia.progreso?.requisitos_aprobados_detalle_sm_vc ?? [];
+  return detalles_sm_vc.some((d) => d.requisito_id_sm_vc === requisito_id_sm_vc);
+};
 
 const progressColor = computed(() => {
   const map = {
