@@ -24,8 +24,16 @@ export const usePeriodoStore = defineStore('periodo', () => {
   const loading_sm_vc       = ref(false)
 
   /* ── Formatea el periodo actual para visualización ── */
-  const periodoFormateado_sm_vc = () =>
-    periodoActual_sm_vc.value.replace('P-', 'Periodo ')
+  const periodoFormateado_sm_vc = () => {
+    const base_sm_vc = periodoActual_sm_vc.value.replace('P-', 'Periodo ')
+    if (fechaInicio_sm_vc.value && fechaCierre_sm_vc.value) {
+      const anio_sm_vc = fechaInicio_sm_vc.value.split('/')[0]
+      const mesInicio_sm_vc = formatearMesSolo_sm_vc(fechaInicio_sm_vc.value)
+      const mesCierre_sm_vc = formatearMesSolo_sm_vc(fechaCierre_sm_vc.value)
+      return `${base_sm_vc} (de ${mesInicio_sm_vc} a ${mesCierre_sm_vc} ${anio_sm_vc})`
+    }
+    return base_sm_vc
+  }
 
   /* ── Simula GET /api/admin/configuracion/periodo ── */
   const cargarPeriodoActual_sm_vc = async () => {
@@ -75,10 +83,10 @@ export const usePeriodoStore = defineStore('periodo', () => {
       fechaInicio_sm_vc.value = fechaInicio
       fechaCierre_sm_vc.value = fechaCierre
 
-      // Generar código de periodo derivado del mes de inicio (Mock)
-      // Ej: 2025/03 → P-165 (lógica real sería del backend)
-      // Se mantiene el valor dummy por ahora
-      periodoActual_sm_vc.value = `P-${fechaInicio.replace('/', '')}`
+      // Generar código de periodo incrementándolo en +1 (Mock)
+      // Ej: P-165 → P-166 (lógica real sería asíncrona del backend)
+      const numActual_sm_vc = parseInt(periodoActual_sm_vc.value.replace('P-', ''), 10) || 165
+      periodoActual_sm_vc.value = `P-${numActual_sm_vc + 1}`
 
       // Conectar con pasantiasStore para reprobar los incompletos
       const pasantias_sm_vc = usePasantiasStore()
@@ -110,7 +118,18 @@ export const usePeriodoStore = defineStore('periodo', () => {
     if (!valor_sm_vc) return ''
     const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
     const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, 1)
-    return fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+    const mes_str_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long' })
+    const mesCap_sm_vc = mes_str_sm_vc.charAt(0).toUpperCase() + mes_str_sm_vc.slice(1)
+    return `${mesCap_sm_vc} ${anio_sm_vc}`
+  }
+
+  /* ── Utilidad interna: formatea YYYY/MM → "Mes" capitalizado ── */
+  const formatearMesSolo_sm_vc = (valor_sm_vc) => {
+    if (!valor_sm_vc) return ''
+    const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
+    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, 1)
+    const mes_str_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long' })
+    return mes_str_sm_vc.charAt(0).toUpperCase() + mes_str_sm_vc.slice(1)
   }
 
   return {

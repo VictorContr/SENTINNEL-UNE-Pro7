@@ -74,7 +74,7 @@
 
       <template #body-cell-acciones="props">
         <q-td :props="props" class="text-center">
-          <q-btn flat dense round icon="edit" color="teal-3" size="sm">
+          <q-btn flat dense round icon="edit" color="teal-3" size="sm" @click="abrirEditar_sm_vc(props.row)">
             <q-tooltip class="bg-dark">Editar usuario</q-tooltip>
           </q-btn>
           <q-btn flat dense round
@@ -116,11 +116,13 @@
       </q-card>
     </q-dialog>
 
-    <!-- Dialog: Nuevo usuario (componente atómico) -->
+    <!-- Dialog: Nuevo/Editar usuario (componente atómico) -->
     <DialogNuevoUsuario
       v-model="dialogNuevo_sm_vc"
       :profesores-opc="profesoresOpc_sm_vc"
-      @guardar="handleGuardar_sm_vc" />
+      :usuario-a-editar="usuarioEditar_sm_vc"
+      @guardar="handleGuardar_sm_vc"
+      @update:model-value="(val) => !val && (usuarioEditar_sm_vc = null)" />
 
   </q-page>
 </template>
@@ -139,6 +141,7 @@ const busqueda_sm_vc = ref('')
 const dialogNuevo_sm_vc = ref(false)
 const dialogBan_sm_vc = ref(false)
 const usuarioTarget_sm_vc = ref(null)
+const usuarioEditar_sm_vc = ref(null)
 
 /* ── Columnas de la tabla ── */
 const columns_sm_vc = [
@@ -186,22 +189,41 @@ const ejecutarBan_sm_vc = () => {
   })
 }
 
-/* ── Handler nuevo usuario ── */
+/* ── Handler editar usuario ── */
+const abrirEditar_sm_vc = (usuario_sm_vc) => {
+  usuarioEditar_sm_vc.value = usuario_sm_vc
+  dialogNuevo_sm_vc.value = true
+}
+
+/* ── Handler nuevo/editar usuario ── */
 const handleGuardar_sm_vc = (datos_sm_vc) => {
   try {
-    const nuevo_sm_vc = auth_sm_vc.crearUsuario(datos_sm_vc)
-    $q_sm_vc.notify({
-      type: 'positive',
-      message: `Usuario ${nuevo_sm_vc.nombre_sm_vc} registrado exitosamente.`,
-      caption: `ID: ${nuevo_sm_vc.id_sm_vc}`,
-      icon: 'check_circle',
-      position: 'top-right',
-      timeout: 4000
-    })
+    const esEdicion_sm_vc = !!datos_sm_vc.id_sm_vc
+    
+    if (esEdicion_sm_vc) {
+      const editado_sm_vc = auth_sm_vc.actualizarUsuario(datos_sm_vc)
+      $q_sm_vc.notify({
+        type: 'positive',
+        message: `Usuario ${editado_sm_vc.nombre_sm_vc} actualizado exitosamente.`,
+        icon: 'check_circle',
+        position: 'top-right',
+        timeout: 4000
+      })
+    } else {
+      const nuevo_sm_vc = auth_sm_vc.crearUsuario(datos_sm_vc)
+      $q_sm_vc.notify({
+        type: 'positive',
+        message: `Usuario ${nuevo_sm_vc.nombre_sm_vc} registrado exitosamente.`,
+        caption: `ID: ${nuevo_sm_vc.id_sm_vc}`,
+        icon: 'check_circle',
+        position: 'top-right',
+        timeout: 4000
+      })
+    }
   } catch (err_sm_vc) {
     $q_sm_vc.notify({
       type: 'negative',
-      message: err_sm_vc?.message || 'Error al crear el usuario.',
+      message: err_sm_vc?.message || 'Error al guardar el usuario.',
       position: 'top-right'
     })
   }

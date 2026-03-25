@@ -160,6 +160,20 @@ export const useAuthStore = defineStore('auth', () => {
     return nuevo_sm_vc
   }
 
+  function actualizar_usuario_sm_vc(datos_sm_vc) {
+    const idx_sm_vc = MOCK_USERS_sm_vc.value.findIndex(u => u.id_sm_vc === datos_sm_vc.id_sm_vc)
+    if (idx_sm_vc !== -1) {
+      MOCK_USERS_sm_vc.value[idx_sm_vc] = { 
+        ...MOCK_USERS_sm_vc.value[idx_sm_vc], 
+        ...datos_sm_vc,
+        // No permitir que sobreescriban id_sm_vc
+        id_sm_vc: MOCK_USERS_sm_vc.value[idx_sm_vc].id_sm_vc 
+      }
+      return MOCK_USERS_sm_vc.value[idx_sm_vc]
+    }
+    throw new Error('Usuario no encontrado')
+  }
+
   return {
     /* State */
     user: user_sm_vc,
@@ -180,6 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
     login: login_sm_vc,
     logout: logout_sm_vc,
     banUser: ban_user_sm_vc,
-    crearUsuario: crear_usuario_sm_vc
+    crearUsuario: crear_usuario_sm_vc,
+    actualizarUsuario: actualizar_usuario_sm_vc
   }
 })

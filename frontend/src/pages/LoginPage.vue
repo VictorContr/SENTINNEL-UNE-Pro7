@@ -130,7 +130,7 @@
 
           <p class="info-description_sm_vc">
             Plataforma centralizada para la gestión, supervisión y trazabilidad
-            completa del proceso de <strong>informes de pasantías</strong> universitarias.
+            completa del proceso de <strong>informes de pasantías</strong> de la universidad Nueva Esparta para la carrera de Computación.
           </p>
 
           <div class="flow-steps_sm_vc">

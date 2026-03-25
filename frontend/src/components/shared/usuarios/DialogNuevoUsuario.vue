@@ -8,8 +8,8 @@
     @update:model-value="emit('update:modelValue', $event)">
     <q-card class="dialog-card_sm_vc">
       <q-card-section class="dialog-header_sm_vc">
-        <q-icon name="person_add" color="teal-3" size="24px" class="q-mr-sm" />
-        <span>Registrar Nuevo Usuario</span>
+        <q-icon :name="usuarioAEditar ? 'manage_accounts' : 'person_add'" color="teal-3" size="24px" class="q-mr-sm" />
+        <span>{{ usuarioAEditar ? 'Editar Usuario' : 'Registrar Nuevo Usuario' }}</span>
       </q-card-section>
 
       <q-card-section>
@@ -57,7 +57,7 @@
           <!-- Campos extra para estudiante -->
           <template v-if="form_sm_vc.rol_sm_vc === 'ESTUDIANTE'">
             <div class="field-group_sm_vc">
-              <label class="field-label_sm_vc">Cohorte</label>
+              <label class="field-label_sm_vc">Periodo</label>
               <q-input
                 v-model="form_sm_vc.cohorte_sm_vc"
                 dense outlined color="teal-3" class="sntnl-input_sm_vc"
@@ -79,7 +79,7 @@
 
       <q-card-actions align="right" class="dialog-actions_sm_vc">
         <q-btn flat label="Cancelar" color="grey-5" no-caps @click="cancelar_sm_vc" />
-        <q-btn unelevated label="Guardar Usuario" icon="save"
+        <q-btn unelevated :label="usuarioAEditar ? 'Actualizar Usuario' : 'Guardar Usuario'" icon="save"
           class="btn-cta_sm_vc" no-caps @click="guardar_sm_vc" />
       </q-card-actions>
     </q-card>
@@ -87,11 +87,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
-defineProps({
+const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  profesoresOpc: { type: Array, default: () => [] }
+  profesoresOpc: { type: Array, default: () => [] },
+  usuarioAEditar: { type: Object, default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'guardar'])
@@ -106,6 +107,15 @@ const estadoInicial_sm_vc = () => ({
 })
 
 const form_sm_vc = ref(estadoInicial_sm_vc())
+
+watch(() => props.usuarioAEditar, (newVal) => {
+  if (newVal) {
+    // Rellenamos el form si es edición
+    form_sm_vc.value = { ...newVal, clave_sm_vc: '' } // no traemos la clave por seguridad mock
+  } else {
+    form_sm_vc.value = estadoInicial_sm_vc()
+  }
+}, { immediate: true })
 
 const cancelar_sm_vc = () => {
   form_sm_vc.value = estadoInicial_sm_vc()
