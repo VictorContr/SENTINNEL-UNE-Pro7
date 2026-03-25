@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { LocalStorage } from 'quasar'
 
 /**
  * SENTINNEL – authStore
@@ -59,14 +60,14 @@ export const useAuthStore = defineStore('auth', () => {
   /* ── Hydrate from localStorage ── */
   const _hidratar_sm_vc = () => {
     try {
-      const stored_sm_vc = localStorage.getItem('sentinnel_session')
+      const stored_sm_vc = LocalStorage.getItem('sentinnel_session')
       if (stored_sm_vc) {
         const parsed_sm_vc = JSON.parse(stored_sm_vc)
         user_sm_vc.value = parsed_sm_vc.user
         token_sm_vc.value = parsed_sm_vc.token
       }
     } catch {
-      localStorage.removeItem('sentinnel_session')
+      LocalStorage.remove('sentinnel_session')
     }
   }
   _hidratar_sm_vc()
@@ -115,7 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
       user_sm_vc.value = safe_user_sm_vc
       token_sm_vc.value = fake_token_sm_vc
 
-      localStorage.setItem(
+      LocalStorage.set(
         'sentinnel_session',
         JSON.stringify({ user: safe_user_sm_vc, token: fake_token_sm_vc })
       )
@@ -132,7 +133,7 @@ export const useAuthStore = defineStore('auth', () => {
   function logout_sm_vc() {
     user_sm_vc.value = null
     token_sm_vc.value = null
-    localStorage.removeItem('sentinnel_session')
+    LocalStorage.remove('sentinnel_session')
   }
 
   function ban_user_sm_vc(id_target_sm_vc) {

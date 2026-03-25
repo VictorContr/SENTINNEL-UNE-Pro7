@@ -6,7 +6,7 @@
 
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { useQuasar } from 'quasar'
+import { useQuasar, LocalStorage } from 'quasar'
 
 const STORAGE_KEY_sm_vc = 'sentinnel_theme'
 
@@ -25,14 +25,14 @@ export const useConfigStore = defineStore('config', () => {
 
   const initTheme_sm_vc = () => {
     $q_sm_vc = useQuasar()
-    const saved_sm_vc = localStorage.getItem(STORAGE_KEY_sm_vc)
+    const saved_sm_vc = LocalStorage.getItem(STORAGE_KEY_sm_vc)
     isDark_sm_vc.value = saved_sm_vc === 'dark'
     applyTheme_sm_vc(isDark_sm_vc.value)
   }
 
   const toggleTheme_sm_vc = () => {
     isDark_sm_vc.value = !isDark_sm_vc.value
-    localStorage.setItem(STORAGE_KEY_sm_vc, isDark_sm_vc.value ? 'dark' : 'light')
+    LocalStorage.set(STORAGE_KEY_sm_vc, isDark_sm_vc.value ? 'dark' : 'light')
     applyTheme_sm_vc(isDark_sm_vc.value)
   }
 
