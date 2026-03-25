@@ -1,153 +1,139 @@
-# SENTINNEL
-**Sistema de Gestión y Trazabilidad de Informes de Pasantías**  
-Universidad Nueva Esparta · Prototipo SPA v1.0
 
----
+# 🎓 SENTINNEL-UNE 
+[cite_start]**Sistema de Gestión y Trazabilidad de Informes de Pasantías en Computación** [cite: 7, 8]
 
-## Stack Tecnológico
+![Vue.js](https://img.shields.io/badge/Vue%203-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D)
+![Quasar](https://img.shields.io/badge/Quasar-1976D2?style=for-the-badge&logo=quasar&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework UI | Vue 3 Composition API (`<script setup>`) |
-| Componentes | Quasar Framework v2 |
-| Estado Global | Pinia |
-| Enrutamiento | Vue Router 4 |
-| Tipografía | IBM Plex Mono / IBM Plex Sans |
-| Paleta | Dark Mode `#0b132b` / Teal `#6fffe9` / `#5bc0be` |
+## 📖 Descripción del Proyecto
 
----
+[cite_start]El **SENTINNEL-UNE** es una plataforma integral (Single Page Application) diseñada para modernizar y digitalizar los procesos académicos vinculados al ciclo de pasantías de la Escuela de Computación de la Universidad Nueva Esparta (UNE)[cite: 17, 18, 302]. 
 
-## Instalación Rápida
+[cite_start]El objetivo central es eliminar la burocracia basada en papel y hojas de cálculo desconectadas [cite: 36, 304][cite_start], reemplazándolas por un flujo digital *step-by-step* que garantiza la trazabilidad auditada de cada entregable entre los tres actores principales: **Estudiantes, Profesores y Coordinadores**[cite: 38, 303].
+
+## ✨ Características Principales (Propuesta de Valor)
+
+- [cite_start]**Flujo Académico Step-by-Step:** Gestión secuencial estricta de 3 materias: *Investigación y Desarrollo*, *Seminario de Grado* y *Trabajo de Grado I*[cite: 18, 49, 50]. [cite_start]Un estudiante no avanza sin la aprobación explícita del profesor[cite: 21, 51].
+- [cite_start]**Módulo de Software Deploy:** Repositorio centralizado para la evidencia técnica del proyecto final, incluyendo URL de producción (Railway/Netlify), código fuente (.zip) y documentación de arquitectura (PDF)[cite: 22, 72, 142].
+- [cite_start]**Trazabilidad y Auditoría:** Historial inmutable de cada acción realizada en la plataforma (subidas, evaluaciones, correcciones)[cite: 38, 52, 148].
+- **Sistema de Notificaciones:** Alertas en tiempo real (Importantes, Urgentes, Informativas) gestionadas desde la base de datos para mantener la comunicación fluida.
+- [cite_start]**Seguridad y Control de Acceso:** Autenticación por JWT, validación de roles y sistema de "Soft Delete" para mantener la integridad referencial del personal inactivo[cite: 78, 117].
+
+## 🛠️ Stack Tecnológico Estricto
+
+### Frontend (Capa de Presentación)
+- [cite_start]**Framework:** Vue 3 (Composition API estricta con `<script setup>`)[cite: 41].
+- [cite_start]**UI & Componentes:** Quasar Framework + Tailwind CSS v4 (Dark Mode exclusivo institucional)[cite: 41, 313, 471].
+- [cite_start]**State Management:** Pinia[cite: 41, 313].
+- [cite_start]**Comunicación HTTP:** Axios (Peticiones asíncronas con interceptores JWT)[cite: 42, 313].
+- [cite_start]**Accesibilidad:** Headless UI (Modales, Transitions)[cite: 313].
+
+### Backend (Capa de Lógica de Negocio)
+- [cite_start]**Framework:** NestJS (Node.js + TypeScript)[cite: 20, 43].
+- [cite_start]**Arquitectura:** Modular (Controladores limpios, lógica en Servicios)[cite: 44, 122].
+- [cite_start]**Seguridad:** Passport, JWT, Helmet, Class-Validator (DTOs)[cite: 78, 281, 284].
+- [cite_start]**ORM:** Prisma Client[cite: 45].
+
+### Base de Datos & Infraestructura
+- [cite_start]**Motor Relacional:** PostgreSQL (Optimizado para integridad referencial y tablas temporales)[cite: 45, 263, 264].
+- [cite_start]**Proxy Inverso:** Nginx[cite: 286, 287].
+
+## 🗄️ Convenciones de Base de Datos
+
+Este proyecto utiliza una estricta convención de nomenclatura a nivel de base de datos, implementada mediante los decoradores `@map` y `@@map` de Prisma:
+- **Base de Datos:** `DBpasantias_sm_vc`
+- **Tablas:** Prefijo `td` y sufijo `_sm_vc` (Ej. `tdusuario_sm_vc`, `tdestudiante_sm_vc`).
+- **Columnas:** Sufijo `_sm_vc` (Ej. `nombre_sm_vc`, `activo_sm_vc`).
+
+## 📂 Estructura del Proyecto
+
+Este ecosistema está construido bajo una filosofía de separación de interfaces. El repositorio aloja dos módulos principales e independientes:
+
+- **[`/frontend`](./frontend/)**: Capa de presentación (Single Page Application) construida sobre Vue 3, Quasar y Pinia. Se encarga de la UI/UX y del consumo estructurado de la API REST.
+
+  ```text
+  frontend/
+  ├── public/         # Archivos estáticos públicos
+  └── src/
+      ├── assets/     # Recursos visuales (imágenes, SVG, etc.)
+      ├── boot/       # Plugins e inicializadores (Axios, notificaciones)
+      ├── components/ # Componentes Vue de interfaz reutilizables
+      ├── css/        # Capa de estilos globales y variables (Tailwind)
+      ├── layouts/    # Plantillas base (Navbar, Sidebar)
+      ├── pages/      # Vistas manejadas por Vue Router
+      ├── router/     # Módulo estructurado de enrutamiento
+      └── stores/     # Manejo de estado central en Pinia
+  ```
+
+- **[`/backend`](./backend/)**: Capa de lógica de negocio (API REST) desarrollada con NestJS y Prisma ORM. Centraliza las reglas de la aplicación, protección de rutas (JWT) y persistencia de datos en PostgreSQL.
+
+  ```text
+  backend/
+  ├── prisma/         # Esquema de la DB, semillas y migraciones
+  ├── src/
+  │   ├── admin/      # Componentes de manejo administrativo
+  │   ├── auth/       # Servicio seguro de autenticación por JWT
+  │   ├── pasantias/  # Core central de la lógica SENTINNEL (Fases, Notas)
+  │   ├── prisma/     # Inyección de dependencias para la DB
+  │   └── users/      # Endpoints CRUD de perfiles y usuarios
+  └── test/           # Pruebas integrales y unitarias
+  ```
+
+## 🚀 Instalación y Despliegue Local
+
+### Requisitos Previos
+- Node.js (v18 o superior)
+- PostgreSQL (v14 o superior) corriendo localmente.
+
+### 1. Configuración de Base de Datos y Backend (NestJS)
 
 ```bash
-# 1. Crear proyecto base con Quasar CLI
-npm create quasar@latest sentinnel
-# Elegir: Vue 3 · Vite · SPA · TypeScript: No · ESLint: sí
+# Navegar al directorio del backend
+cd backend
 
-# 2. Instalar dependencias adicionales
-cd sentinnel
-npm install pinia
+# Instalar dependencias
+npm install
 
-# 3. Copiar el contenido de este src/ sobre el scaffolding
-# (reemplaza src/App.vue, src/main.js, etc.)
-cp -r sentinnel-src/* src/
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env y colocar: DATABASE_URL="postgresql://usuario:clave@localhost:5432/DBpasantias_sm_vc?schema=public"
 
-# 4. Ejecutar en desarrollo
-quasar dev
-# → http://localhost:9000
-```
+# Ejecutar migraciones de Prisma para crear las tablas
+npx prisma migrate dev --name init_SENTINNEL_db_sm_vc
 
----
+# Generar el cliente de Prisma
+npx prisma generate
 
-## Credenciales de Demo
-
-| Rol | Correo | Contraseña |
-|-----|--------|-----------|
-| Administrador | `admin@une.edu.ve` | `admin123` |
-| Profesor | `profesor@une.edu.ve` | `prof123` |
-| Estudiante | `estudiante@une.edu.ve` | `est123` |
-
----
-
-## Arquitectura de Archivos
+# Levantar el servidor en modo desarrollo
+npm run start:dev
 
 ```
-src/
-├── main.js                        # Bootstrap: Vue + Quasar + Pinia + Router
-├── App.vue                        # Root component + estilos globales
-│
-├── router/
-│   └── index.js                   # Rutas + Navigation Guard (roles)
-│
-├── stores/
-│   ├── authStore.js               # Autenticación, sesión, roles
-│   ├── notificacionesStore.js     # Alertas filtradas por receptor_id_sm_vc
-│   └── pasantiasStore.js          # Materias, Progreso, Conversaciones, Deploy
-│
-├── layouts/
-│   └── MainLayout.vue             # Drawer responsivo + Header + menú por rol
-│
-├── views/
-│   ├── LoginView.vue              # Split screen + Canvas animado
-│   ├── NotificacionesView.vue     # Dashboard de alertas (todos los roles)
-│   │
-│   ├── admin/
-│   │   ├── UsuariosView.vue       # q-table + Soft-delete (banear)
-│   │   └── CargaMasivaView.vue    # q-stepper (Usuarios → Materias → Requisitos)
-│   │
-│   ├── profesor/
-│   │   ├── EstudiantesView.vue    # Grid de tarjetas + filtros reactivos
-│   │   ├── TrazabilidadView.vue   # Progreso 3 materias + tabs (conv/deploy)
-│   │   ├── ConversacionView.vue   # Chat documental (wrapper)
-│   │   └── DeployView.vue        # Deploy del estudiante (solo lectura)
-│   │
-│   └── estudiante/
-│       ├── TrazabilidadView.vue   # Panel de progreso + panel de envío
-│       ├── HistorialView.vue      # Conversación en modo solo lectura
-│       └── DeployView.vue        # Formulario deploy + preflight checklist
-│
-└── components/
-    └── shared/
-        ├── DocumentConversacion.vue  # Chat de archivos (reusable, soporta readonly)
-        └── MateriaProgressCard.vue   # Tarjeta de materia con progreso (reusable)
-```
 
----
+### 2. Configuración del Frontend (Vue 3 + Quasar)
 
-## Modelo de Datos (Convención de Sufijos Prisma)
+```bash
+# Navegar al directorio del frontend
+cd frontend
 
-Las variables reactivas que mapean con la BD respetan los sufijos:
+# Instalar dependencias
+npm install
 
-| Sufijo | Tipo | Ejemplo |
-|--------|------|---------|
-| `_sm_vc` | `String` / `varchar` | `id_sm_vc`, `nombre_sm_vc` |
-| `_sm_int` | `Int` | `orden_sm_int`, `intentos_sm_int` |
-| `_sm_dec` | `Decimal` / `Float` | `nota_sm_dec`, `progreso_sm_dec` |
-| `_sm_bool` | `Boolean` | `activo_sm_vc`, `obligatorio_sm_vc` |
-
----
-
-## Flujo de la Conversación Documental
+# Levantar el servidor de desarrollo (Vite)
+npm run dev
 
 ```
-ESTUDIANTE                    PROFESOR
-    │                            │
-    │── enviarInforme() ────────>│
-    │   (tipo: INFORME)          │
-    │                            │── responderCorreccion()
-    │                            │   (tipo: CORRECCION)
-    │<─────────────────────────────   estado: OBSERVACIONES | APROBADO | REPROBADO
-    │
-    │ Si APROBADO → progreso_sm[materia].estado = 'APROBADO'
-    │ Si REPROBADO → estudiante reenvía nueva versión
-```
+
+## 👥 Equipo de Desarrollo
+
+* 
+**Víctor Contreras** - *Desarrollador Full-Stack / UI-UX* 
+
+
+* **Santiago** - *Desarrollador Full-Stack / Arquitectura*
 
 ---
 
-## Protección de Rutas (Navigation Guard)
-
-```javascript
-// router/index.js — beforeEach
-1. Ruta pública (requiresAuth: false) → pasar (redirigir a /notificaciones si ya autenticado)
-2. Ruta privada sin sesión → redirigir a /login
-3. Ruta con roles requeridos → verificar auth.user.rol_sm_vc
-   - roles: [] → cualquier usuario autenticado
-   - roles: ['ADMINISTRADOR'] → solo admins
-   - roles: ['PROFESOR'] → solo profesores
-   - roles: ['ESTUDIANTE'] → solo estudiantes
-```
-
----
-
-## Política de Soft-Delete
-
-Por temas de **auditoría**, el sistema **no elimina usuarios**. En su lugar:
-
-- `UsuariosView.vue` → botón **"Revocar Permisos"** hace `activo_sm_vc = false`
-- `authStore.banUser(id)` → actualiza el flag sin borrar el registro
-- El Navigation Guard rechaza login si `activo_sm_vc === false`
-- **No existe ningún botón DELETE en toda la aplicación**
-
----
-
-*SENTINNEL © UNE — Prototipo educativo, datos simulados.*
+*Proyecto desarrollado para la materia de Programación 7 - Facultad de Ciencias de la Computación, Universidad Nueva Esparta (2026).* 

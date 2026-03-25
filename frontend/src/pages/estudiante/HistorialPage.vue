@@ -9,7 +9,7 @@
         <h1 class="page-title">Historial de Materia</h1>
       </div>
       <p class="page-subtitle">
-        Materia: <span class="code-tag">{{ materiaId }}</span>
+        Materia: <span class="code-tag">{{ materia_id_sm_vc }}</span>
         · Solo lectura — <span class="aprobado-text">Aprobada</span>
       </p>
     </div>
@@ -28,9 +28,9 @@
     </div>
 
     <!-- Conversación (solo lectura) -->
-    <div class="conv-card">
+    <div v-if="auth.user && progreso" class="conv-card">
       <DocumentConversacion
-        :materia-id="materiaId"
+        :materia-id="materia_id_sm_vc"
         :estudiante-id="auth.user.id_sm_vc"
         :readonly="true"
         :estado-progreso="'APROBADO'"
@@ -51,11 +51,11 @@ const router = useRouter()
 const store  = usePasantiasStore()
 const auth   = useAuthStore()
 
-const materiaId = computed(() => route.params.materia_id)
+const materia_id_sm_vc = computed(() => route.params.materia_id)
 
 const progreso = computed(() =>
-  store.progreso_sm.find(
-    (p) => p.estudiante_id_sm_vc === auth.user.id_sm_vc && p.materia_id_sm_vc === materiaId.value
+  store.progreso_sm_vc.find(
+    (p) => p.estudiante_id_sm_vc === auth.user?.id_sm_vc && p.materia_id_sm_vc === materia_id_sm_vc.value
   ) ?? null
 )
 
