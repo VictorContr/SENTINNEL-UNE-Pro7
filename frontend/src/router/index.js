@@ -28,7 +28,7 @@ export default route(function (/* { store, ssrContext } */) {
 
     // Ruta pública: si ya está autenticado, redirigir a dashboard (notificaciones)
     if (!to.meta.requiresAuth) {
-      if (auth.isAuthenticated && to.name === 'login') {
+      if (auth.isAuthenticated && (to.name === 'login' || to.name === 'landing')) {
         return { name: 'notificaciones' }
       }
       return true
