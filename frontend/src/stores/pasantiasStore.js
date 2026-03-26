@@ -18,47 +18,66 @@ export const ESTADO_APROBACION = {
 /* ── Seeds de datos mock ── */
 const MOCK_MATERIAS_sm_vc = [
   {
-    id_sm_vc: 'MAT-001', nombre_sm_vc: 'Pasantías I', orden_sm_int: 1,
-    descripcion_sm_vc: 'Introducción al entorno empresarial y diagnóstico organizacional.',
+    id_sm_vc: 'MAT-001', nombre_sm_vc: 'Investigación y Desarrollo', orden_sm_int: 1,
+    descripcion_sm_vc: 'Fundamentos del anteproyecto: contexto organizacional y planteamiento del problema.',
     requisitos: [
-      { id_sm_vc: 'REQ-001', nombre_sm_vc: 'Carta de Aceptación',      obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-002', nombre_sm_vc: 'Capítulo I — Introducción', obligatorio_sm_vc: true,  orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-003', nombre_sm_vc: 'Capítulo II — Marco Teórico', obligatorio_sm_vc: true, orden_sm_int: 3 },
-      { id_sm_vc: 'REQ-004', nombre_sm_vc: 'Informe Final I',           obligatorio_sm_vc: true,  orden_sm_int: 4 }
+      { id_sm_vc: 'REQ-001', nombre_sm_vc: 'Contexto Organizacional',   obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-002', nombre_sm_vc: 'Situación Problemática',    obligatorio_sm_vc: true,  orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-003', nombre_sm_vc: 'Objetivo General',           obligatorio_sm_vc: true,  orden_sm_int: 3 },
+      { id_sm_vc: 'REQ-004', nombre_sm_vc: 'Objetivos Específicos',      obligatorio_sm_vc: true,  orden_sm_int: 4 },
+      { id_sm_vc: 'REQ-005', nombre_sm_vc: 'Justificación',              obligatorio_sm_vc: true,  orden_sm_int: 5 },
+      { id_sm_vc: 'REQ-006', nombre_sm_vc: 'Delimitación',               obligatorio_sm_vc: true,  orden_sm_int: 6 }
     ]
   },
   {
-    id_sm_vc: 'MAT-002', nombre_sm_vc: 'Pasantías II', orden_sm_int: 2,
-    descripcion_sm_vc: 'Desarrollo del proyecto y ejecución de actividades en la empresa.',
+    id_sm_vc: 'MAT-002', nombre_sm_vc: 'Seminario de Grado', orden_sm_int: 2,
+    descripcion_sm_vc: 'Refinamiento del proyecto y desarrollo temprano de los primeros objetivos.',
     requisitos: [
-      { id_sm_vc: 'REQ-005', nombre_sm_vc: 'Capítulo III — Metodología', obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-006', nombre_sm_vc: 'Capítulo IV — Resultados',   obligatorio_sm_vc: true,  orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-007', nombre_sm_vc: 'Evaluación Empresarial',     obligatorio_sm_vc: false, orden_sm_int: 3 },
-      { id_sm_vc: 'REQ-008', nombre_sm_vc: 'Informe Final II',           obligatorio_sm_vc: true,  orden_sm_int: 4 }
+      { id_sm_vc: 'REQ-007', nombre_sm_vc: 'Fase de Refinamiento',        obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-008', nombre_sm_vc: 'Fase Técnica y de Entorno',  obligatorio_sm_vc: true,  orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-009', nombre_sm_vc: 'Desarrollo Temprano — Obj 1', obligatorio_sm_vc: true,  orden_sm_int: 3 },
+      { id_sm_vc: 'REQ-010', nombre_sm_vc: 'Desarrollo Temprano — Obj 2', obligatorio_sm_vc: true,  orden_sm_int: 4 },
+      { id_sm_vc: 'REQ-011', nombre_sm_vc: 'Desarrollo Temprano — Obj 3', obligatorio_sm_vc: true,  orden_sm_int: 5 }
     ]
   },
   {
-    id_sm_vc: 'MAT-003', nombre_sm_vc: 'Pasantías III', orden_sm_int: 3,
-    descripcion_sm_vc: 'Presentación, defensa y documentación del proyecto final.',
+    id_sm_vc: 'MAT-003', nombre_sm_vc: 'Trabajo de Grado I', orden_sm_int: 3,
+    descripcion_sm_vc: 'Desarrollo avanzado, cierre técnico y fase opcional del proyecto.',
     requisitos: [
-      { id_sm_vc: 'REQ-009', nombre_sm_vc: 'Capítulo V — Conclusiones',  obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-010', nombre_sm_vc: 'Anexos y Bibliografía',      obligatorio_sm_vc: false, orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-011', nombre_sm_vc: 'Acta de Entrega Empresa',    obligatorio_sm_vc: true,  orden_sm_int: 3 },
-      { id_sm_vc: 'REQ-012', nombre_sm_vc: 'Informe Final III (Tesis)',  obligatorio_sm_vc: true,  orden_sm_int: 4 }
+      { id_sm_vc: 'REQ-012', nombre_sm_vc: 'Desarrollo Avanzado — Obj 4',  obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-013', nombre_sm_vc: 'Desarrollo Avanzado — Obj 5',  obligatorio_sm_vc: true,  orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-014', nombre_sm_vc: 'Fase Opcional',                 obligatorio_sm_vc: false, orden_sm_int: 3 }
+    ]
+  },
+  {
+    id_sm_vc: 'MAT-004', nombre_sm_vc: 'Trabajo de Grado II', orden_sm_int: 4,
+    descripcion_sm_vc: 'Cierre documental, defensa y cumplimiento de solvencias académicas.',
+    requisitos: [
+      { id_sm_vc: 'REQ-015', nombre_sm_vc: 'Fase Documental Final',      obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-016', nombre_sm_vc: 'Aprobación Académica',       obligatorio_sm_vc: true,  orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-017', nombre_sm_vc: 'Defensa del Proyecto',        obligatorio_sm_vc: true,  orden_sm_int: 3 },
+      { id_sm_vc: 'REQ-018', nombre_sm_vc: 'Solvencia Administrativa',    obligatorio_sm_vc: true,  orden_sm_int: 4 },
+      { id_sm_vc: 'REQ-019', nombre_sm_vc: 'Solvencia de Biblioteca',     obligatorio_sm_vc: true,  orden_sm_int: 5 }
     ]
   }
 ]
 
 const MOCK_PROGRESO_sm_vc = [
+  // USR-003: MAT-001 Aprobado, MAT-002 Entregado, MAT-003 Pendiente, MAT-004 Bloqueado
   { id_sm_vc: 'PRG-001', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 18.5, fecha_aprobacion_sm_vc: '2024-03-15T10:00:00Z', intentos_sm_int: 2 },
   { id_sm_vc: 'PRG-002', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'ENTREGADO', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 1 },
   { id_sm_vc: 'PRG-003', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  { id_sm_vc: 'PRG-004', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'ENTREGADO', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-005', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  { id_sm_vc: 'PRG-006', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  { id_sm_vc: 'PRG-007', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 20,   fecha_aprobacion_sm_vc: '2023-12-01T10:00:00Z', intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-008', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 19,   fecha_aprobacion_sm_vc: '2024-01-20T10:00:00Z', intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-009', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 17,   fecha_aprobacion_sm_vc: '2024-03-05T10:00:00Z', intentos_sm_int: 1 }
+  { id_sm_vc: 'PRG-004', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-004', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
+  // USR-010: MAT-001 Entregado, restó pendiente
+  { id_sm_vc: 'PRG-005', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'ENTREGADO', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-006', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
+  { id_sm_vc: 'PRG-007', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
+  { id_sm_vc: 'PRG-008', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-004', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
+  // USR-011: todas aprobadas
+  { id_sm_vc: 'PRG-009', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 20,   fecha_aprobacion_sm_vc: '2023-12-01T10:00:00Z', intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-010', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 19,   fecha_aprobacion_sm_vc: '2024-01-20T10:00:00Z', intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-011', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 17,   fecha_aprobacion_sm_vc: '2024-03-05T10:00:00Z', intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-012', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-004', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 18,   fecha_aprobacion_sm_vc: '2024-05-10T10:00:00Z', intentos_sm_int: 1 }
 ]
 
 const MOCK_CONVERSACIONES_sm_vc = [
