@@ -96,9 +96,7 @@
         <MapaSection :is-dark_sm_vc="isDark_sm_vc" />
 
         <!-- 8. Footer -->
-        <FooterSection
-          :is-dark_sm_vc="isDark_sm_vc"
-          @toggle-theme="configStore_sm_vc.toggleTheme_sm_vc()" />
+        <FooterSection />
 
         <!-- Botón de scroll to top -->
         <transition name="fade-up">
