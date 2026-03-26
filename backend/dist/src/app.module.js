@@ -13,6 +13,7 @@ const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const pasantias_module_1 = require("./pasantias/pasantias.module");
+const mailer_module_1 = require("./mailer/mailer.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -24,6 +25,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule_sm_vc,
             users_module_1.UsersModule_sm_vc,
             pasantias_module_1.PasantiasModule_sm_vc,
+            mailer_module_1.MailerContactoModule_sm_vc,
         ],
     })
 ], AppModule);

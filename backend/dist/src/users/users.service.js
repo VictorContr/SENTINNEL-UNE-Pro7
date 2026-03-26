@@ -18,33 +18,29 @@ let UsersService_sm_vc = class UsersService_sm_vc {
         this.prisma = prisma;
     }
     async findAll_sm_vc() {
-        const usuarios_sm_vc = await this.prisma.usuario_sm.findMany({
+        const usuarios_sm_vc = await this.prisma.usuario.findMany({
             select: {
                 id_sm_vc: true,
                 nombre_sm_vc: true,
                 correo_sm_vc: true,
                 rol_sm_vc: true,
                 activo_sm_vc: true,
-                cohorte_sm_vc: true,
-                profesor_id_sm_vc: true,
-                created_at_sm_vc: true,
+                fecha_creacion_sm_vc: true,
             },
-            orderBy: { created_at_sm_vc: 'desc' },
+            orderBy: { fecha_creacion_sm_vc: 'desc' },
         });
         return usuarios_sm_vc;
     }
     async findOne_sm_vc(id_sm_vc) {
-        const usuario_sm_vc = await this.prisma.usuario_sm.findUnique({
-            where: { id_sm_vc },
+        const usuario_sm_vc = await this.prisma.usuario.findUnique({
+            where: { id_sm_vc: parseInt(id_sm_vc) },
             select: {
                 id_sm_vc: true,
                 nombre_sm_vc: true,
                 correo_sm_vc: true,
                 rol_sm_vc: true,
                 activo_sm_vc: true,
-                cohorte_sm_vc: true,
-                profesor_id_sm_vc: true,
-                created_at_sm_vc: true,
+                fecha_creacion_sm_vc: true,
             },
         });
         if (!usuario_sm_vc) {
@@ -53,14 +49,14 @@ let UsersService_sm_vc = class UsersService_sm_vc {
         return usuario_sm_vc;
     }
     async toggleBan_sm_vc(id_sm_vc) {
-        const usuario_sm_vc = await this.prisma.usuario_sm.findUnique({
-            where: { id_sm_vc },
+        const usuario_sm_vc = await this.prisma.usuario.findUnique({
+            where: { id_sm_vc: parseInt(id_sm_vc) },
         });
         if (!usuario_sm_vc) {
             throw new common_1.NotFoundException(`Usuario ${id_sm_vc} no encontrado.`);
         }
-        return this.prisma.usuario_sm.update({
-            where: { id_sm_vc },
+        return this.prisma.usuario.update({
+            where: { id_sm_vc: parseInt(id_sm_vc) },
             data: { activo_sm_vc: !usuario_sm_vc.activo_sm_vc },
             select: {
                 id_sm_vc: true,

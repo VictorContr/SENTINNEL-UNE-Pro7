@@ -34,7 +34,7 @@ let UsersController_sm_vc = class UsersController_sm_vc {
 exports.UsersController_sm_vc = UsersController_sm_vc;
 __decorate([
     (0, common_1.Get)(),
-    (0, guards_1.Roles_sm_vc)('ADMINISTRADOR'),
+    (0, guards_1.Roles_sm_vc)('ADMIN'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -48,7 +48,7 @@ __decorate([
 ], UsersController_sm_vc.prototype, "findOne_sm_vc", null);
 __decorate([
     (0, common_1.Patch)(':id/ban'),
-    (0, guards_1.Roles_sm_vc)('ADMINISTRADOR'),
+    (0, guards_1.Roles_sm_vc)('ADMIN'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

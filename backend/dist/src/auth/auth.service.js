@@ -55,7 +55,7 @@ let AuthService_sm_vc = class AuthService_sm_vc {
         this.jwtService = jwtService;
     }
     async login_sm_vc(correo_sm_vc, clave_sm_vc) {
-        const usuario_sm_vc = await this.prisma.usuario_sm.findUnique({
+        const usuario_sm_vc = await this.prisma.usuario.findUnique({
             where: { correo_sm_vc },
         });
         if (!usuario_sm_vc) {
@@ -80,7 +80,7 @@ let AuthService_sm_vc = class AuthService_sm_vc {
         };
     }
     async validateUser_sm_vc(userId_sm_vc) {
-        const usuario_sm_vc = await this.prisma.usuario_sm.findUnique({
+        const usuario_sm_vc = await this.prisma.usuario.findUnique({
             where: { id_sm_vc: userId_sm_vc },
         });
         if (!usuario_sm_vc || !usuario_sm_vc.activo_sm_vc) {

@@ -1,0 +1,25 @@
+// =============================================================
+// SRC/MAILER/DTO/ENVIAR-CONTACTO.DTO.TS
+//
+// DTO de validación estricta para el formulario de contacto
+// de la Landing Page. Define el contrato de datos que acepta
+// el endpoint POST /api/mailer/contacto.
+// =============================================================
+
+import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+
+export class EnviarContactoDto_sm_vc {
+  @IsString({ message: 'El nombre debe ser texto.' })
+  @IsNotEmpty({ message: 'El nombre no puede estar vacío.' })
+  @MaxLength(100, { message: 'El nombre no puede exceder 100 caracteres.' })
+  nombre_sm_vc: string;
+
+  @IsEmail({}, { message: 'Debes proveer un correo electrónico válido.' })
+  @IsNotEmpty({ message: 'El correo no puede estar vacío.' })
+  correo_sm_vc: string;
+
+  @IsString({ message: 'El asunto debe ser texto.' })
+  @IsNotEmpty({ message: 'El asunto no puede estar vacío.' })
+  @MaxLength(200, { message: 'El asunto no puede exceder 200 caracteres.' })
+  asunto_sm_vc: string;
+}
