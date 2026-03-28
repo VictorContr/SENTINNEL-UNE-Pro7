@@ -59,6 +59,12 @@ const routes = [
         component: () => import("src/pages/admin/TrazabilidadPage.vue"),
         meta: { requiresAuth: true, roles: ["ADMINISTRADOR"] },
       },
+      {
+        path: "/admin/trazabilidad/:estudianteId/deploy",
+        name: "admin-deploy",
+        component: () => import("src/pages/admin/DeployPage.vue"),
+        meta: { requiresAuth: true, roles: ["ADMINISTRADOR"] },
+      },
 
       /* ── PROFESOR ── */
       {

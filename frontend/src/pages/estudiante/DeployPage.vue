@@ -16,7 +16,7 @@
         <h1 class="page-title_sm_vc">Registrar Deploy Final</h1>
       </div>
       <p class="page-subtitle_sm_vc">
-        Solo habilitado cuando las 3 materias estén aprobadas.
+        Solo habilitado cuando las 4 materias estén aprobadas.
       </p>
     </div>
 
@@ -28,7 +28,7 @@
       <div>
         <p class="locked-title_sm_vc">Formulario bloqueado</p>
         <p class="locked-desc_sm_vc">
-          Debes aprobar las 3 materias antes de registrar tu deploy.
+          Debes aprobar las 4 materias antes de registrar tu deploy.
         </p>
         <div class="locked-progress_sm_vc">
           <div

@@ -130,9 +130,10 @@ const periodosOpc_sm_vc = [
 ]
 
 const materiasOpc_sm_vc = [
-  { label: 'Pasantías I', value: 'MAT-001' },
-  { label: 'Pasantías II', value: 'MAT-002' },
-  { label: 'Pasantías III', value: 'MAT-003' }
+  { label: 'Investigación y Desarrollo', value: 'MAT-001' },
+  { label: 'Seminario de Grado', value: 'MAT-002' },
+  { label: 'Trabajo de Grado I', value: 'MAT-003' },
+  { label: 'Trabajo de Grado II', value: 'MAT-004' }
 ]
 
 /* ── Estudiantes filtrados (toda la lógica en computed) ── */

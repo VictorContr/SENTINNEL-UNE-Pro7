@@ -85,6 +85,17 @@
             :to="`/admin/trazabilidad/${props.row.id_sm_vc}`">
             <q-tooltip class="bg-dark">Trazabilidad académica</q-tooltip>
           </q-btn>
+          <q-btn
+            v-if="props.row.rol_sm_vc === 'ESTUDIANTE'"
+            flat
+            dense
+            round
+            icon="rocket_launch"
+            color="teal-3"
+            size="sm"
+            :to="`/admin/trazabilidad/${props.row.id_sm_vc}/deploy`">
+            <q-tooltip class="bg-dark">Deploy Final</q-tooltip>
+          </q-btn>
           <q-btn flat dense round icon="edit" color="teal-3" size="sm" @click="abrirEditar_sm_vc(props.row)">
             <q-tooltip class="bg-dark">Editar usuario</q-tooltip>
           </q-btn>
