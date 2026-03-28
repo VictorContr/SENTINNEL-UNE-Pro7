@@ -1,7 +1,7 @@
 <!-- ══════════════════════════════════════════════════════════════════
      MapaSection.vue — Sección del mapa interactivo de la UNE.
      Integra Leaflet.js + OpenStreetMap tiles para mostrar la
-     ubicación de la Universidad Nueva Esparta en Las Mercedes,
+     ubicación de la Universidad Nueva Esparta en Los Naranjos,
      Caracas, Venezuela. Consume mapaStore.js que a su vez usa
      mapaService.js → Nominatim API (con fallback a coords verificadas).
      ══════════════════════════════════════════════════════════════════ -->
@@ -19,7 +19,7 @@
         </span>
         <h2 class="mapa-titulo_sm_vc">Universidad Nueva Esparta</h2>
         <p class="mapa-subtitulo_sm_vc">
-          Las Mercedes, Caracas, Venezuela — Sede del programa de pasantías
+          Los Naranjos, Caracas, Venezuela — Sede del programa
           gestionado por SENTINNEL.
         </p>
       </div>
@@ -42,7 +42,7 @@
         <!-- Chip de información sobre el mapa -->
         <div class="mapa-overlay-chip_sm_vc">
           <q-icon name="location_on" color="teal-5" size="xs" />
-          <span>Universidad Nueva Esparta · Las Mercedes, Caracas</span>
+          <span>Universidad Nueva Esparta · Los Naranjos, Caracas</span>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ const iniciarMapa_sm_vc = () => {
     .bindPopup(
       `<div style="font-family:sans-serif;text-align:center;line-height:1.5;">
         <strong style="color:#0d7a6f;font-size:13px;">Universidad Nueva Esparta</strong><br/>
-        <span style="font-size:11px;color:#666;">Las Mercedes, Caracas, Venezuela</span>
+        <span style="font-size:11px;color:#666;">Los Naranjos, Caracas, Venezuela</span>
       </div>`,
       { maxWidth: 220 }
     )

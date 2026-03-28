@@ -16,7 +16,7 @@ import { obtenerUbicacionUNE_sm_vc as fetchUbicacion_sm_vc } from 'src/services/
 /**
  * Coordenadas de respaldo verificadas desde Google Maps:
  * https://maps.app.goo.gl/THbDajKPPvWEQsrz7
- * => Universidad Nueva Esparta, Las Mercedes, Caracas, Venezuela
+ * => Universidad Nueva Esparta, Los Naranjos, Caracas, Venezuela
  */
 const COORDS_FALLBACK_sm_vc = {
   latitud_sm_vc:  10.4374895,

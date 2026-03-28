@@ -96,7 +96,7 @@
           <div class="conv-preview_sm_vc">
             <div class="conv-header_sm_vc">
               <q-icon name="forum" size="13px" color="teal-3" />
-              <span>Conversación Documental — Pasantías II</span>
+              <span>Conversación Documental — Seminario de Grado</span>
             </div>
             <div class="conv-mensajes_sm_vc">
               <div v-for="msg_sm_vc in mensajesDemo_sm_vc" :key="msg_sm_vc.id_sm_vc"
@@ -137,9 +137,9 @@ const navItems_sm_vc = [
 ]
 
 const materiasDemo_sm_vc = [
-  { id_sm_vc: 'MAT-001', nombre_sm_vc: 'Pasantías I',   estado_sm_vc: 'APROBADO',  progreso_sm_vc: 1,   reqs_sm_vc: 4, totalReqs_sm_vc: 4, color_sm_vc: '#6fffe9', colorQ_sm_vc: 'teal-4',        icon_sm_vc: 'check_circle' },
-  { id_sm_vc: 'MAT-002', nombre_sm_vc: 'Pasantías II',  estado_sm_vc: 'ENTREGADO', progreso_sm_vc: .5,  reqs_sm_vc: 2, totalReqs_sm_vc: 4, color_sm_vc: '#7ec8e3', colorQ_sm_vc: 'light-blue-5',  icon_sm_vc: 'upload_file' },
-  { id_sm_vc: 'MAT-003', nombre_sm_vc: 'Pasantías III', estado_sm_vc: 'PENDIENTE', progreso_sm_vc: 0,   reqs_sm_vc: 0, totalReqs_sm_vc: 4, color_sm_vc: '#5a7fa8', colorQ_sm_vc: 'blue-grey-6',   icon_sm_vc: 'schedule' }
+  { id_sm_vc: 'MAT-001', nombre_sm_vc: 'Investig. y Desarrollo', estado_sm_vc: 'APROBADO',  progreso_sm_vc: 1,   reqs_sm_vc: 6, totalReqs_sm_vc: 6, color_sm_vc: '#6fffe9', colorQ_sm_vc: 'teal-4',        icon_sm_vc: 'check_circle' },
+  { id_sm_vc: 'MAT-002', nombre_sm_vc: 'Seminario de Grado',    estado_sm_vc: 'ENTREGADO', progreso_sm_vc: .5,  reqs_sm_vc: 2, totalReqs_sm_vc: 5, color_sm_vc: '#7ec8e3', colorQ_sm_vc: 'light-blue-5',  icon_sm_vc: 'upload_file' },
+  { id_sm_vc: 'MAT-003', nombre_sm_vc: 'Trabajo de Grado I',    estado_sm_vc: 'PENDIENTE', progreso_sm_vc: 0,   reqs_sm_vc: 0, totalReqs_sm_vc: 3, color_sm_vc: '#5a7fa8', colorQ_sm_vc: 'blue-grey-6',   icon_sm_vc: 'schedule' }
 ]
 
 const mensajesDemo_sm_vc = [
