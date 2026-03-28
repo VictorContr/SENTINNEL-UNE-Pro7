@@ -30,7 +30,7 @@
             class="trz-meta-item_sm_vc"
           >
             <q-icon name="calendar_month" size="12px" />
-            Cohorte {{ fichaEstudiante_sm_vc.cohorte_sm_vc }}
+            Periodo {{ fichaEstudiante_sm_vc.cohorte_sm_vc }}
           </span>
           <span
             v-if="fichaEstudiante_sm_vc?.rol_sm_vc"
@@ -40,6 +40,15 @@
             {{ fichaEstudiante_sm_vc.rol_sm_vc }}
           </span>
         </div>
+      </div>
+
+      <div class="ficha-global-estado_sm_vc">
+        <div class="global-estado-label_sm_vc">Progreso Global</div>
+        <q-circular-progress
+          :value="progresoGlobal_sm_vc" size="60px" :thickness="0.15"
+          color="teal-3" track-color="blue-grey-9" show-value>
+          <span class="pct-label_sm_vc">{{ progresoGlobal_sm_vc }}%</span>
+        </q-circular-progress>
       </div>
     </div>
 
@@ -197,6 +206,13 @@ const materiasConFases_sm_vc = computed(() =>
   )
 )
 
+const progresoGlobal_sm_vc = computed(() => {
+  const items_sm_vc = pasantiasStore_sm_vc.getProgresoEstudiante(props.estudianteId)
+  if (!items_sm_vc.length) return 0
+  const suma_sm_vc = items_sm_vc.reduce((acc, m) => acc + (m.progreso_decimal || 0), 0)
+  return Math.round((suma_sm_vc / items_sm_vc.length) * 100)
+})
+
 const materiaPasoActivo_sm_vc = computed(() =>
   materiasConFases_sm_vc.value.find((m) => m.id_sm_vc === stepActivo_sm_vc.value) ??
   null
@@ -312,6 +328,10 @@ const abrirSoloConversacion_sm_vc = (materiaId_sm_vc) => {
   color: var(--sn-texto-terciario);
   font-family: var(--sn-font-sans);
 }
+
+.ficha-global-estado_sm_vc { display: flex; flex-direction: column; align-items: center; gap: .3rem; flex-shrink: 0; }
+.global-estado-label_sm_vc { font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--sn-texto-apagado); }
+.pct-label_sm_vc { font-size: .75rem; font-weight: 700; color: var(--sn-primario); }
 
 .trz-solo-nav_sm_vc {
   display: flex;

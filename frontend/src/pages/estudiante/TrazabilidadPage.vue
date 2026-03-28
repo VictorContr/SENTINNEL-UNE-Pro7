@@ -17,8 +17,8 @@
         </div>
         <p class="page-subtitle_sm_vc">
           Progreso secuencial de tus 4 materias de grado ·
-          Cohorte: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.cohorte_sm_vc }}</span>
-          · Periodo: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.profesor_id_sm_vc }}</span>
+          Periodo: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.cohorte_sm_vc }}</span>
+          · Profesor asignado: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.profesor_id_sm_vc }}</span>
         </p>
       </div>
 

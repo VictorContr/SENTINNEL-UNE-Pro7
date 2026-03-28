@@ -333,8 +333,8 @@ onUnmounted(() => {
 .input-icon_sm_vc { color: var(--sn-primario); }
 .login-btn_sm_vc { width: 100%; height: 46px; margin-top: 0.5rem; }
 .btn-loader_sm_vc { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; color: var(--sn-fondo); }
-.form-footer_sm_vc { margin-top: 1.25rem; text-align: center; font-size: 0.7rem; color: var(--sn-texto-apagado); font-family: var(--sn-font-sans); }
-.security-badge_sm_vc { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.62rem; color: var(--sn-texto-apagado); letter-spacing: 0.08em; }
+.form-footer_sm_vc { margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: var(--sn-acento-sec); font-family: var(--sn-font-sans); font-weight: 500; }
+.security-badge_sm_vc { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.75rem; color: var(--sn-primario); letter-spacing: 0.08em; font-weight: 500; }
 .security-icon_sm_vc { color: var(--sn-primario); }
 
 /* ── Quasar input overrides para LoginPage ── */

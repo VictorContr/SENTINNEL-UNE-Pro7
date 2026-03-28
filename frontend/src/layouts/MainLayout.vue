@@ -693,12 +693,12 @@ const estudiante_menu_sm_vc = [
   border-bottom: 1px solid var(--sn-borde);
 }
 .drawer-brand-sub_sm_vc {
-  font-size: 0.48rem;
-  letter-spacing: 0.18em;
-  color: var(--sn-texto-dim);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--sn-acento-sec);
   text-transform: uppercase;
-  margin: 0 0 1px;
-  font-weight: 500;
+  margin: 0 0 2px;
+  font-weight: 700;
 }
 .drawer-brand-name_sm_vc {
   font-size: 1.1rem;

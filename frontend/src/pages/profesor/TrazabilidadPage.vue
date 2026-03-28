@@ -24,7 +24,7 @@
           <div class="ficha-meta_sm_vc">
             <span class="meta-item_sm_vc"><q-icon name="badge" size="12px" />{{ estudiante_sm_vc.id_sm_vc }}</span>
             <span class="meta-item_sm_vc"><q-icon name="email" size="12px" />{{ estudiante_sm_vc.correo_sm_vc }}</span>
-            <span class="meta-item_sm_vc"><q-icon name="calendar_month" size="12px" />Cohorte {{ estudiante_sm_vc.cohorte_sm_vc }}</span>
+            <span class="meta-item_sm_vc"><q-icon name="calendar_month" size="12px" />Periodo {{ estudiante_sm_vc.cohorte_sm_vc }}</span>
           </div>
         </div>
         <div class="ficha-global-estado_sm_vc">

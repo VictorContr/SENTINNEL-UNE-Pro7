@@ -48,7 +48,7 @@
     <div class="progress-section">
       <div class="progress-numbers">
         <span>Requisitos</span>
-        <span>{{ materia.requisitos_aprobados_sm_int }}/{{ materia.total_requisitos_sm_int }}</span>
+        <span>{{ requisitosAprobadosVisual_sm_vc }}/{{ materia.total_requisitos_sm_int }}</span>
       </div>
       <q-linear-progress
         :value="materia.progreso_decimal"
@@ -145,6 +145,13 @@ const handleCardClick_sm_vc = () => {
   if (props.readonly || props.materia.bloqueada) return;
   emit("click", props.materia);
 };
+
+const requisitosAprobadosVisual_sm_vc = computed(() => {
+  if (props.materia.estado_aprobacion_sm_vc === "APROBADO") {
+    return props.materia.total_requisitos_sm_int;
+  }
+  return props.materia.requisitos_aprobados_sm_int;
+});
 
 /* Determina si un requisito ha sido completado (basado en el detalle de aprobación o entregas previas) */
 const isRequisitoCompletado_sm_vc = (requisito_id_sm_vc) => {
