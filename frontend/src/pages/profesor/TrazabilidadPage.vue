@@ -171,6 +171,7 @@ import { ref, computed, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
+import { enriquecerMateriasTrazabilidad_sm_vc } from 'src/utils/trazabilidadFases_sm_vc'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -205,31 +206,8 @@ const deployEstudiante_sm_vc = computed(() =>
 const stepActivo_sm_vc = ref(null)
 const materiaSeleccionada_sm_vc = ref(null)
 
-const FASES_META_sm_vc = {
-  'MAT-001': {
-    icono_sm_vc: 'science',
-    captionFase_sm_vc: 'Contexto · Objetivos · Justificación · Delimitación'
-  },
-  'MAT-002': {
-    icono_sm_vc: 'school',
-    captionFase_sm_vc: 'Refinamiento · Técnica · Desarrollo Temprano (Obj 1-3)'
-  },
-  'MAT-003': {
-    icono_sm_vc: 'engineering',
-    captionFase_sm_vc: 'Desarrollo Avanzado · Cierre Técnico (Obj 4-5) · Fase Opcional'
-  },
-  'MAT-004': {
-    icono_sm_vc: 'workspace_premium',
-    captionFase_sm_vc: 'Doc. Final · Aprobación · Defensa · Solvencias'
-  }
-}
-
 const materiasConFases_sm_vc = computed(() =>
-  progresoEstudiante_sm_vc.value.map((materia_sm_vc) => ({
-    ...materia_sm_vc,
-    icono_sm_vc:       FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.icono_sm_vc       ?? 'book',
-    captionFase_sm_vc: FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.captionFase_sm_vc ?? ''
-  }))
+  enriquecerMateriasTrazabilidad_sm_vc(progresoEstudiante_sm_vc.value)
 )
 
 // Inicialización reactiva segura

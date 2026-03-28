@@ -170,6 +170,7 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
+import { enriquecerMateriasTrazabilidad_sm_vc } from 'src/utils/trazabilidadFases_sm_vc'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -199,31 +200,8 @@ const materiaActiva_sm_vc = ref(null)
  *   aprueba Materia 1) provoca que Vue recalcule este array y automáticamente
  *   actualiza el prop :disable del q-step correspondiente.
  */
-const FASES_META_sm_vc = {
-  'MAT-001': {
-    icono_sm_vc: 'science',
-    captionFase_sm_vc: 'Contexto · Objetivos · Justificación · Delimitación'
-  },
-  'MAT-002': {
-    icono_sm_vc: 'school',
-    captionFase_sm_vc: 'Refinamiento · Técnica · Desarrollo Temprano (Obj 1-3)'
-  },
-  'MAT-003': {
-    icono_sm_vc: 'engineering',
-    captionFase_sm_vc: 'Desarrollo Avanzado · Cierre Técnico (Obj 4-5) · Fase Opcional'
-  },
-  'MAT-004': {
-    icono_sm_vc: 'workspace_premium',
-    captionFase_sm_vc: 'Doc. Final · Aprobación · Defensa · Solvencias'
-  }
-}
-
 const materiasConFases_sm_vc = computed(() =>
-  store_sm_vc.miProgreso.map((materia_sm_vc) => ({
-    ...materia_sm_vc,
-    icono_sm_vc:       FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.icono_sm_vc       ?? 'book',
-    captionFase_sm_vc: FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.captionFase_sm_vc ?? ''
-  }))
+  enriquecerMateriasTrazabilidad_sm_vc(store_sm_vc.miProgreso)
 )
 
 /*
