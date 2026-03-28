@@ -12,10 +12,39 @@ export const useProgressBarStore = defineStore('progressBar', () => {
   const pasantiasStore_sm_vc = usePasantiasStore()
   const loading_sm_vc = ref(false)
 
+  const FASES_META_sm_vc = {
+    'MAT-001': {
+      icono_sm_vc: 'science',
+      captionFase_sm_vc: 'Contexto · Objetivos · Justificación · Delimitación',
+    },
+    'MAT-002': {
+      icono_sm_vc: 'school',
+      captionFase_sm_vc: 'Refinamiento · Técnica · Desarrollo Temprano (Obj 1-3)',
+    },
+    'MAT-003': {
+      icono_sm_vc: 'engineering',
+      captionFase_sm_vc: 'Desarrollo Avanzado · Cierre Técnico (Obj 4-5) · Fase Opcional',
+    },
+    'MAT-004': {
+      icono_sm_vc: 'workspace_premium',
+      captionFase_sm_vc: 'Doc. Final · Aprobación · Defensa · Solvencias',
+    },
+  }
+
+  const enriquecerMateriasTrazabilidad_sm_vc = (listaProgreso) => {
+    return listaProgreso.map((materia_sm_vc) => ({
+      ...materia_sm_vc,
+      icono_sm_vc: FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.icono_sm_vc || 'book',
+      captionFase_sm_vc: FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.captionFase_sm_vc || '',
+    }))
+  }
+
   const getProgresoSimplificado = (estudianteId_sm_vc) => {
     if (!estudianteId_sm_vc) return []
     return pasantiasStore_sm_vc.getProgresoEstudiante(estudianteId_sm_vc).map((materia_sm_vc) => ({
       materia_id: materia_sm_vc.id_sm_vc,
+      icono_sm_vc: FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.icono_sm_vc || 'book',
+      captionFase_sm_vc: FASES_META_sm_vc[materia_sm_vc.id_sm_vc]?.captionFase_sm_vc || '',
       materia_nombre: materia_sm_vc.nombre_sm_vc,
       estado: materia_sm_vc.estado_aprobacion_sm_vc,
       progreso: materia_sm_vc.progreso_decimal || 0,
@@ -82,6 +111,8 @@ export const useProgressBarStore = defineStore('progressBar', () => {
     getProgresoGeneral,
     getEstadoColor,
     actualizarProgreso,
-    formatProgresoText
+    formatProgresoText,
+    FASES_META_sm_vc,
+    enriquecerMateriasTrazabilidad_sm_vc
   }
 })

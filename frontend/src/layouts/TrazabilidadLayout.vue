@@ -155,7 +155,7 @@
 import { ref, computed, watch, watchEffect } from 'vue'
 import { useAuthStore } from 'src/stores/authStore'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
-import { enriquecerMateriasTrazabilidad_sm_vc } from 'src/utils/trazabilidadFases_sm_vc'
+import { useProgressBarStore } from 'src/stores/progressBarStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -171,6 +171,7 @@ const props = defineProps({
 
 const pasantiasStore_sm_vc = usePasantiasStore()
 const authStore_sm_vc = useAuthStore()
+const progressBarStore_sm_vc = useProgressBarStore()
 
 const stepActivo_sm_vc = ref(null)
 /** true = solo chat de la materia del paso activo; el stepper se desmonta (v-if). */
@@ -191,7 +192,7 @@ const inicialesEstudiante_sm_vc = computed(() => {
 })
 
 const materiasConFases_sm_vc = computed(() =>
-  enriquecerMateriasTrazabilidad_sm_vc(
+  progressBarStore_sm_vc.enriquecerMateriasTrazabilidad_sm_vc(
     pasantiasStore_sm_vc.getProgresoEstudiante(props.estudianteId)
   )
 )

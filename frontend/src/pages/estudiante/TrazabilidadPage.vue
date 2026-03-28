@@ -170,7 +170,7 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
-import { enriquecerMateriasTrazabilidad_sm_vc } from 'src/utils/trazabilidadFases_sm_vc'
+import { useProgressBarStore } from 'src/stores/progressBarStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -179,6 +179,7 @@ const router_sm_vc = useRouter()
 const $q_sm_vc    = useQuasar()
 const store_sm_vc = usePasantiasStore()
 const auth_sm_vc  = useAuthStore()
+const progressBar_sm_vc = useProgressBarStore()
 
 /* ── Estado local del Stepper ── */
 // stepActivo_sm_vc guarda el id_sm_vc de la materia cuyo step está expandido.
@@ -201,7 +202,7 @@ const materiaActiva_sm_vc = ref(null)
  *   actualiza el prop :disable del q-step correspondiente.
  */
 const materiasConFases_sm_vc = computed(() =>
-  enriquecerMateriasTrazabilidad_sm_vc(store_sm_vc.miProgreso)
+  progressBar_sm_vc.enriquecerMateriasTrazabilidad_sm_vc(store_sm_vc.miProgreso)
 )
 
 /*

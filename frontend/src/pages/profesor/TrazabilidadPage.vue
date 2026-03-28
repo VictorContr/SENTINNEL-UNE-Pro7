@@ -171,7 +171,7 @@ import { ref, computed, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
-import { enriquecerMateriasTrazabilidad_sm_vc } from 'src/utils/trazabilidadFases_sm_vc'
+import { useProgressBarStore } from 'src/stores/progressBarStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -179,6 +179,7 @@ const route_sm_vc   = useRoute()
 const router_sm_vc  = useRouter()
 const store_sm_vc   = usePasantiasStore()
 const auth_sm_vc    = useAuthStore()
+const progressBar_sm_vc = useProgressBarStore()
 
 /* ── Computed principales ── */
 const estudianteId_sm_vc = computed(() => route_sm_vc.params.id_sm_vc)
@@ -207,7 +208,7 @@ const stepActivo_sm_vc = ref(null)
 const materiaSeleccionada_sm_vc = ref(null)
 
 const materiasConFases_sm_vc = computed(() =>
-  enriquecerMateriasTrazabilidad_sm_vc(progresoEstudiante_sm_vc.value)
+  progressBar_sm_vc.enriquecerMateriasTrazabilidad_sm_vc(progresoEstudiante_sm_vc.value)
 )
 
 // Inicialización reactiva segura

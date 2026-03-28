@@ -18,7 +18,7 @@ defineOptions({ name: 'AdminTrazabilidadPage' })
 
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import TrazabilidadLayout from 'src/components/TrazabilidadLayout.vue'
+import TrazabilidadLayout from 'src/layouts/TrazabilidadLayout.vue'
 
 const route_sm_vc = useRoute()
 
