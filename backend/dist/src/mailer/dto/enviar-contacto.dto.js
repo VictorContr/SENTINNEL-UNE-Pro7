@@ -13,6 +13,7 @@ exports.EnviarContactoDto_sm_vc = void 0;
 const class_validator_1 = require("class-validator");
 class EnviarContactoDto_sm_vc {
     nombre_sm_vc;
+    cedula_sm_vc;
     correo_sm_vc;
     asunto_sm_vc;
 }
@@ -23,6 +24,12 @@ __decorate([
     (0, class_validator_1.MaxLength)(100, { message: 'El nombre no puede exceder 100 caracteres.' }),
     __metadata("design:type", String)
 ], EnviarContactoDto_sm_vc.prototype, "nombre_sm_vc", void 0);
+__decorate([
+    (0, class_validator_1.IsString)({ message: 'La cédula debe ser texto.' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'La cédula no puede estar vacía.' }),
+    (0, class_validator_1.MaxLength)(12, { message: 'La cédula no puede exceder 12 caracteres.' }),
+    __metadata("design:type", String)
+], EnviarContactoDto_sm_vc.prototype, "cedula_sm_vc", void 0);
 __decorate([
     (0, class_validator_1.IsEmail)({}, { message: 'Debes proveer un correo electrónico válido.' }),
     (0, class_validator_1.IsNotEmpty)({ message: 'El correo no puede estar vacío.' }),

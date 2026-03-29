@@ -74,10 +74,41 @@ let AuthService_sm_vc = class AuthService_sm_vc {
             rol: usuario_sm_vc.rol_sm_vc,
         };
         const { clave_sm_vc: _, ...safe_user_sm_vc } = usuario_sm_vc;
+        if (usuario_sm_vc.requiere_cambio_clave_sm_vc) {
+            return {
+                requires_password_change: true,
+                user_sm_vc: safe_user_sm_vc,
+            };
+        }
         return {
             access_token_sm_vc: this.jwtService.sign(payload_sm_vc),
             user_sm_vc: safe_user_sm_vc,
         };
+    }
+    async cambiarClaveInicial_sm_vc(correo_sm_vc, clave_temporal_sm_vc, nueva_clave_sm_vc) {
+        const usuario_sm_vc = await this.prisma.usuario.findUnique({
+            where: { correo_sm_vc },
+        });
+        if (!usuario_sm_vc || !usuario_sm_vc.activo_sm_vc) {
+            throw new common_1.UnauthorizedException('Credenciales inválidas o cuenta inactiva.');
+        }
+        if (!usuario_sm_vc.requiere_cambio_clave_sm_vc) {
+            throw new common_1.UnauthorizedException('El usuario no requiere cambio de clave inicial.');
+        }
+        const clave_valida_sm_vc = await bcrypt.compare(clave_temporal_sm_vc, usuario_sm_vc.clave_sm_vc);
+        if (!clave_valida_sm_vc) {
+            throw new common_1.UnauthorizedException('La contraseña temporal es inválida.');
+        }
+        const salt = await bcrypt.genSalt(10);
+        const clave_hash_sm_vc = await bcrypt.hash(nueva_clave_sm_vc, salt);
+        await this.prisma.usuario.update({
+            where: { id_sm_vc: usuario_sm_vc.id_sm_vc },
+            data: {
+                clave_sm_vc: clave_hash_sm_vc,
+                requiere_cambio_clave_sm_vc: false,
+            },
+        });
+        return { message: 'Contraseña actualizada exitosamente. Por favor, inicie sesión.' };
     }
     async validateUser_sm_vc(userId_sm_vc) {
         const usuario_sm_vc = await this.prisma.usuario.findUnique({

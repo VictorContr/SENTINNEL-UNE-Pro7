@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { LocalStorage, Notify } from 'quasar'
+import { api } from 'src/boot/axios'
 
 /**
  * SENTINNEL – authStore
@@ -91,44 +92,50 @@ export const useAuthStore = defineStore('auth', () => {
     error_sm_vc.value = null
 
     try {
-      /* Simular latencia de red */
-      await new Promise((r_sm_vc) => setTimeout(r_sm_vc, 900))
+      const response = await api.post('/auth/login', {
+        correo_sm_vc: correo_input_sm_vc.trim().toLowerCase(),
+        clave_sm_vc: clave_input_sm_vc
+      })
 
-      const found_sm_vc = MOCK_USERS_sm_vc.value.find(
-        (u_sm_vc) =>
-          u_sm_vc.correo_sm_vc === correo_input_sm_vc.trim().toLowerCase() &&
-          u_sm_vc.clave_sm_vc === clave_input_sm_vc
-      )
-
-      if (!found_sm_vc) {
-        error_sm_vc.value = 'Credenciales inválidas. Verifica tu correo y contraseña.'
-        Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'warning' })
-        return false
+      if (response.data.requires_password_change) {
+        return { 
+          requires_password_change: true, 
+          user: response.data.user_sm_vc 
+        }
       }
 
-      if (!found_sm_vc.activo_sm_vc) {
-        error_sm_vc.value = 'Tu cuenta ha sido revocada. Contacta al administrador.'
-        Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'block' })
-        return false
-      }
-
-      /* Generar token simulado */
-      const fake_token_sm_vc = `sntnl_${btoa(found_sm_vc.id_sm_vc + ':' + Date.now())}`
-      const safe_user_sm_vc = { ...found_sm_vc }
-      delete safe_user_sm_vc.clave_sm_vc
-
-      user_sm_vc.value = safe_user_sm_vc
-      token_sm_vc.value = fake_token_sm_vc
+      user_sm_vc.value = response.data.user_sm_vc
+      token_sm_vc.value = response.data.access_token_sm_vc
 
       LocalStorage.set(
         'sentinnel_session',
-        JSON.stringify({ user: safe_user_sm_vc, token: fake_token_sm_vc })
+        JSON.stringify({ user: user_sm_vc.value, token: token_sm_vc.value })
       )
 
-      Notify.create({ message: `Bienvenido, ${safe_user_sm_vc.nombre_sm_vc}`, color: 'positive', icon: 'check_circle' })
+      Notify.create({ message: `Bienvenido, ${user_sm_vc.value.nombre_sm_vc || ''}`, color: 'positive', icon: 'check_circle' })
       return true
     } catch (err_sm_vc) {
-      error_sm_vc.value = err_sm_vc?.message || 'Error inesperado al iniciar sesión.'
+      error_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc?.message || 'Error inesperado al iniciar sesión.'
+      Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'error' })
+      return false
+    } finally {
+      loading_sm_vc.value = false
+    }
+  }
+
+  const cambiar_clave_inicial_sm_vc = async (correo_sm_vc, clave_temporal_sm_vc, nueva_clave_sm_vc) => {
+    loading_sm_vc.value = true
+    error_sm_vc.value = null
+    try {
+      const resp = await api.post('/auth/cambiar-clave-inicial', {
+        correo_sm_vc,
+        clave_temporal_sm_vc,
+        nueva_clave_sm_vc
+      })
+      Notify.create({ message: resp.data.message || 'Contraseña cambiada exitosamente.', color: 'positive' })
+      return true
+    } catch (err_sm_vc) {
+      error_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc?.message || 'Error al cambiar la contraseña.'
       Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'error' })
       return false
     } finally {
@@ -208,6 +215,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout_sm_vc,
     ban_user_sm_vc,
     crear_usuario_sm_vc,
-    actualizar_usuario_sm_vc
+    actualizar_usuario_sm_vc,
+    cambiar_clave_inicial_sm_vc
   }
 })

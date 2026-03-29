@@ -70,8 +70,9 @@ model Usuario {
   telefono_sm_vc       String?    @db.VarChar(20) 
   clave_sm_vc          String     @db.VarChar(255) // Hash Bcrypt
   rol_sm_vc            RolUsuario
-  activo_sm_vc         Boolean    @default(true) // Soft Delete
-  fecha_creacion_sm_vc DateTime   @default(now())
+  activo_sm_vc                 Boolean    @default(true) // Soft Delete
+  requiere_cambio_clave_sm_vc  Boolean    @default(true) 
+  fecha_creacion_sm_vc         DateTime   @default(now())
 
   estudiantePerfil        Estudiante?             @relation("UsuarioAEstudiante")
   estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")

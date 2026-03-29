@@ -14,6 +14,11 @@ export class EnviarContactoDto_sm_vc {
   @MaxLength(100, { message: 'El nombre no puede exceder 100 caracteres.' })
   nombre_sm_vc: string;
 
+  @IsString({ message: 'La cédula debe ser texto.' })
+  @IsNotEmpty({ message: 'La cédula no puede estar vacía.' })
+  @MaxLength(12, { message: 'La cédula no puede exceder 12 caracteres.' })
+  cedula_sm_vc: string;
+
   @IsEmail({}, { message: 'Debes proveer un correo electrónico válido.' })
   @IsNotEmpty({ message: 'El correo no puede estar vacío.' })
   correo_sm_vc: string;

@@ -20,7 +20,7 @@
           de pasantías?
         </h2>
         <p class="contacto-subtitulo_sm_vc">
-          Déjanos tus datos y te enviamos toda la información para comenzar.
+          Déjanos tus datos, crearemos tu cuenta de administrador y te enviaremos las credenciales.
         </p>
       </div>
 
@@ -64,6 +64,24 @@
                 filled dense
                 placeholder="Ej. María González"
                 :rules="[val => !!val || 'El nombre es requerido.']"
+                class="form-input_sm_vc"
+                bg-color="transparent"
+                :dark="isDark_sm_vc"
+                lazy-rules
+              />
+            </div>
+
+            <!-- Campo: Cédula -->
+            <div class="form-grupo_sm_vc">
+              <label class="form-label_sm_vc" for="contacto-cedula">
+                <q-icon name="badge" size="xs" /> Cédula
+              </label>
+              <q-input
+                id="contacto-cedula"
+                v-model="form_sm_vc.cedula_sm_vc"
+                filled dense
+                placeholder="V-12345678"
+                :rules="[val => !!val || 'La cédula es requerida.']"
                 class="form-input_sm_vc"
                 bg-color="transparent"
                 :dark="isDark_sm_vc"
@@ -159,6 +177,7 @@ const store_sm_vc = useContactoStore()
 /* ── Modelo del formulario ── */
 const form_sm_vc = reactive({
   nombre_sm_vc: '',
+  cedula_sm_vc: '',
   correo_sm_vc: '',
   asunto_sm_vc: '',
 })
@@ -171,6 +190,7 @@ const onSubmit_sm_vc = async () => {
 /* ── Reiniciar para nuevo envío ── */
 const reiniciar_sm_vc = () => {
   form_sm_vc.nombre_sm_vc = ''
+  form_sm_vc.cedula_sm_vc = ''
   form_sm_vc.correo_sm_vc = ''
   form_sm_vc.asunto_sm_vc = ''
   store_sm_vc.resetear_sm_vc()

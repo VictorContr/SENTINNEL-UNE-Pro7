@@ -161,6 +161,42 @@
         </div>
       </section>
     </div>
+
+    <!-- Modal Cambio de Clave Inicial -->
+    <q-dialog v-model="show_cambio_clave_sm_vc" persistent backdrop-filter="blur(8px)">
+      <q-card :class="isDark_sm_vc ? 'bg-dark text-white' : 'bg-white text-dark'" style="min-width: 400px; border: 1px solid var(--sn-borde); border-radius: 12px;">
+        <q-card-section class="q-pb-none">
+          <div class="text-h6" style="color: var(--sn-primario);">Requiere cambio de contraseña</div>
+          <div class="text-caption" style="color: var(--sn-texto-secundario);">Por motivos de seguridad, debes cambiar tu contraseña temporal antes de continuar.</div>
+        </q-card-section>
+        <q-card-section>
+          <q-form @submit.prevent="submit_cambio_clave_sm_vc" class="q-gutter-md q-mt-sm">
+            <q-input 
+              v-model="nueva_clave_sm_vc" 
+              type="password" 
+              label="Nueva Contraseña" 
+              dense outlined 
+              :dark="isDark_sm_vc" 
+              color="teal-3"
+              :rules="[val => !!val || 'Requerido', val => val.length >= 6 || 'Mínimo 6 caracteres']" 
+            />
+            <q-input 
+              v-model="confirmar_clave_sm_vc" 
+              type="password" 
+              label="Confirmar Contraseña" 
+              dense outlined 
+              :dark="isDark_sm_vc" 
+              color="teal-3"
+              :rules="[val => !!val || 'Requerido']" 
+            />
+            <div class="row justify-end q-mt-md">
+              <q-btn flat label="Cancelar" color="grey-6" v-close-popup @click="cerrar_modal_cambio" class="q-mr-sm" no-caps />
+              <q-btn unelevated label="Actualizar" color="teal-6" type="submit" :loading="auth_sm_vc.loading_sm_vc" no-caps />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -189,6 +225,12 @@ const accentColor_sm_vc = computed(() => isDark_sm_vc.value ? '#5bc0be' : '#0e8e
 const correo_sm_vc = ref('')
 const clave_sm_vc = ref('')
 const show_pass_sm_vc = ref(false)
+
+/* ── Change Password State ── */
+const show_cambio_clave_sm_vc = ref(false)
+const nueva_clave_sm_vc = ref('')
+const confirmar_clave_sm_vc = ref('')
+const temp_user_correo_sm_vc = ref('')
 
 /* ── Canvas background ── */
 const canvas_ref_sm_vc = ref(null)
@@ -238,11 +280,36 @@ const features_sm_vc = [
 
 /* ── Login handler ── */
 const handle_login_sm_vc = async () => {
-  const ok_sm_vc = await auth_sm_vc.login_sm_vc(correo_sm_vc.value, clave_sm_vc.value)
-  if (ok_sm_vc) {
+  const result_sm_vc = await auth_sm_vc.login_sm_vc(correo_sm_vc.value, clave_sm_vc.value)
+  if (result_sm_vc === true) {
     const redirect_sm_vc = route_sm_vc.query.redirect || '/notificaciones'
     router_sm_vc.push(redirect_sm_vc)
+  } else if (result_sm_vc && result_sm_vc.requires_password_change) {
+    temp_user_correo_sm_vc.value = result_sm_vc.user.correo_sm_vc || correo_sm_vc.value
+    show_cambio_clave_sm_vc.value = true
   }
+}
+
+const submit_cambio_clave_sm_vc = async () => {
+  if (nueva_clave_sm_vc.value !== confirmar_clave_sm_vc.value) {
+    $q_sm_vc.notify({ message: 'Las contraseñas no coinciden.', color: 'negative', icon: 'error' })
+    return
+  }
+  const ok = await auth_sm_vc.cambiar_clave_inicial_sm_vc(
+    temp_user_correo_sm_vc.value,
+    clave_sm_vc.value,
+    nueva_clave_sm_vc.value
+  )
+  if (ok) {
+    cerrar_modal_cambio()
+    clave_sm_vc.value = '' // Borramos para forzar que inicie sesión con la nueva
+  }
+}
+
+const cerrar_modal_cambio = () => {
+  show_cambio_clave_sm_vc.value = false
+  nueva_clave_sm_vc.value = ''
+  confirmar_clave_sm_vc.value = ''
 }
 
 /* ── Animated grid canvas ── */

@@ -21,6 +21,7 @@ export declare class JwtStrategy_sm_vc extends JwtStrategy_sm_vc_base {
         telefono_sm_vc: string | null;
         rol_sm_vc: import("@prisma/client").$Enums.RolUsuario;
         activo_sm_vc: boolean;
+        requiere_cambio_clave_sm_vc: boolean;
         fecha_creacion_sm_vc: Date;
     }>;
 }

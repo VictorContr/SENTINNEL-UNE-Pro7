@@ -14,4 +14,14 @@ export class AuthController_sm_vc {
       loginDto.clave_sm_vc,
     );
   }
+
+  @Post('cambiar-clave-inicial')
+  @HttpCode(HttpStatus.OK)
+  async cambiarClaveInicial_sm_vc(@Body() body: any) {
+    return this.authService.cambiarClaveInicial_sm_vc(
+      body.correo_sm_vc,
+      body.clave_temporal_sm_vc,
+      body.nueva_clave_sm_vc,
+    );
+  }
 }
