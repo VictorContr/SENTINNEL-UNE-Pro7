@@ -48,7 +48,7 @@ import { computed } from 'vue'
 import { useQuasar } from 'quasar'
 
 /* ── Props ── */
-const props = defineProps({
+defineProps({
   eventos:  { type: Array, default: () => [] },
   cargando: { type: Boolean, default: false }
 })
