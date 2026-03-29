@@ -25,6 +25,27 @@ export const findOne_sm_vc = async (id_sm_vc) => {
 }
 
 /**
+ * Crea un nuevo usuario
+ * @param {Object} data_sm_vc
+ * @returns {Promise<Object>} Usuario creado
+ */
+export const create_sm_vc = async (data_sm_vc) => {
+  const respuesta_sm_vc = await api.post('/users', data_sm_vc)
+  return respuesta_sm_vc.data
+}
+
+/**
+ * Actualiza un usuario existente
+ * @param {string} id_sm_vc
+ * @param {Object} data_sm_vc
+ * @returns {Promise<Object>} Usuario actualizado
+ */
+export const update_sm_vc = async (id_sm_vc, data_sm_vc) => {
+  const respuesta_sm_vc = await api.patch(`/users/${id_sm_vc}`, data_sm_vc)
+  return respuesta_sm_vc.data
+}
+
+/**
  * Activa/Desactiva (ban) a un usuario alternando su estado
  * @param {string} id_sm_vc - ID del usuario
  * @returns {Promise<Object>} Resultado de la operación

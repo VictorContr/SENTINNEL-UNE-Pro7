@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Notify } from 'quasar'
-import { findAll_sm_vc, findOne_sm_vc, toggleBan_sm_vc } from 'src/services/usersService'
+import { findAll_sm_vc, findOne_sm_vc, toggleBan_sm_vc, create_sm_vc, update_sm_vc } from 'src/services/usersService'
 
 /**
  * SENTINNEL - usersStore
@@ -55,6 +55,50 @@ export const useUsersStore = defineStore('users', () => {
   }
 
   /**
+   * Crea un usuario
+   * @param {Object} datos_sm_vc
+   */
+  const create_usuario_sm_vc = async (datos_sm_vc) => {
+    cargando_usuarios_sm_vc.value = true
+    error_usuarios_sm_vc.value = null
+    try {
+      const nuevo_sm_vc = await create_sm_vc(datos_sm_vc)
+      usuarios_sm_vc.value.unshift(nuevo_sm_vc)
+      return nuevo_sm_vc
+    } catch (err_sm_vc) {
+      error_usuarios_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al crear usuario.'
+      Notify.create({ message: error_usuarios_sm_vc.value, color: 'negative', icon: 'error' })
+      return null
+    } finally {
+      cargando_usuarios_sm_vc.value = false
+    }
+  }
+
+  /**
+   * Actualiza un usuario
+   * @param {Object} datos_sm_vc
+   */
+  const update_usuario_sm_vc = async (datos_sm_vc) => {
+    const { id_sm_vc, ...payload_sm_vc } = datos_sm_vc
+    cargando_usuarios_sm_vc.value = true
+    error_usuarios_sm_vc.value = null
+    try {
+      const editado_sm_vc = await update_sm_vc(id_sm_vc, payload_sm_vc)
+      const idx_sm_vc = usuarios_sm_vc.value.findIndex(u => u.id_sm_vc === id_sm_vc || u.id === id_sm_vc)
+      if (idx_sm_vc !== -1) {
+        usuarios_sm_vc.value[idx_sm_vc] = { ...usuarios_sm_vc.value[idx_sm_vc], ...editado_sm_vc }
+      }
+      return editado_sm_vc
+    } catch (err_sm_vc) {
+      error_usuarios_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al actualizar usuario.'
+      Notify.create({ message: error_usuarios_sm_vc.value, color: 'negative', icon: 'error' })
+      return null
+    } finally {
+      cargando_usuarios_sm_vc.value = false
+    }
+  }
+
+  /**
    * Cambia el estado (activo/inactivo) de un usuario
    * @param {string} id_sm_vc
    */
@@ -68,9 +112,7 @@ export const useUsersStore = defineStore('users', () => {
       // Actualizamos localmente en la lista ref
       const idx_sm_vc = usuarios_sm_vc.value.findIndex(u_sm_vc => u_sm_vc.id_sm_vc === id_sm_vc || u_sm_vc.id === id_sm_vc)
       if (idx_sm_vc !== -1) {
-        // Asumiendo que el toggle invierte el estado booleano 'activo_sm_vc'
-        // pero preferiblemente usamos la rpta del backend
-        usuarios_sm_vc.value[idx_sm_vc] = { ...usuarios_sm_vc.value[idx_sm_vc], ...resp_sm_vc.user }
+        usuarios_sm_vc.value[idx_sm_vc] = { ...usuarios_sm_vc.value[idx_sm_vc], ...resp_sm_vc }
       }
       return true
     } catch (err_sm_vc) {
@@ -90,6 +132,8 @@ export const useUsersStore = defineStore('users', () => {
 
     fetch_usuarios_sm_vc,
     fetch_usuario_sm_vc,
+    create_usuario_sm_vc,
+    update_usuario_sm_vc,
     ban_usuario_sm_vc
   }
 })
