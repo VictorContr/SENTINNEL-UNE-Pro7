@@ -8,13 +8,21 @@ import { Pool } from 'pg';
  * Wraps PrismaClient for dependency injection in NestJS modules.
  */
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
-    const connectionString = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/dbname';
+    const connectionString =
+      process.env.DATABASE_URL ||
+      'postgresql://user:password@localhost:5432/dbname';
     const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool);
-    
-    super({ adapter });
+
+    super({
+      adapter,
+      log: ['query', 'info', 'warn', 'error'],
+    });
   }
 
   async onModuleInit() {

@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JwtStrategy_sm_vc = void 0;
 const common_1 = require("@nestjs/common");
@@ -36,7 +37,6 @@ let JwtStrategy_sm_vc = class JwtStrategy_sm_vc extends (0, passport_1.PassportS
 exports.JwtStrategy_sm_vc = JwtStrategy_sm_vc;
 exports.JwtStrategy_sm_vc = JwtStrategy_sm_vc = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [auth_service_1.AuthService_sm_vc,
-        config_1.ConfigService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService_sm_vc, typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
 ], JwtStrategy_sm_vc);
 //# sourceMappingURL=jwt.strategy.js.map

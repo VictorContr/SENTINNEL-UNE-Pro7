@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateEvaluacionDto_sm_vc = void 0;
 const class_validator_1 = require("class-validator");
@@ -32,7 +33,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsEnum)(client_1.EstadoAprobacion),
     (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
+    __metadata("design:type", typeof (_a = typeof client_1.EstadoAprobacion !== "undefined" && client_1.EstadoAprobacion) === "function" ? _a : Object)
 ], CreateEvaluacionDto_sm_vc.prototype, "decision_sm_vc", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),

@@ -42,6 +42,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var MailerContactoService_sm_vc_1;
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MailerContactoService_sm_vc = void 0;
 const common_1 = require("@nestjs/common");
@@ -121,8 +122,6 @@ let MailerContactoService_sm_vc = MailerContactoService_sm_vc_1 = class MailerCo
 exports.MailerContactoService_sm_vc = MailerContactoService_sm_vc;
 exports.MailerContactoService_sm_vc = MailerContactoService_sm_vc = MailerContactoService_sm_vc_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [mailer_1.MailerService,
-        config_1.ConfigService,
-        prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [mailer_1.MailerService, typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, prisma_service_1.PrismaService])
 ], MailerContactoService_sm_vc);
 //# sourceMappingURL=mailer.service.js.map

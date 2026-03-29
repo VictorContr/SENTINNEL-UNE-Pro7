@@ -14,6 +14,11 @@ const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const pasantias_module_1 = require("./pasantias/pasantias.module");
 const mailer_module_1 = require("./mailer/mailer.module");
+const admin_module_1 = require("./admin/admin.module");
+const documentos_module_1 = require("./documentos/documentos.module");
+const evaluaciones_module_1 = require("./evaluaciones/evaluaciones.module");
+const estudiantes_module_1 = require("./estudiantes/estudiantes.module");
+const deploy_module_1 = require("./deploy/deploy.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -26,6 +31,11 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule_sm_vc,
             pasantias_module_1.PasantiasModule_sm_vc,
             mailer_module_1.MailerContactoModule_sm_vc,
+            admin_module_1.AdminModule,
+            documentos_module_1.DocumentosModule,
+            evaluaciones_module_1.EvaluacionesModule,
+            estudiantes_module_1.EstudiantesModule,
+            deploy_module_1.DeployModule,
         ],
     })
 ], AppModule);

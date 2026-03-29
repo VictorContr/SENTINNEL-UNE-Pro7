@@ -41,6 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService_sm_vc = void 0;
 const common_1 = require("@nestjs/common");
@@ -124,7 +125,6 @@ let AuthService_sm_vc = class AuthService_sm_vc {
 exports.AuthService_sm_vc = AuthService_sm_vc;
 exports.AuthService_sm_vc = AuthService_sm_vc = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        jwt_1.JwtService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, typeof (_a = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _a : Object])
 ], AuthService_sm_vc);
 //# sourceMappingURL=auth.service.js.map

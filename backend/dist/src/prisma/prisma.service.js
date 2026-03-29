@@ -16,10 +16,14 @@ const adapter_pg_1 = require("@prisma/adapter-pg");
 const pg_1 = require("pg");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor() {
-        const connectionString = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/dbname';
+        const connectionString = process.env.DATABASE_URL ||
+            'postgresql://user:password@localhost:5432/dbname';
         const pool = new pg_1.Pool({ connectionString });
         const adapter = new adapter_pg_1.PrismaPg(pool);
-        super({ adapter });
+        super({
+            adapter,
+            log: ['query', 'info', 'warn', 'error'],
+        });
     }
     async onModuleInit() {
         await this.$connect();
