@@ -26,14 +26,14 @@ let PasantiasController_sm_vc = class PasantiasController_sm_vc {
         return this.pasantiasService.getMaterias_sm_vc();
     }
     async crearEntrega_sm_vc(req, createEntregaDto) {
-        const estudianteId = req.user.sub;
+        const estudianteId = req.user.id_sm_vc;
         return this.pasantiasService.crearEntrega_sm_vc(estudianteId, createEntregaDto.requisito_id_sm_vc);
     }
     async getProgresoEstudiante_sm_vc(id) {
         return this.pasantiasService.getProgresoEstudiante_sm_vc(parseInt(id));
     }
     async getMiProgreso_sm_vc(req) {
-        const estudianteId = req.user.sub;
+        const estudianteId = req.user.id_sm_vc;
         return this.pasantiasService.getProgresoEstudiante_sm_vc(estudianteId);
     }
 };

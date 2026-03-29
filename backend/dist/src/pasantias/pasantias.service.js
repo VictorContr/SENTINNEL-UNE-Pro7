@@ -28,9 +28,9 @@ let PasantiasService_sm_vc = class PasantiasService_sm_vc {
             orderBy: { posicion_sm_vc: 'asc' },
         });
     }
-    async validarProgresoEstudiante_sm_vc(estudianteId, materiaId) {
+    async validarProgresoEstudiante_sm_vc(usuarioId, materiaId) {
         const estudiante = await this.prisma.estudiante.findUnique({
-            where: { id_sm_vc: estudianteId },
+            where: { usuario_id_sm_vc: usuarioId },
             include: { materiaActiva: true }
         });
         if (!estudiante) {
@@ -57,7 +57,7 @@ let PasantiasService_sm_vc = class PasantiasService_sm_vc {
         }
         const entregasAnteriores = await this.prisma.entrega.findMany({
             where: {
-                estudiante_id_sm_vc: estudianteId,
+                estudiante_id_sm_vc: estudiante.id_sm_vc,
                 requisito: {
                     materia_id_sm_vc: materiaAnterior.id_sm_vc
                 }
@@ -72,7 +72,7 @@ let PasantiasService_sm_vc = class PasantiasService_sm_vc {
         }
         return true;
     }
-    async crearEntrega_sm_vc(estudianteId, requisitoId) {
+    async crearEntrega_sm_vc(usuarioId, requisitoId) {
         const requisito = await this.prisma.requisito.findUnique({
             where: { id_sm_vc: requisitoId },
             include: { materia: true }
@@ -80,10 +80,17 @@ let PasantiasService_sm_vc = class PasantiasService_sm_vc {
         if (!requisito) {
             throw new common_1.NotFoundException('Requisito no encontrado');
         }
-        await this.validarProgresoEstudiante_sm_vc(estudianteId, requisito.materia.id_sm_vc);
+        const estudiante = await this.prisma.estudiante.findUnique({
+            where: { usuario_id_sm_vc: usuarioId },
+            select: { id_sm_vc: true }
+        });
+        if (!estudiante) {
+            throw new common_1.NotFoundException('Estudiante no encontrado');
+        }
+        await this.validarProgresoEstudiante_sm_vc(usuarioId, requisito.materia.id_sm_vc);
         return this.prisma.entrega.create({
             data: {
-                estudiante_id_sm_vc: estudianteId,
+                estudiante_id_sm_vc: estudiante.id_sm_vc,
                 requisito_id_sm_vc: requisitoId,
                 estado_sm_vc: client_1.EstadoAprobacion.PENDIENTE
             },
@@ -95,28 +102,70 @@ let PasantiasService_sm_vc = class PasantiasService_sm_vc {
             }
         });
     }
-    async getProgresoEstudiante_sm_vc(estudianteId) {
-        const estudiante = await this.prisma.estudiante.findUnique({
-            where: { id_sm_vc: estudianteId },
-            include: {
-                materiaActiva: {
-                    include: {
-                        requisitos: {
-                            include: {
-                                entregas: {
-                                    where: { estudiante_id_sm_vc: estudianteId },
-                                    include: { evaluacion: true }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    async getProgresoEstudiante_sm_vc(usuarioId) {
+        const estudianteBase = await this.prisma.estudiante.findUnique({
+            where: { usuario_id_sm_vc: usuarioId },
+            include: { materiaActiva: true }
         });
-        if (!estudiante) {
+        if (!estudianteBase) {
             throw new common_1.NotFoundException('Estudiante no encontrado');
         }
-        return estudiante;
+        const materias = await this.prisma.materia.findMany({
+            include: { requisitos: true },
+            orderBy: { posicion_sm_vc: 'asc' }
+        });
+        const entregas = await this.prisma.entrega.findMany({
+            where: { estudiante_id_sm_vc: estudianteBase.id_sm_vc }
+        });
+        const resultado = materias.map(materia => {
+            const requisitosMateria = materia.requisitos;
+            const totalRequisitos = requisitosMateria.length;
+            const entregasMateria = entregas.filter(e => requisitosMateria.some(req => req.id_sm_vc === e.requisito_id_sm_vc));
+            const aprobados = entregasMateria.filter(e => e.estado_sm_vc === client_1.EstadoAprobacion.APROBADO).length;
+            let progresoDecimal = totalRequisitos > 0 ? aprobados / totalRequisitos : 0;
+            let estadoAprobacion = client_1.EstadoAprobacion.PENDIENTE;
+            let bloqueada = materia.posicion_sm_vc > estudianteBase.materiaActiva.posicion_sm_vc;
+            if (materia.posicion_sm_vc < estudianteBase.materiaActiva.posicion_sm_vc) {
+                estadoAprobacion = client_1.EstadoAprobacion.APROBADO;
+                progresoDecimal = 1.0;
+            }
+            else if (materia.posicion_sm_vc === estudianteBase.materiaActiva.posicion_sm_vc) {
+                if (aprobados === totalRequisitos && totalRequisitos > 0) {
+                    estadoAprobacion = client_1.EstadoAprobacion.APROBADO;
+                }
+                else if (entregasMateria.some(e => e.estado_sm_vc === client_1.EstadoAprobacion.REPROBADO)) {
+                    estadoAprobacion = client_1.EstadoAprobacion.REPROBADO;
+                }
+                else if (entregasMateria.some(e => e.estado_sm_vc === client_1.EstadoAprobacion.ENTREGADO || e.estado_sm_vc === client_1.EstadoAprobacion.PENDIENTE)) {
+                    estadoAprobacion = client_1.EstadoAprobacion.ENTREGADO;
+                }
+                else {
+                    estadoAprobacion = client_1.EstadoAprobacion.PENDIENTE;
+                }
+            }
+            return {
+                id_sm_vc: materia.id_sm_vc,
+                nombre_sm_vc: materia.nombre_sm_vc,
+                orden_sm_int: materia.posicion_sm_vc,
+                posicion_sm_vc: materia.posicion_sm_vc,
+                periodo_sm_vc: materia.periodo_sm_vc,
+                estado_aprobacion_sm_vc: estadoAprobacion,
+                progreso_decimal: progresoDecimal,
+                requisitos_aprobados_sm_int: aprobados,
+                total_requisitos_sm_int: totalRequisitos,
+                bloqueada: bloqueada,
+                requisitos: requisitosMateria,
+                nota_sm_dec: null,
+                intentos_sm_int: 0,
+                conversacion_count_sm_int: entregasMateria.length,
+                progreso: {
+                    requisitos_aprobados_detalle_sm_vc: entregasMateria
+                        .filter(e => e.estado_sm_vc === client_1.EstadoAprobacion.APROBADO)
+                        .map(e => ({ requisito_id_sm_vc: e.requisito_id_sm_vc }))
+                }
+            };
+        });
+        return resultado;
     }
 };
 exports.PasantiasService_sm_vc = PasantiasService_sm_vc;
