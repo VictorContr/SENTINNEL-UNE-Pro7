@@ -6,11 +6,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EstadoAprobacion, TipoDocumento } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CrearDocumentoDto } from './dto/crear-documento.dto';
 
 @Injectable()
 export class DocumentosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter_sm_vc: EventEmitter2,
+  ) {}
 
   // ─────────────────────────────────────────────────────────────────
   // POST /api/documentos — Subir un documento a una entrega
@@ -62,16 +66,10 @@ export class DocumentosService {
         data:  { estado_sm_vc: EstadoAprobacion.ENTREGADO },
       });
 
-      // 5. Registrar en historial de trazabilidad
-      await this.prisma.historialTrazabilidad.create({
-        data: {
-          estudiante_id_sm_vc: entrega.estudiante.id_sm_vc,
-          actor_id_sm_vc:      usuarioId,
-          accion_sm_vc:        'DOCUMENTO_SUBIDO',
-          detalles_sm_vc: `Documento "${file.originalname}" subido para el requisito ` +
-            `"${entrega.requisito.nombre_sm_vc}" ` +
-            `de la materia "${entrega.requisito.materia.nombre_sm_vc}".`,
-        },
+      // 5. Emitir evento de trazabilidad
+      this.eventEmitter_sm_vc.emit('documento.subido_sm_vc', {
+        estudianteId: entrega.estudiante.id_sm_vc,
+        descripcion_sm_vc: `Documento "${file.originalname}" subido para "${entrega.requisito.nombre_sm_vc}" (${entrega.requisito.materia.nombre_sm_vc})`,
       });
 
       return this.generarRespuesta_sm_vc(documento);

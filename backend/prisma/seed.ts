@@ -24,7 +24,8 @@ async function main() {
 
   // ── 1. Limpieza completa en orden de dependencia ──
   await prisma.$transaction([
-    prisma.historialTrazabilidad.deleteMany(),
+    prisma.mensaje.deleteMany(),
+    prisma.conversacion.deleteMany(),
     prisma.notificacion.deleteMany(),
     prisma.proyectoDeploy.deleteMany(),
     prisma.evaluacion.deleteMany(),
@@ -179,6 +180,7 @@ async function main() {
         requiere_cambio_clave_sm_vc: true,
       },
     });
+
     const perfil = await prisma.estudiante.create({
       data: {
         usuario_id_sm_vc: usuario.id_sm_vc,
@@ -189,6 +191,23 @@ async function main() {
         materia_activa_id_sm_vc: materia1.id_sm_vc,
       },
     });
+
+    // Crear conversación inicial para el estudiante
+    const conversacion = await prisma.conversacion.create({
+      data: {
+        estudiante_id_sm_vc: perfil.id_sm_vc,
+      },
+    });
+
+    // Mensaje de sistema inicial
+    await prisma.mensaje.create({
+      data: {
+        conversacion_id_sm_vc: conversacion.id_sm_vc,
+        contenido_sm_vc:       'Log: Sistema de trazabilidad activado. Bienvenido al periodo P-165.',
+        es_sistema_sm_vc:      true,
+      },
+    });
+
     perfiles.push({ usuario, perfil });
   }
 
@@ -361,18 +380,7 @@ async function main() {
 
   console.log('✔ Notificaciones de prueba creadas');
 
-  // ── 8. Historial de trazabilidad inicial ──
-  await prisma.historialTrazabilidad.createMany({
-    data: [
-      { estudiante_id_sm_vc: luis.perfil.id_sm_vc,   actor_id_sm_vc: admin.id_sm_vc,  accion_sm_vc: 'REGISTRO_PERIODO',    detalles_sm_vc: 'Estudiante registrado en el periodo P-165.' },
-      { estudiante_id_sm_vc: maria.perfil.id_sm_vc,  actor_id_sm_vc: admin.id_sm_vc,  accion_sm_vc: 'REGISTRO_PERIODO',    detalles_sm_vc: 'Estudiante registrado en el periodo P-165.' },
-      { estudiante_id_sm_vc: maria.perfil.id_sm_vc,  actor_id_sm_vc: prof1.id_sm_vc,  accion_sm_vc: 'MATERIA_COMPLETADA',  detalles_sm_vc: 'Investigación y Desarrollo aprobada. Seminario de Grado desbloqueado.' },
-      { estudiante_id_sm_vc: carlos.perfil.id_sm_vc, actor_id_sm_vc: prof2.id_sm_vc,  accion_sm_vc: 'MATERIA_COMPLETADA',  detalles_sm_vc: 'Materias 1 y 2 aprobadas. Trabajo de Grado I desbloqueado.' },
-      { estudiante_id_sm_vc: andres.perfil.id_sm_vc, actor_id_sm_vc: prof1.id_sm_vc,  accion_sm_vc: 'ENTREGA_REPROBADA',   detalles_sm_vc: 'Contexto Organizacional reprobado. Se notificó al estudiante para correcciones.' },
-    ],
-  });
-
-  console.log('✔ Historial de trazabilidad creado');
+  console.log('✔ Conversaciones iniciales creadas para estudiantes');
 
   console.log(`
 ╔══════════════════════════════════════════════════════════╗

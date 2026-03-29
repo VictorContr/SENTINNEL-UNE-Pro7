@@ -77,10 +77,9 @@ export class EstudiantesService {
               documentacionTecnica: true,
             },
           },
-          historial: {
-            orderBy: { fecha_sm_vc: 'desc' },
-            take: 20,
-          },
+          conversacion: {
+            include: { mensajes: { take: 5, orderBy: { fecha_creacion_sm_vc: 'desc' } } }
+          }
         },
       });
 
@@ -237,7 +236,10 @@ export class EstudiantesService {
       materia_activa:          e.materiaActiva,
       entregas:                e.entregas,
       proyecto_deploy:         e.proyectoDeploy,
-      historial:               e.historial,
+      conversacion_sm_vc: {
+        id_sm_vc: e.conversacion?.id_sm_vc,
+        ultimos_mensajes_sm_vc: e.conversacion?.mensajes ?? [],
+      },
     };
   }
 }

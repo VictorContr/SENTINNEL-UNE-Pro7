@@ -7,11 +7,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EstadoAprobacion, TipoDocumento, TipoNotificacion } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CrearDeployDto } from './dto/crear-deploy.dto';
 
 @Injectable()
 export class DeployService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter_sm_vc: EventEmitter2,
+  ) {}
 
   // ─────────────────────────────────────────────────────────────────
   // POST /api/deploy/:estudianteId
@@ -102,15 +106,10 @@ export class DeployService {
         },
       });
 
-      // 7. Registrar en historial
-      await this.prisma.historialTrazabilidad.create({
-        data: {
-          estudiante_id_sm_vc: estudianteId,
-          actor_id_sm_vc:      usuarioActorId,
-          accion_sm_vc:        'DEPLOY_REGISTRADO',
-          detalles_sm_vc:      `Deploy registrado. URL: ${dto.url_produccion_sm_vc}. ` +
-            `ZIP: ${archivoZip.originalname}. PDF: ${archivoPdf.originalname}.`,
-        },
+      // 7. Emitir evento de trazabilidad
+      this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
+        estudianteId: estudianteId,
+        descripcion_sm_vc: `🚀 Deploy registrado exitosamente. URL: ${dto.url_produccion_sm_vc}`,
       });
 
       // 8. Notificar al estudiante

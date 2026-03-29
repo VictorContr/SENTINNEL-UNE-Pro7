@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule }              from './prisma/prisma.module';
 import { AuthModule_sm_vc }          from './auth/auth.module';
 import { UsersModule_sm_vc }         from './users/users.module';
@@ -11,10 +12,12 @@ import { DocumentosModule }  from './documentos/documentos.module';
 import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
 import { EstudiantesModule }  from './estudiantes/estudiantes.module';
 import { DeployModule }       from './deploy/deploy.module';
+import { ConversacionesModule } from './conversaciones/conversaciones.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule_sm_vc,
     UsersModule_sm_vc,
@@ -26,6 +29,7 @@ import { DeployModule }       from './deploy/deploy.module';
     EvaluacionesModule,
     EstudiantesModule,
     DeployModule,
+    ConversacionesModule,
   ],
 })
 export class AppModule {}
