@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════════
 // pasantiasStore.js — Store centralizado Mock-First de pasantías.
-// Corregido: seeds con _sm_vc, refs de estado _sm → _sm_vc,
-// arrow functions en todos los handlers. API pública sin cambios.
+// API pública completamente sufijada con _sm_vc.
+// Actualizado para consumir user_sm_vc y MOCK_USERS_sm_vc de authStore.
 // ══════════════════════════════════════════════════════════════════
 
 import { defineStore } from 'pinia'
@@ -9,75 +9,56 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from './authStore'
 
 export const ESTADO_APROBACION = {
-  PENDIENTE:  { color: '#5a7fa8', bg: 'rgba(90,127,168,0.1)',   icon: 'schedule' },
-  ENTREGADO:  { color: '#7ec8e3', bg: 'rgba(126,200,227,0.1)',  icon: 'upload_file' },
-  APROBADO:   { color: '#6fffe9', bg: 'rgba(111,255,233,0.1)',  icon: 'check_circle' },
-  REPROBADO:  { color: '#ff8fa3', bg: 'rgba(255,143,163,0.1)',  icon: 'cancel' }
+  PENDIENTE: { color: '#5a7fa8', bg: 'rgba(90,127,168,0.1)',   icon: 'schedule' },
+  ENTREGADO: { color: '#7ec8e3', bg: 'rgba(126,200,227,0.1)',  icon: 'upload_file' },
+  APROBADO:  { color: '#6fffe9', bg: 'rgba(111,255,233,0.1)',  icon: 'check_circle' },
+  REPROBADO: { color: '#ff8fa3', bg: 'rgba(255,143,163,0.1)',  icon: 'cancel' }
 }
 
 /* ── Seeds de datos mock ── */
 const MOCK_MATERIAS_sm_vc = [
   {
-    id_sm_vc: 'MAT-001', nombre_sm_vc: 'Investigación y Desarrollo', orden_sm_int: 1,
-    descripcion_sm_vc: 'Fundamentos del anteproyecto: contexto organizacional y planteamiento del problema.',
+    id_sm_vc: 'MAT-001', nombre_sm_vc: 'Pasantías I', orden_sm_int: 1,
+    descripcion_sm_vc: 'Introducción al entorno empresarial y diagnóstico organizacional.',
     requisitos: [
-      { id_sm_vc: 'REQ-001', nombre_sm_vc: 'Contexto Organizacional',   obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-002', nombre_sm_vc: 'Situación Problemática',    obligatorio_sm_vc: true,  orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-003', nombre_sm_vc: 'Objetivo General',           obligatorio_sm_vc: true,  orden_sm_int: 3 },
-      { id_sm_vc: 'REQ-004', nombre_sm_vc: 'Objetivos Específicos',      obligatorio_sm_vc: true,  orden_sm_int: 4 },
-      { id_sm_vc: 'REQ-005', nombre_sm_vc: 'Justificación',              obligatorio_sm_vc: true,  orden_sm_int: 5 },
-      { id_sm_vc: 'REQ-006', nombre_sm_vc: 'Delimitación',               obligatorio_sm_vc: true,  orden_sm_int: 6 }
+      { id_sm_vc: 'REQ-001', nombre_sm_vc: 'Carta de Aceptación',       obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-002', nombre_sm_vc: 'Capítulo I — Introducción',  obligatorio_sm_vc: true,  orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-003', nombre_sm_vc: 'Capítulo II — Marco Teórico',obligatorio_sm_vc: true,  orden_sm_int: 3 },
+      { id_sm_vc: 'REQ-004', nombre_sm_vc: 'Informe Final I',            obligatorio_sm_vc: true,  orden_sm_int: 4 }
     ]
   },
   {
-    id_sm_vc: 'MAT-002', nombre_sm_vc: 'Seminario de Grado', orden_sm_int: 2,
-    descripcion_sm_vc: 'Refinamiento del proyecto y desarrollo temprano de los primeros objetivos.',
+    id_sm_vc: 'MAT-002', nombre_sm_vc: 'Pasantías II', orden_sm_int: 2,
+    descripcion_sm_vc: 'Desarrollo del proyecto y ejecución de actividades en la empresa.',
     requisitos: [
-      { id_sm_vc: 'REQ-007', nombre_sm_vc: 'Fase de Refinamiento',        obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-008', nombre_sm_vc: 'Fase Técnica y de Entorno',  obligatorio_sm_vc: true,  orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-009', nombre_sm_vc: 'Desarrollo Temprano — Obj 1', obligatorio_sm_vc: true,  orden_sm_int: 3 },
-      { id_sm_vc: 'REQ-010', nombre_sm_vc: 'Desarrollo Temprano — Obj 2', obligatorio_sm_vc: true,  orden_sm_int: 4 },
-      { id_sm_vc: 'REQ-011', nombre_sm_vc: 'Desarrollo Temprano — Obj 3', obligatorio_sm_vc: true,  orden_sm_int: 5 }
+      { id_sm_vc: 'REQ-005', nombre_sm_vc: 'Capítulo III — Metodología', obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-006', nombre_sm_vc: 'Capítulo IV — Resultados',   obligatorio_sm_vc: true,  orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-007', nombre_sm_vc: 'Evaluación Empresarial',     obligatorio_sm_vc: false, orden_sm_int: 3 },
+      { id_sm_vc: 'REQ-008', nombre_sm_vc: 'Informe Final II',           obligatorio_sm_vc: true,  orden_sm_int: 4 }
     ]
   },
   {
-    id_sm_vc: 'MAT-003', nombre_sm_vc: 'Trabajo de Grado I', orden_sm_int: 3,
-    descripcion_sm_vc: 'Desarrollo avanzado, cierre técnico y fase opcional del proyecto.',
+    id_sm_vc: 'MAT-003', nombre_sm_vc: 'Pasantías III', orden_sm_int: 3,
+    descripcion_sm_vc: 'Presentación, defensa y documentación del proyecto final.',
     requisitos: [
-      { id_sm_vc: 'REQ-012', nombre_sm_vc: 'Desarrollo Avanzado — Obj 4',  obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-013', nombre_sm_vc: 'Desarrollo Avanzado — Obj 5',  obligatorio_sm_vc: true,  orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-014', nombre_sm_vc: 'Fase Opcional',                 obligatorio_sm_vc: false, orden_sm_int: 3 }
-    ]
-  },
-  {
-    id_sm_vc: 'MAT-004', nombre_sm_vc: 'Trabajo de Grado II', orden_sm_int: 4,
-    descripcion_sm_vc: 'Cierre documental, defensa y cumplimiento de solvencias académicas.',
-    requisitos: [
-      { id_sm_vc: 'REQ-015', nombre_sm_vc: 'Fase Documental Final',      obligatorio_sm_vc: true,  orden_sm_int: 1 },
-      { id_sm_vc: 'REQ-016', nombre_sm_vc: 'Aprobación Académica',       obligatorio_sm_vc: true,  orden_sm_int: 2 },
-      { id_sm_vc: 'REQ-017', nombre_sm_vc: 'Defensa del Proyecto',        obligatorio_sm_vc: true,  orden_sm_int: 3 },
-      { id_sm_vc: 'REQ-018', nombre_sm_vc: 'Solvencia Administrativa',    obligatorio_sm_vc: true,  orden_sm_int: 4 },
-      { id_sm_vc: 'REQ-019', nombre_sm_vc: 'Solvencia de Biblioteca',     obligatorio_sm_vc: true,  orden_sm_int: 5 }
+      { id_sm_vc: 'REQ-009', nombre_sm_vc: 'Capítulo V — Conclusiones', obligatorio_sm_vc: true,  orden_sm_int: 1 },
+      { id_sm_vc: 'REQ-010', nombre_sm_vc: 'Anexos y Bibliografía',     obligatorio_sm_vc: false, orden_sm_int: 2 },
+      { id_sm_vc: 'REQ-011', nombre_sm_vc: 'Acta de Entrega Empresa',   obligatorio_sm_vc: true,  orden_sm_int: 3 },
+      { id_sm_vc: 'REQ-012', nombre_sm_vc: 'Informe Final III (Tesis)', obligatorio_sm_vc: true,  orden_sm_int: 4 }
     ]
   }
 ]
 
 const MOCK_PROGRESO_sm_vc = [
-  // USR-003: MAT-001 Aprobado, MAT-002 Entregado, MAT-003 Pendiente, MAT-004 Bloqueado
   { id_sm_vc: 'PRG-001', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 18.5, fecha_aprobacion_sm_vc: '2024-03-15T10:00:00Z', intentos_sm_int: 2 },
   { id_sm_vc: 'PRG-002', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'ENTREGADO', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 1 },
   { id_sm_vc: 'PRG-003', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  { id_sm_vc: 'PRG-004', estudiante_id_sm_vc: 'USR-003', materia_id_sm_vc: 'MAT-004', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  // USR-010: MAT-001 Entregado, restó pendiente
-  { id_sm_vc: 'PRG-005', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'ENTREGADO', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-006', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  { id_sm_vc: 'PRG-007', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  { id_sm_vc: 'PRG-008', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-004', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
-  // USR-011: todas aprobadas
-  { id_sm_vc: 'PRG-009', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 20,   fecha_aprobacion_sm_vc: '2023-12-01T10:00:00Z', intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-010', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 19,   fecha_aprobacion_sm_vc: '2024-01-20T10:00:00Z', intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-011', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 17,   fecha_aprobacion_sm_vc: '2024-03-05T10:00:00Z', intentos_sm_int: 1 },
-  { id_sm_vc: 'PRG-012', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-004', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 18,   fecha_aprobacion_sm_vc: '2024-05-10T10:00:00Z', intentos_sm_int: 1 }
+  { id_sm_vc: 'PRG-004', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'ENTREGADO', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-005', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
+  { id_sm_vc: 'PRG-006', estudiante_id_sm_vc: 'USR-010', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'PENDIENTE', nota_sm_dec: null, fecha_aprobacion_sm_vc: null, intentos_sm_int: 0 },
+  { id_sm_vc: 'PRG-007', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-001', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 20,   fecha_aprobacion_sm_vc: '2023-12-01T10:00:00Z', intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-008', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-002', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 19,   fecha_aprobacion_sm_vc: '2024-01-20T10:00:00Z', intentos_sm_int: 1 },
+  { id_sm_vc: 'PRG-009', estudiante_id_sm_vc: 'USR-011', materia_id_sm_vc: 'MAT-003', estado_aprobacion_sm_vc: 'APROBADO',  nota_sm_dec: 17,   fecha_aprobacion_sm_vc: '2024-03-05T10:00:00Z', intentos_sm_int: 1 }
 ]
 
 const MOCK_CONVERSACIONES_sm_vc = [
@@ -106,43 +87,46 @@ const MOCK_ESTUDIANTES_sm_vc = [
   { id_sm_vc: 'USR-011', cohorte_sm_vc: 'P-164', profesor_id_sm_vc: 'USR-002', empresa_sm_vc: 'InnoTech' }
 ]
 
-/* ══════════════════════════════════════════════════════════════════
-   STORE
-   ══════════════════════════════════════════════════════════════════ */
 export const usePasantiasStore = defineStore('pasantias', () => {
   const auth_sm_vc = useAuthStore()
 
-  /* ── State ── */
+  /* ── Estado ── */
   const materias_sm_vc       = ref([...MOCK_MATERIAS_sm_vc])
   const progreso_sm_vc       = ref([...MOCK_PROGRESO_sm_vc])
   const conversaciones_sm_vc = ref([...MOCK_CONVERSACIONES_sm_vc])
   const deploys_sm_vc        = ref([...MOCK_DEPLOY_sm_vc])
   const loading_sm_vc        = ref(false)
 
-  /* ── Getters: Materias ── */
-  const getMaterias = computed(() => materias_sm_vc.value)
+  /* ── Getter: todas las materias ── */
+  const getMaterias_sm_vc = computed(() => materias_sm_vc.value)
 
-  const getMateriaById = (id_sm_vc) =>
-    materias_sm_vc.value.find((m) => m.id_sm_vc === id_sm_vc) ?? null
+  /* ── Getter: materia por ID ── */
+  const getMateriaById_sm_vc = (id_sm_vc) =>
+    materias_sm_vc.value.find((m_sm_vc) => m_sm_vc.id_sm_vc === id_sm_vc) ?? null
 
-  /* ── Getters: Progreso ── */
-  const getProgresoEstudiante = (estudiante_id_sm_vc) =>
+  /* ── Getter: progreso enriquecido por estudiante ── */
+  const getProgresoEstudiante_sm_vc = (estudiante_id_sm_vc) =>
     materias_sm_vc.value.map((materia_sm_vc) => {
       const prog_sm_vc = progreso_sm_vc.value.find(
-        (p) => p.estudiante_id_sm_vc === estudiante_id_sm_vc && p.materia_id_sm_vc === materia_sm_vc.id_sm_vc
+        (p_sm_vc) =>
+          p_sm_vc.estudiante_id_sm_vc === estudiante_id_sm_vc &&
+          p_sm_vc.materia_id_sm_vc === materia_sm_vc.id_sm_vc
       )
       const estado_sm_vc = prog_sm_vc?.estado_aprobacion_sm_vc ?? 'PENDIENTE'
-      const conversacion_sm_vc = getConversacion(estudiante_id_sm_vc, materia_sm_vc.id_sm_vc)
+      const conv_sm_vc = getConversacion_sm_vc(estudiante_id_sm_vc, materia_sm_vc.id_sm_vc)
       const detalles_sm_vc = prog_sm_vc?.requisitos_aprobados_detalle_sm_vc ?? []
       const reqAprobados_sm_vc = detalles_sm_vc.length
 
+      /* Determina si la materia está bloqueada por no aprobar la anterior */
       const bloqueada_sm_vc = (() => {
         if (materia_sm_vc.orden_sm_int === 1) return false
         const anterior_sm_vc = materias_sm_vc.value.find(
-          (m) => m.orden_sm_int === materia_sm_vc.orden_sm_int - 1
+          (m_sm_vc) => m_sm_vc.orden_sm_int === materia_sm_vc.orden_sm_int - 1
         )
         const progAnterior_sm_vc = progreso_sm_vc.value.find(
-          (p) => p.estudiante_id_sm_vc === estudiante_id_sm_vc && p.materia_id_sm_vc === anterior_sm_vc?.id_sm_vc
+          (p_sm_vc) =>
+            p_sm_vc.estudiante_id_sm_vc === estudiante_id_sm_vc &&
+            p_sm_vc.materia_id_sm_vc === anterior_sm_vc?.id_sm_vc
         )
         return progAnterior_sm_vc?.estado_aprobacion_sm_vc !== 'APROBADO'
       })()
@@ -157,77 +141,95 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         intentos_sm_int: prog_sm_vc?.intentos_sm_int ?? 0,
         requisitos_aprobados_sm_int: reqAprobados_sm_vc,
         total_requisitos_sm_int: materia_sm_vc.requisitos.length,
-        progreso_decimal: estado_sm_vc === 'APROBADO'
-          ? 1
-          : materia_sm_vc.requisitos.length > 0
-            ? reqAprobados_sm_vc / materia_sm_vc.requisitos.length
-            : 0,
-        conversacion_count_sm_int: conversacion_sm_vc.length,
+        progreso_decimal:
+          estado_sm_vc === 'APROBADO'
+            ? 1
+            : materia_sm_vc.requisitos.length > 0
+              ? reqAprobados_sm_vc / materia_sm_vc.requisitos.length
+              : 0,
+        conversacion_count_sm_int: conv_sm_vc.length,
         bloqueada: bloqueada_sm_vc
       }
     })
 
-  const miProgreso = computed(() => {
-    if (!auth_sm_vc.user || auth_sm_vc.user.rol_sm_vc !== 'ESTUDIANTE') return []
-    return getProgresoEstudiante(auth_sm_vc.user.id_sm_vc)
+  /* ── Getter computado: progreso del estudiante autenticado ── */
+  const miProgreso_sm_vc = computed(() => {
+    if (!auth_sm_vc.user_sm_vc || auth_sm_vc.user_sm_vc.rol_sm_vc !== 'ESTUDIANTE') return []
+    return getProgresoEstudiante_sm_vc(auth_sm_vc.user_sm_vc.id_sm_vc)
   })
 
-  const todasAprobadas = computed(
-    () => miProgreso.value.length > 0 &&
-      miProgreso.value.every((m) => m.estado_aprobacion_sm_vc === 'APROBADO')
+  /* ── Getter: true si el estudiante aprobó todas las materias ── */
+  const todasAprobadas_sm_vc = computed(
+    () =>
+      miProgreso_sm_vc.value.length > 0 &&
+      miProgreso_sm_vc.value.every((m_sm_vc) => m_sm_vc.estado_aprobacion_sm_vc === 'APROBADO')
   )
 
-  /* ── Getters: Conversación ── */
-  const getConversacion = (estudiante_id_sm_vc, materia_id_sm_vc) =>
+  /* ── Getter: conversación ordenada por fecha ── */
+  const getConversacion_sm_vc = (estudiante_id_sm_vc, materia_id_sm_vc) =>
     conversaciones_sm_vc.value
       .filter(
-        (m) => m.estudiante_id_sm_vc === estudiante_id_sm_vc && m.materia_id_sm_vc === materia_id_sm_vc
+        (m_sm_vc) =>
+          m_sm_vc.estudiante_id_sm_vc === estudiante_id_sm_vc &&
+          m_sm_vc.materia_id_sm_vc === materia_id_sm_vc
       )
-      .sort((a, b) => new Date(a.fecha_sm_vc) - new Date(b.fecha_sm_vc))
+      .sort((a_sm_vc, b_sm_vc) => new Date(a_sm_vc.fecha_sm_vc) - new Date(b_sm_vc.fecha_sm_vc))
 
-  /* ── Getters: Deploy ── */
-  const getDeployEstudiante = (estudiante_id_sm_vc) =>
-    deploys_sm_vc.value.find((d) => d.estudiante_id_sm_vc === estudiante_id_sm_vc) ?? null
+  /* ── Getter: deploy de un estudiante ── */
+  const getDeployEstudiante_sm_vc = (estudiante_id_sm_vc) =>
+    deploys_sm_vc.value.find((d_sm_vc) => d_sm_vc.estudiante_id_sm_vc === estudiante_id_sm_vc) ?? null
 
-  const miDeploy = computed(() =>
-    auth_sm_vc.user ? getDeployEstudiante(auth_sm_vc.user.id_sm_vc) : null
+  /* ── Getter: deploy del estudiante autenticado ── */
+  const miDeploy_sm_vc = computed(() =>
+    auth_sm_vc.user_sm_vc ? getDeployEstudiante_sm_vc(auth_sm_vc.user_sm_vc.id_sm_vc) : null
   )
 
-  /* ── Getters: Estudiantes del profesor ── */
-  const getEstudiantesDelProfesor = (profesor_id_sm_vc) =>
-    MOCK_ESTUDIANTES_sm_vc
-      .filter((e) => e.profesor_id_sm_vc === profesor_id_sm_vc)
-      .map((e_sm_vc) => {
-        const user_sm_vc = auth_sm_vc.MOCK_USERS.find((u) => u.id_sm_vc === e_sm_vc.id_sm_vc)
-        if (!user_sm_vc) return null
-        const prog_sm_vc = getProgresoEstudiante(e_sm_vc.id_sm_vc)
-        const estado_actual_sm_vc =
-          prog_sm_vc.find((m) => m.estado_aprobacion_sm_vc !== 'APROBADO')?.estado_aprobacion_sm_vc ||
-          (prog_sm_vc.every((m) => m.estado_aprobacion_sm_vc === 'APROBADO') ? 'APROBADO' : 'PENDIENTE')
+  /* ── Getter: estudiantes asignados al profesor ── */
+  const getEstudiantesDelProfesor_sm_vc = (profesor_id_sm_vc) =>
+    MOCK_ESTUDIANTES_sm_vc.filter((e_sm_vc) => e_sm_vc.profesor_id_sm_vc === profesor_id_sm_vc)
+      .map((est_sm_vc) => {
+        /* Cruza con MOCK_USERS_sm_vc del authStore (API corregida) */
+        const usuario_sm_vc = auth_sm_vc.MOCK_USERS_sm_vc.find(
+          (u_sm_vc) => u_sm_vc.id_sm_vc === est_sm_vc.id_sm_vc
+        )
+        if (!usuario_sm_vc) return null
+        const prog_sm_vc = getProgresoEstudiante_sm_vc(est_sm_vc.id_sm_vc)
+        const estadoActual_sm_vc =
+          prog_sm_vc.find((m_sm_vc) => m_sm_vc.estado_aprobacion_sm_vc !== 'APROBADO')
+            ?.estado_aprobacion_sm_vc ||
+          (prog_sm_vc.every((m_sm_vc) => m_sm_vc.estado_aprobacion_sm_vc === 'APROBADO')
+            ? 'APROBADO'
+            : 'PENDIENTE')
 
         return {
-          ...user_sm_vc,
-          cohorte_sm_vc: e_sm_vc.cohorte_sm_vc,
-          empresa_sm_vc: e_sm_vc.empresa_sm_vc,
-          estado_actual_sm_vc,
-          materias_sm_vc: prog_sm_vc.map((m) => ({
-            nombre: m.nombre_sm_vc,
-            estado: m.estado_aprobacion_sm_vc,
-            progreso: m.progreso_decimal,
-            materia_id: m.id_sm_vc
+          ...usuario_sm_vc,
+          cohorte_sm_vc: est_sm_vc.cohorte_sm_vc,
+          empresa_sm_vc: est_sm_vc.empresa_sm_vc,
+          estado_actual_sm_vc: estadoActual_sm_vc,
+          materias_sm_vc: prog_sm_vc.map((m_sm_vc) => ({
+            nombre: m_sm_vc.nombre_sm_vc,
+            estado: m_sm_vc.estado_aprobacion_sm_vc,
+            progreso: m_sm_vc.progreso_decimal,
+            materia_id: m_sm_vc.id_sm_vc
           }))
         }
       })
       .filter(Boolean)
 
-  /* ── Actions ── */
-  const enviarInforme = ({ materia_id_sm_vc, archivo_nombre_sm_vc, version_sm_vc, comentario_sm_vc, requisito_id_sm_vc }) => {
-    if (!auth_sm_vc.user) return
+  /* ── Acción: el estudiante envía un informe ── */
+  const enviarInforme_sm_vc = ({
+    materia_id_sm_vc,
+    archivo_nombre_sm_vc,
+    version_sm_vc,
+    comentario_sm_vc,
+    requisito_id_sm_vc
+  }) => {
+    if (!auth_sm_vc.user_sm_vc) return
     const nuevo_sm_vc = {
       id_sm_vc: `MSG-${Date.now()}`,
-      estudiante_id_sm_vc: auth_sm_vc.user.id_sm_vc,
+      estudiante_id_sm_vc: auth_sm_vc.user_sm_vc.id_sm_vc,
       materia_id_sm_vc,
-      remitente_id_sm_vc: auth_sm_vc.user.id_sm_vc,
+      remitente_id_sm_vc: auth_sm_vc.user_sm_vc.id_sm_vc,
       remitente_rol_sm_vc: 'ESTUDIANTE',
       tipo_sm_vc: 'INFORME',
       version_sm_vc,
@@ -239,8 +241,12 @@ export const usePasantiasStore = defineStore('pasantias', () => {
       requisito_id_sm_vc
     }
     conversaciones_sm_vc.value.push(nuevo_sm_vc)
+
+    /* Marca materia como ENTREGADO si estaba PENDIENTE */
     const idx_sm_vc = progreso_sm_vc.value.findIndex(
-      (p) => p.estudiante_id_sm_vc === auth_sm_vc.user.id_sm_vc && p.materia_id_sm_vc === materia_id_sm_vc
+      (p_sm_vc) =>
+        p_sm_vc.estudiante_id_sm_vc === auth_sm_vc.user_sm_vc.id_sm_vc &&
+        p_sm_vc.materia_id_sm_vc === materia_id_sm_vc
     )
     if (idx_sm_vc !== -1 && progreso_sm_vc.value[idx_sm_vc].estado_aprobacion_sm_vc === 'PENDIENTE') {
       progreso_sm_vc.value[idx_sm_vc].estado_aprobacion_sm_vc = 'ENTREGADO'
@@ -249,12 +255,20 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     return nuevo_sm_vc
   }
 
-  const responderCorreccion = ({ estudiante_id_sm_vc, materia_id_sm_vc, archivo_nombre_sm_vc, comentario_sm_vc, estado_evaluacion_sm_vc, nota_sm_dec }) => {
-    if (!auth_sm_vc.user || auth_sm_vc.user.rol_sm_vc !== 'PROFESOR') return
+  /* ── Acción: el profesor responde con corrección ── */
+  const responderCorreccion_sm_vc = ({
+    estudiante_id_sm_vc,
+    materia_id_sm_vc,
+    archivo_nombre_sm_vc,
+    comentario_sm_vc,
+    estado_evaluacion_sm_vc,
+    nota_sm_dec
+  }) => {
+    if (!auth_sm_vc.user_sm_vc || auth_sm_vc.user_sm_vc.rol_sm_vc !== 'PROFESOR') return
     const nuevo_sm_vc = {
       id_sm_vc: `MSG-${Date.now()}`,
       estudiante_id_sm_vc, materia_id_sm_vc,
-      remitente_id_sm_vc: auth_sm_vc.user.id_sm_vc,
+      remitente_id_sm_vc: auth_sm_vc.user_sm_vc.id_sm_vc,
       remitente_rol_sm_vc: 'PROFESOR',
       tipo_sm_vc: 'CORRECCION',
       version_sm_vc: `C${Date.now()}`,
@@ -268,7 +282,9 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     conversaciones_sm_vc.value.push(nuevo_sm_vc)
 
     const idx_sm_vc = progreso_sm_vc.value.findIndex(
-      (p) => p.estudiante_id_sm_vc === estudiante_id_sm_vc && p.materia_id_sm_vc === materia_id_sm_vc
+      (p_sm_vc) =>
+        p_sm_vc.estudiante_id_sm_vc === estudiante_id_sm_vc &&
+        p_sm_vc.materia_id_sm_vc === materia_id_sm_vc
     )
     if (idx_sm_vc !== -1) {
       if (estado_evaluacion_sm_vc === 'APROBADO') {
@@ -282,30 +298,37 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     return nuevo_sm_vc
   }
 
-  const aprobarRequisitosGranular = ({ estudiante_id_sm_vc, materia_id_sm_vc, requisitos_seleccionados_ids }) => {
-    if (!auth_sm_vc.user || auth_sm_vc.user.rol_sm_vc !== 'PROFESOR') return
+  /* ── Acción: aprobación granular de requisitos individuales ── */
+  const aprobarRequisitosGranular_sm_vc = ({
+    estudiante_id_sm_vc,
+    materia_id_sm_vc,
+    requisitos_seleccionados_ids
+  }) => {
+    if (!auth_sm_vc.user_sm_vc || auth_sm_vc.user_sm_vc.rol_sm_vc !== 'PROFESOR') return
 
     const idx_sm_vc = progreso_sm_vc.value.findIndex(
-      (p) => p.estudiante_id_sm_vc === estudiante_id_sm_vc && p.materia_id_sm_vc === materia_id_sm_vc
+      (p_sm_vc) =>
+        p_sm_vc.estudiante_id_sm_vc === estudiante_id_sm_vc &&
+        p_sm_vc.materia_id_sm_vc === materia_id_sm_vc
     )
     if (idx_sm_vc === -1) return
 
     const p_sm_vc = progreso_sm_vc.value[idx_sm_vc]
     if (!p_sm_vc.requisitos_aprobados_detalle_sm_vc) p_sm_vc.requisitos_aprobados_detalle_sm_vc = []
 
-    const prev_sm_vc = [...p_sm_vc.requisitos_aprobados_detalle_sm_vc]
+    const previos_sm_vc = [...p_sm_vc.requisitos_aprobados_detalle_sm_vc]
     const fecha_sm_vc = new Date().toISOString()
 
     progreso_sm_vc.value[idx_sm_vc].requisitos_aprobados_detalle_sm_vc =
-      requisitos_seleccionados_ids.map((req_id_sm_vc) => {
-        const existe_sm_vc = prev_sm_vc.find((r) => r.requisito_id_sm_vc === req_id_sm_vc)
-        return existe_sm_vc ?? { requisito_id_sm_vc: req_id_sm_vc, fecha_aprobacion_sm_vc: fecha_sm_vc }
+      requisitos_seleccionados_ids.map((reqId_sm_vc) => {
+        const existe_sm_vc = previos_sm_vc.find((r_sm_vc) => r_sm_vc.requisito_id_sm_vc === reqId_sm_vc)
+        return existe_sm_vc ?? { requisito_id_sm_vc: reqId_sm_vc, fecha_aprobacion_sm_vc: fecha_sm_vc }
       })
 
     const msg_sm_vc = {
       id_sm_vc: `MSG-${Date.now()}`,
       estudiante_id_sm_vc, materia_id_sm_vc,
-      remitente_id_sm_vc: auth_sm_vc.user.id_sm_vc,
+      remitente_id_sm_vc: auth_sm_vc.user_sm_vc.id_sm_vc,
       remitente_rol_sm_vc: 'PROFESOR',
       tipo_sm_vc: 'CORRECCION',
       version_sm_vc: `R-${Date.now().toString().slice(-4)}`,
@@ -320,18 +343,23 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     return msg_sm_vc
   }
 
-  const registrarDeploy = ({ url_produccion_sm_vc, archivo_codigo_nombre, documentacion_nombre }) => {
-    if (!auth_sm_vc.user) return
+  /* ── Acción: registrar el deploy final del estudiante ── */
+  const registrarDeploy_sm_vc = ({
+    url_produccion_sm_vc,
+    archivo_codigo_nombre,
+    documentacion_nombre
+  }) => {
+    if (!auth_sm_vc.user_sm_vc) return
     const registro_sm_vc = {
       id_sm_vc: `DEP-${Date.now()}`,
-      estudiante_id_sm_vc: auth_sm_vc.user.id_sm_vc,
+      estudiante_id_sm_vc: auth_sm_vc.user_sm_vc.id_sm_vc,
       url_produccion_sm_vc,
       archivo_codigo_id_sm_vc: archivo_codigo_nombre,
       documentacion_tecnica_id_sm_vc: documentacion_nombre,
       fecha_registro_sm_vc: new Date().toISOString()
     }
     const existente_sm_vc = deploys_sm_vc.value.findIndex(
-      (d) => d.estudiante_id_sm_vc === auth_sm_vc.user.id_sm_vc
+      (d_sm_vc) => d_sm_vc.estudiante_id_sm_vc === auth_sm_vc.user_sm_vc.id_sm_vc
     )
     if (existente_sm_vc !== -1) {
       deploys_sm_vc.value[existente_sm_vc] = registro_sm_vc
@@ -341,60 +369,53 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     return registro_sm_vc
   }
 
-  const procesarCambioPeriodo_sm_vc = (nuevo_periodo_sm_vc) => {
+  /* ── Acción: cambio de periodo — reprueba incompletos ── */
+  const procesarCambioPeriodo_sm_vc = (nuevoPeriodo_sm_vc) => {
     progreso_sm_vc.value.forEach((p_sm_vc) => {
-      if (p_sm_vc.estado_aprobacion_sm_vc !== 'APROBADO' && p_sm_vc.estado_aprobacion_sm_vc !== 'REPROBADO') {
-        const materia_sm_vc = getMateriaById(p_sm_vc.materia_id_sm_vc)
-        if (!materia_sm_vc) return
-        
-        const requisitosTotales_sm_vc = materia_sm_vc.requisitos.length
-        const requisitosAprobados_sm_vc = p_sm_vc.requisitos_aprobados_detalle_sm_vc?.length ?? 0
-
-        if (requisitosAprobados_sm_vc < requisitosTotales_sm_vc) {
-          p_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO'
-          
-          conversaciones_sm_vc.value.push({
-            id_sm_vc: `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            estudiante_id_sm_vc: p_sm_vc.estudiante_id_sm_vc,
-            materia_id_sm_vc: p_sm_vc.materia_id_sm_vc,
-            remitente_id_sm_vc: 'SISTEMA',
-            remitente_rol_sm_vc: 'SISTEMA',
-            tipo_sm_vc: 'SISTEMA',
-            version_sm_vc: 'SIS',
-            archivo_nombre_sm_vc: 'Transición de Periodo',
-            tamanio_sm_vc: '—',
-            comentario_sm_vc: `[ALERTA] El estudiante no completó el 100% de los requisitos al finalizar el periodo. Ha sido REPROBADO y pasará a cursar la materia en el nuevo periodo: ${nuevo_periodo_sm_vc}.`,
-            estado_evaluacion_sm_vc: 'REPROBADO',
-            fecha_sm_vc: new Date().toISOString(),
-            requisito_id_sm_vc: null
-          })
-        }
+      if (['APROBADO', 'REPROBADO'].includes(p_sm_vc.estado_aprobacion_sm_vc)) return
+      const materia_sm_vc = getMateriaById_sm_vc(p_sm_vc.materia_id_sm_vc)
+      if (!materia_sm_vc) return
+      const reqAprobados_sm_vc = p_sm_vc.requisitos_aprobados_detalle_sm_vc?.length ?? 0
+      if (reqAprobados_sm_vc < materia_sm_vc.requisitos.length) {
+        p_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO'
+        conversaciones_sm_vc.value.push({
+          id_sm_vc: `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          estudiante_id_sm_vc: p_sm_vc.estudiante_id_sm_vc,
+          materia_id_sm_vc: p_sm_vc.materia_id_sm_vc,
+          remitente_id_sm_vc: 'SISTEMA', remitente_rol_sm_vc: 'SISTEMA',
+          tipo_sm_vc: 'SISTEMA', version_sm_vc: 'SIS',
+          archivo_nombre_sm_vc: 'Transición de Periodo', tamanio_sm_vc: '—',
+          comentario_sm_vc: `[ALERTA] El estudiante no completó el 100% de los requisitos. REPROBADO. Nuevo periodo: ${nuevoPeriodo_sm_vc}.`,
+          estado_evaluacion_sm_vc: 'REPROBADO',
+          fecha_sm_vc: new Date().toISOString(),
+          requisito_id_sm_vc: null
+        })
       }
     })
   }
 
   return {
-    /* State — expuesto con _sm_vc */
+    /* Estado */
     materias_sm_vc,
     progreso_sm_vc,
     conversaciones_sm_vc,
     deploys_sm_vc,
     loading_sm_vc,
     /* Getters */
-    getMaterias,
-    getMateriaById,
-    getProgresoEstudiante,
-    miProgreso,
-    todasAprobadas,
-    getConversacion,
-    getDeployEstudiante,
-    miDeploy,
-    getEstudiantesDelProfesor,
-    /* Actions */
-    enviarInforme,
-    responderCorreccion,
-    aprobarRequisitosGranular,
-    registrarDeploy,
+    getMaterias_sm_vc,
+    getMateriaById_sm_vc,
+    getProgresoEstudiante_sm_vc,
+    miProgreso_sm_vc,
+    todasAprobadas_sm_vc,
+    getConversacion_sm_vc,
+    getDeployEstudiante_sm_vc,
+    miDeploy_sm_vc,
+    getEstudiantesDelProfesor_sm_vc,
+    /* Acciones */
+    enviarInforme_sm_vc,
+    responderCorreccion_sm_vc,
+    aprobarRequisitosGranular_sm_vc,
+    registrarDeploy_sm_vc,
     procesarCambioPeriodo_sm_vc,
     ESTADO_APROBACION
   }

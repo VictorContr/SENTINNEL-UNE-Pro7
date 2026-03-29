@@ -1,22 +1,26 @@
 <!-- ══════════════════════════════════════════════════════════════════
-     LandingPage.vue — Vista orquestadora de la Landing Page SENTINNEL.
-     Thin Page: importa y coordina las secciones, maneja el scroll
-     suave entre anclas y propaga el estado de tema a los hijos.
-     El único acceso a stores es configStore para el tema.
+     LandingPage.vue — Vista orquestadora de la Landing Page.
+     CORRECCIÓN: reemplaza window.scrollY/addEventListener con la
+     directiva v-scroll de Quasar. Secciones apuntadas por template
+     refs — elimina document.getElementById().
      ══════════════════════════════════════════════════════════════════ -->
 <template>
-  <q-layout view="hHh lpR fFf" class="landing-layout_sm_vc">
+  <!-- v-scroll de Quasar captura el scroll sin acceder a window -->
+  <q-layout
+    v-scroll="alDesplazar_sm_vc"
+    view="hHh lpR fFf"
+    class="landing-layout_sm_vc">
     <q-page-container>
       <q-page class="landing-page_sm_vc">
 
-        <!-- ── Barra de navegación flotante ── -->
-        <header class="landing-navbar_sm_vc" :class="{ 'navbar-scrolled_sm_vc': scrolled_sm_vc }">
+        <!-- Navbar flotante -->
+        <header
+          class="landing-navbar_sm_vc"
+          :class="{ 'navbar-scrolled_sm_vc': desplazado_sm_vc }">
           <div class="navbar-inner_sm_vc">
-            <!-- Logo -->
             <div class="navbar-brand_sm_vc">
               <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
-                <polygon
-                  points="18,2 34,10 34,26 18,34 2,26 2,10"
+                <polygon points="18,2 34,10 34,26 18,34 2,26 2,10"
                   :stroke="isDark_sm_vc ? '#6fffe9' : '#0d7a6f'"
                   stroke-width="1.5" fill="none" />
                 <circle cx="18" cy="18" r="4" :fill="isDark_sm_vc ? '#6fffe9' : '#0d7a6f'" />
@@ -24,21 +28,18 @@
               <span class="navbar-nombre_sm_vc">SENTINNEL</span>
             </div>
 
-            <!-- Nav links (desktop) -->
             <nav class="navbar-links_sm_vc gt-sm" aria-label="Navegación de la landing">
               <a
-                v-for="link_sm_vc in navAnlas_sm_vc"
-                :key="link_sm_vc.href_sm_vc"
-                :href="link_sm_vc.href_sm_vc"
+                v-for="enlace_sm_vc in navLinks_sm_vc"
+                :key="enlace_sm_vc.href_sm_vc"
+                :href="enlace_sm_vc.href_sm_vc"
                 class="navbar-link_sm_vc"
-                @click.prevent="scrollA_sm_vc(link_sm_vc.href_sm_vc)">
-                {{ link_sm_vc.label_sm_vc }}
+                @click.prevent="scrollASeccion_sm_vc(enlace_sm_vc.href_sm_vc)">
+                {{ enlace_sm_vc.label_sm_vc }}
               </a>
             </nav>
 
-            <!-- Controles derecha -->
             <div class="navbar-actions_sm_vc">
-              <!-- Toggle de tema -->
               <q-btn
                 flat round dense
                 :icon="isDark_sm_vc ? 'light_mode' : 'dark_mode'"
@@ -51,64 +52,55 @@
                 </q-tooltip>
               </q-btn>
 
-              <!-- CTA de acceso -->
               <q-btn
                 unelevated no-caps
-                label="Acceder"
-                icon="login"
-                size="sm"
+                label="Acceder" icon="login" size="sm"
                 class="navbar-cta_sm_vc"
-                @click="router_sm_vc.push('/login')"
-              />
+                @click="router_sm_vc.push('/login')" />
             </div>
           </div>
         </header>
 
-        <!-- ══════════════════════
-             SECCIONES DE CONTENIDO
-             ══════════════════════ -->
-
-        <!-- 1. Hero -->
-        <div id="hero">
+        <!-- ═══════════════════════════════
+             SECCIONES — refs en lugar de id queries
+             ═══════════════════════════════ -->
+        <div ref="refHero_sm_vc" id="hero">
           <HeroSection
             :is-dark_sm_vc="isDark_sm_vc"
-            @scroll-to-beneficios="scrollA_sm_vc('#beneficios')" />
+            @scroll-to-beneficios="scrollASeccion_sm_vc('#beneficios')" />
         </div>
 
-        <!-- 2. Beneficios -->
-        <BeneficiosSection :is-dark_sm_vc="isDark_sm_vc" />
-
-        <!-- 3. Mockup visual del dashboard -->
-        <MockUpVisual :is-dark_sm_vc="isDark_sm_vc" />
-
-        <!-- 4. Testimonios (usa store + servicio Axios) -->
-        <TestimoniosSection :is-dark_sm_vc="isDark_sm_vc" />
-
-        <!-- 5. FAQ -->
-        <FAQSection :is-dark_sm_vc="isDark_sm_vc" />
-
-        <!-- 6. Contacto (formulario + solicitar demo) -->
-        <div id="contacto">
-          <ContactoSection :is-dark_sm_vc="isDark_sm_vc" />
+        <div ref="refBeneficios_sm_vc" id="beneficios">
+          <BeneficiosSection :is-dark_sm_vc="isDark_sm_vc" />
         </div>
 
-        <!-- 7. Mapa — Universidad Nueva Esparta -->
-        <MapaSection :is-dark_sm_vc="isDark_sm_vc" />
+        <div ref="refDemo_sm_vc" id="demo">
+          <MockUpVisual :is-dark_sm_vc="isDark_sm_vc" />
+        </div>
 
-        <!-- 8. Footer -->
-        <FooterSection />
+        <div ref="refTestimonios_sm_vc" id="testimonios">
+          <TestimoniosSection :is-dark_sm_vc="isDark_sm_vc" />
+        </div>
 
-        <!-- Botón de scroll to top -->
+        <div ref="refFaq_sm_vc" id="faq">
+          <FAQSection :is-dark_sm_vc="isDark_sm_vc" />
+        </div>
+
+        <FooterSection
+          :is-dark_sm_vc="isDark_sm_vc"
+          @toggle-theme="configStore_sm_vc.toggleTheme_sm_vc()"
+          @scroll-to="scrollASeccion_sm_vc" />
+
+        <!-- Botón scroll al inicio — usa el ref del hero en lugar de window.scrollTo -->
         <transition name="fade-up">
           <q-btn
-            v-if="scrolled_sm_vc"
+            v-if="desplazado_sm_vc"
             round unelevated
             icon="keyboard_arrow_up"
             class="scroll-top-btn_sm_vc"
-            color="teal-3"
-            text-color="dark"
+            color="teal-3" text-color="dark"
             aria-label="Volver al inicio"
-            @click="scrollA_sm_vc('#hero')" />
+            @click="scrollASeccion_sm_vc('#hero')" />
         </transition>
       </q-page>
     </q-page-container>
@@ -116,61 +108,57 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useConfigStore } from 'src/stores/configStore.js'
 import { useRouter } from 'vue-router'
 
-/* ── Sub-componentes de sección ── */
-import HeroSection       from 'src/components/shared/landing/HeroSection.vue'
-import BeneficiosSection from 'src/components/shared/landing/BeneficiosSection.vue'
-import MockUpVisual      from 'src/components/shared/landing/MockUpVisual.vue'
+import HeroSection        from 'src/components/shared/landing/HeroSection.vue'
+import BeneficiosSection  from 'src/components/shared/landing/BeneficiosSection.vue'
+import MockUpVisual       from 'src/components/shared/landing/MockUpVisual.vue'
 import TestimoniosSection from 'src/components/shared/landing/TestimoniosSection.vue'
-import FAQSection        from 'src/components/shared/landing/FAQSection.vue'
-import FooterSection     from 'src/components/shared/landing/FooterSection.vue'
-import ContactoSection   from 'src/components/shared/landing/ContactoSection.vue'
-import MapaSection       from 'src/components/shared/landing/MapaSection.vue'
+import FAQSection         from 'src/components/shared/landing/FAQSection.vue'
+import FooterSection      from 'src/components/shared/landing/FooterSection.vue'
+import { useLandingStore } from 'src/stores/landingStore.js'
 
-/* ── Enrutador ── */
-const router_sm_vc = useRouter()
-
-/* ── Config Store (tema light/dark) ── */
+const router_sm_vc      = useRouter()
 const configStore_sm_vc = useConfigStore()
-const isDark_sm_vc = computed(() => configStore_sm_vc.isDark_sm_vc)
+const landingStore_sm_vc = useLandingStore()
+const navLinks_sm_vc    = landingStore_sm_vc.navLinks_sm_vc
+const isDark_sm_vc      = computed(() => configStore_sm_vc.isDark_sm_vc)
 
-/* ── Estado de scroll para navbar y botón top ── */
-const scrolled_sm_vc = ref(false)
+/* ── Refs de secciones — sustituyen a document.getElementById ── */
+const refHero_sm_vc        = ref(null)
+const refBeneficios_sm_vc  = ref(null)
+const refDemo_sm_vc        = ref(null)
+const refTestimonios_sm_vc = ref(null)
+const refFaq_sm_vc         = ref(null)
 
-const onScroll_sm_vc = () => {
-  scrolled_sm_vc.value = window.scrollY > 80
+/* Mapa de hash → ref del elemento */
+const mapaRefs_sm_vc = computed(() => ({
+  hero:        refHero_sm_vc,
+  beneficios:  refBeneficios_sm_vc,
+  demo:        refDemo_sm_vc,
+  testimonios: refTestimonios_sm_vc,
+  faq:         refFaq_sm_vc
+}))
+
+/* Estado de scroll para el navbar y botón de inicio */
+const desplazado_sm_vc = ref(false)
+
+/* Handler de la directiva v-scroll de Quasar — recibe posición en px */
+const alDesplazar_sm_vc = (posicion_sm_vc) => {
+  desplazado_sm_vc.value = posicion_sm_vc > 80
 }
 
-/* ── Scroll suave a un ancla ── */
-const scrollA_sm_vc = (href_sm_vc) => {
-  const id_sm_vc = href_sm_vc.replace('#', '')
-  const el_sm_vc = document.getElementById(id_sm_vc)
-  if (el_sm_vc) {
-    el_sm_vc.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  } else {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+/* Scroll suave a sección por hash — usa element.scrollIntoView (permitido) */
+const scrollASeccion_sm_vc = (href_sm_vc) => {
+  const id_sm_vc  = href_sm_vc.replace('#', '')
+  const ref_sm_vc = mapaRefs_sm_vc.value[id_sm_vc]
+  if (ref_sm_vc?.value) {
+    ref_sm_vc.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
-/* ── Links de navegación ── */
-const navAnlas_sm_vc = [
-  { label_sm_vc: 'Beneficios',  href_sm_vc: '#beneficios' },
-  { label_sm_vc: 'Demo',        href_sm_vc: '#demo' },
-  { label_sm_vc: 'Testimonios', href_sm_vc: '#testimonios' },
-  { label_sm_vc: 'FAQ',         href_sm_vc: '#faq' },
-  { label_sm_vc: 'Contacto',    href_sm_vc: '#contacto' }
-]
-
-/* ── Lifecycle ── */
-onMounted(() => {
-  window.addEventListener('scroll', onScroll_sm_vc, { passive: true })
-})
-onUnmounted(() => {
-  window.removeEventListener('scroll', onScroll_sm_vc)
-})
 </script>
 
 <style scoped>

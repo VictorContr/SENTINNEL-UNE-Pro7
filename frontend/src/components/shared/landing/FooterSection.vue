@@ -94,19 +94,17 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useConfigStore } from 'src/stores/configStore'
+import { useLandingStore } from 'src/stores/landingStore.js'
 
 const configStore_sm_vc = useConfigStore()
+const landingStore_sm_vc = useLandingStore()
 const { isDark_sm_vc } = storeToRefs(configStore_sm_vc)
 const { toggleTheme_sm_vc } = configStore_sm_vc
 
 const anioActual_sm_vc = computed(() => new Date().getFullYear())
 
 const navLinks_sm_vc = [
-  { label_sm_vc: 'Inicio',        href_sm_vc: '#hero',         icon_sm_vc: 'home' },
-  { label_sm_vc: 'Beneficios',    href_sm_vc: '#beneficios',   icon_sm_vc: 'star' },
-  { label_sm_vc: 'Vista Previa',  href_sm_vc: '#demo',         icon_sm_vc: 'preview' },
-  { label_sm_vc: 'Testimonios',   href_sm_vc: '#testimonios',  icon_sm_vc: 'chat_bubble' },
-  { label_sm_vc: 'Preguntas',     href_sm_vc: '#faq',          icon_sm_vc: 'help' },
+  ...landingStore_sm_vc.navLinks_sm_vc,
   { label_sm_vc: 'Acceder',       href_sm_vc: '#/login',       icon_sm_vc: 'login' }
 ]
 

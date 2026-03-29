@@ -1,15 +1,15 @@
+// ══════════════════════════════════════════════════════════════════
+// authStore.js — Autenticación Mock-First con sesión persistente.
+// Toda la API pública lleva sufijo _sm_vc según convención SENTINNEL.
+// Persistencia delegada a $q.LocalStorage (nunca window.localStorage).
+// ══════════════════════════════════════════════════════════════════
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { LocalStorage } from 'quasar'
 
-/**
- * SENTINNEL – authStore
- * Simula autenticación JWT con roles y sesión persistente en localStorage.
- * Campos de usuario respetan la convención de sufijos Prisma (_sm_vc, _sm_int, etc.)
- */
-
-/* ── Usuarios ficticios para el prototipo ── */
-const MOCK_USERS_SEED_sm_vc = [
+/* Semilla de usuarios para el prototipo — no se muta directamente */
+const SEMILLA_USUARIOS_sm_vc = [
   {
     id_sm_vc: 'USR-001',
     nombre_sm_vc: 'Carlos Mendoza',
@@ -46,25 +46,25 @@ const MOCK_USERS_SEED_sm_vc = [
 ]
 
 export const useAuthStore = defineStore('auth', () => {
-  /* ── State ── */
+  /* ── Estado reactivo ── */
   const user_sm_vc = ref(null)
   const token_sm_vc = ref(null)
   const loading_sm_vc = ref(false)
   const error_sm_vc = ref(null)
 
-  /* ── Reactive copy of mock users (not mutating the seed) ── */
+  /* Copia reactiva de mock; no muta la semilla original */
   const MOCK_USERS_sm_vc = ref(
-    MOCK_USERS_SEED_sm_vc.map((u) => ({ ...u }))
+    SEMILLA_USUARIOS_sm_vc.map((u_sm_vc) => ({ ...u_sm_vc }))
   )
 
-  /* ── Hydrate from localStorage ── */
+  /* Hidratación desde $q.LocalStorage al montar el store */
   const _hidratar_sm_vc = () => {
     try {
-      const stored_sm_vc = LocalStorage.getItem('sentinnel_session')
-      if (stored_sm_vc) {
-        const parsed_sm_vc = JSON.parse(stored_sm_vc)
-        user_sm_vc.value = parsed_sm_vc.user
-        token_sm_vc.value = parsed_sm_vc.token
+      const sesion_sm_vc = LocalStorage.getItem('sentinnel_session')
+      if (sesion_sm_vc) {
+        const datos_sm_vc = JSON.parse(sesion_sm_vc)
+        user_sm_vc.value = datos_sm_vc.user
+        token_sm_vc.value = datos_sm_vc.token
       }
     } catch {
       LocalStorage.remove('sentinnel_session')
@@ -72,53 +72,53 @@ export const useAuthStore = defineStore('auth', () => {
   }
   _hidratar_sm_vc()
 
-  /* ── Getters ── */
-  const is_authenticated_sm_vc = computed(() => !!token_sm_vc.value && !!user_sm_vc.value)
+  /* ── Getters computados ── */
+  const isAuthenticated_sm_vc = computed(
+    () => !!token_sm_vc.value && !!user_sm_vc.value
+  )
   const rol_sm_vc = computed(() => user_sm_vc.value?.rol_sm_vc ?? null)
-  const is_admin_sm_vc = computed(() => rol_sm_vc.value === 'ADMINISTRADOR')
-  const is_profesor_sm_vc = computed(() => rol_sm_vc.value === 'PROFESOR')
-  const is_estudiante_sm_vc = computed(() => rol_sm_vc.value === 'ESTUDIANTE')
-  const nombre_corto_sm_vc = computed(() => {
-    if (!user_sm_vc.value?.nombre_sm_vc) return ''
-    return user_sm_vc.value.nombre_sm_vc.split(' ')[0]
-  })
+  const isAdmin_sm_vc = computed(() => rol_sm_vc.value === 'ADMINISTRADOR')
+  const isProfesor_sm_vc = computed(() => rol_sm_vc.value === 'PROFESOR')
+  const isEstudiante_sm_vc = computed(() => rol_sm_vc.value === 'ESTUDIANTE')
+  const nombreCorto_sm_vc = computed(() =>
+    user_sm_vc.value?.nombre_sm_vc?.split(' ')[0] ?? ''
+  )
 
-  /* ── Actions ── */
-  async function login_sm_vc(correo_input_sm_vc, clave_input_sm_vc) {
+  /* ── Acción: iniciar sesión con credenciales mock ── */
+  const login_sm_vc = async (correo_sm_vc, clave_sm_vc) => {
     loading_sm_vc.value = true
     error_sm_vc.value = null
 
     try {
-      /* Simular latencia de red */
+      /* Simula latencia de red */
       await new Promise((r) => setTimeout(r, 900))
 
-      const found_sm_vc = MOCK_USERS_sm_vc.value.find(
-        (u) =>
-          u.correo_sm_vc === correo_input_sm_vc.trim().toLowerCase() &&
-          u.clave_sm_vc === clave_input_sm_vc
+      const encontrado_sm_vc = MOCK_USERS_sm_vc.value.find(
+        (u_sm_vc) =>
+          u_sm_vc.correo_sm_vc === correo_sm_vc.trim().toLowerCase() &&
+          u_sm_vc.clave_sm_vc === clave_sm_vc
       )
 
-      if (!found_sm_vc) {
+      if (!encontrado_sm_vc) {
         error_sm_vc.value = 'Credenciales inválidas. Verifica tu correo y contraseña.'
         return false
       }
-
-      if (!found_sm_vc.activo_sm_vc) {
+      if (!encontrado_sm_vc.activo_sm_vc) {
         error_sm_vc.value = 'Tu cuenta ha sido revocada. Contacta al administrador.'
         return false
       }
 
-      /* Generar token simulado */
-      const fake_token_sm_vc = `sntnl_${btoa(found_sm_vc.id_sm_vc + ':' + Date.now())}`
-      const safe_user_sm_vc = { ...found_sm_vc }
-      delete safe_user_sm_vc.clave_sm_vc
+      const tokenSimulado_sm_vc = `sntnl_${btoa(encontrado_sm_vc.id_sm_vc + ':' + Date.now())}`
+      const usuarioSeguro_sm_vc = { ...encontrado_sm_vc }
+      delete usuarioSeguro_sm_vc.clave_sm_vc
 
-      user_sm_vc.value = safe_user_sm_vc
-      token_sm_vc.value = fake_token_sm_vc
+      user_sm_vc.value = usuarioSeguro_sm_vc
+      token_sm_vc.value = tokenSimulado_sm_vc
 
+      /* Persistencia vía Quasar LocalStorage — jamás window.localStorage */
       LocalStorage.set(
         'sentinnel_session',
-        JSON.stringify({ user: safe_user_sm_vc, token: fake_token_sm_vc })
+        JSON.stringify({ user: usuarioSeguro_sm_vc, token: tokenSimulado_sm_vc })
       )
 
       return true
@@ -130,22 +130,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout_sm_vc() {
+  /* ── Acción: cerrar sesión y limpiar persistencia ── */
+  const logout_sm_vc = () => {
     user_sm_vc.value = null
     token_sm_vc.value = null
     LocalStorage.remove('sentinnel_session')
   }
 
-  function ban_user_sm_vc(id_target_sm_vc) {
-    /* Soft-delete: marca como inactivo en la copia reactiva */
-    const usuario_sm_vc = MOCK_USERS_sm_vc.value.find((u) => u.id_sm_vc === id_target_sm_vc)
-    if (usuario_sm_vc) {
-      usuario_sm_vc.activo_sm_vc = !usuario_sm_vc.activo_sm_vc
+  /* ── Acción: soft-delete — toggle activo del usuario ── */
+  const banUser_sm_vc = (idObjetivo_sm_vc) => {
+    const objetivo_sm_vc = MOCK_USERS_sm_vc.value.find(
+      (u_sm_vc) => u_sm_vc.id_sm_vc === idObjetivo_sm_vc
+    )
+    if (objetivo_sm_vc) {
+      objetivo_sm_vc.activo_sm_vc = !objetivo_sm_vc.activo_sm_vc
     }
   }
 
-  function crear_usuario_sm_vc(datos_sm_vc) {
-    /* Acción mock: agrega un usuario al array reactivo local */
+  /* ── Acción: agregar usuario al array reactivo mock ── */
+  const crearUsuario_sm_vc = (datos_sm_vc) => {
     const nuevo_sm_vc = {
       id_sm_vc: `USR-${String(MOCK_USERS_sm_vc.value.length + 1).padStart(3, '0')}`,
       nombre_sm_vc: datos_sm_vc.nombre_sm_vc,
@@ -161,14 +164,16 @@ export const useAuthStore = defineStore('auth', () => {
     return nuevo_sm_vc
   }
 
-  function actualizar_usuario_sm_vc(datos_sm_vc) {
-    const idx_sm_vc = MOCK_USERS_sm_vc.value.findIndex(u => u.id_sm_vc === datos_sm_vc.id_sm_vc)
+  /* ── Acción: actualizar campos de usuario existente ── */
+  const actualizarUsuario_sm_vc = (datos_sm_vc) => {
+    const idx_sm_vc = MOCK_USERS_sm_vc.value.findIndex(
+      (u_sm_vc) => u_sm_vc.id_sm_vc === datos_sm_vc.id_sm_vc
+    )
     if (idx_sm_vc !== -1) {
-      MOCK_USERS_sm_vc.value[idx_sm_vc] = { 
-        ...MOCK_USERS_sm_vc.value[idx_sm_vc], 
+      MOCK_USERS_sm_vc.value[idx_sm_vc] = {
+        ...MOCK_USERS_sm_vc.value[idx_sm_vc],
         ...datos_sm_vc,
-        // No permitir que sobreescriban id_sm_vc
-        id_sm_vc: MOCK_USERS_sm_vc.value[idx_sm_vc].id_sm_vc 
+        id_sm_vc: MOCK_USERS_sm_vc.value[idx_sm_vc].id_sm_vc
       }
       return MOCK_USERS_sm_vc.value[idx_sm_vc]
     }
@@ -176,26 +181,24 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    /* State */
-    user: user_sm_vc,
+    /* Estado */
+    user_sm_vc,
     token_sm_vc,
     loading_sm_vc,
     error_sm_vc,
-    MOCK_USERS: MOCK_USERS_sm_vc,
-
+    MOCK_USERS_sm_vc,
     /* Getters */
-    isAuthenticated: is_authenticated_sm_vc,
-    rol: rol_sm_vc,
-    isAdmin: is_admin_sm_vc,
-    isProfesor: is_profesor_sm_vc,
-    isEstudiante: is_estudiante_sm_vc,
-    nombreCorto: nombre_corto_sm_vc,
-
-    /* Actions */
-    login: login_sm_vc,
-    logout: logout_sm_vc,
-    banUser: ban_user_sm_vc,
-    crearUsuario: crear_usuario_sm_vc,
-    actualizarUsuario: actualizar_usuario_sm_vc
+    isAuthenticated_sm_vc,
+    rol_sm_vc,
+    isAdmin_sm_vc,
+    isProfesor_sm_vc,
+    isEstudiante_sm_vc,
+    nombreCorto_sm_vc,
+    /* Acciones */
+    login_sm_vc,
+    logout_sm_vc,
+    banUser_sm_vc,
+    crearUsuario_sm_vc,
+    actualizarUsuario_sm_vc
   }
 })
