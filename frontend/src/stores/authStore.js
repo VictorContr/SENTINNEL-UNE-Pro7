@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { LocalStorage } from 'quasar'
+import { LocalStorage, Notify } from 'quasar'
 
 /**
  * SENTINNEL – authStore
@@ -54,7 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   /* ── Reactive copy of mock users (not mutating the seed) ── */
   const MOCK_USERS_sm_vc = ref(
-    MOCK_USERS_SEED_sm_vc.map((u) => ({ ...u }))
+    MOCK_USERS_SEED_sm_vc.map((u_sm_vc) => ({ ...u_sm_vc }))
   )
 
   /* ── Hydrate from localStorage ── */
@@ -62,7 +62,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const stored_sm_vc = LocalStorage.getItem('sentinnel_session')
       if (stored_sm_vc) {
-        const parsed_sm_vc = JSON.parse(stored_sm_vc)
+        // En Quasar LocalStorage ya parsea los objetos si se guardaron con setItem,
+        // pero por si acaso, verificamos:
+        const parsed_sm_vc = typeof stored_sm_vc === 'string' ? JSON.parse(stored_sm_vc) : stored_sm_vc
         user_sm_vc.value = parsed_sm_vc.user
         token_sm_vc.value = parsed_sm_vc.token
       }
@@ -84,27 +86,29 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   /* ── Actions ── */
-  async function login_sm_vc(correo_input_sm_vc, clave_input_sm_vc) {
+  const login_sm_vc = async (correo_input_sm_vc, clave_input_sm_vc) => {
     loading_sm_vc.value = true
     error_sm_vc.value = null
 
     try {
       /* Simular latencia de red */
-      await new Promise((r) => setTimeout(r, 900))
+      await new Promise((r_sm_vc) => setTimeout(r_sm_vc, 900))
 
       const found_sm_vc = MOCK_USERS_sm_vc.value.find(
-        (u) =>
-          u.correo_sm_vc === correo_input_sm_vc.trim().toLowerCase() &&
-          u.clave_sm_vc === clave_input_sm_vc
+        (u_sm_vc) =>
+          u_sm_vc.correo_sm_vc === correo_input_sm_vc.trim().toLowerCase() &&
+          u_sm_vc.clave_sm_vc === clave_input_sm_vc
       )
 
       if (!found_sm_vc) {
         error_sm_vc.value = 'Credenciales inválidas. Verifica tu correo y contraseña.'
+        Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'warning' })
         return false
       }
 
       if (!found_sm_vc.activo_sm_vc) {
         error_sm_vc.value = 'Tu cuenta ha sido revocada. Contacta al administrador.'
+        Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'block' })
         return false
       }
 
@@ -121,30 +125,34 @@ export const useAuthStore = defineStore('auth', () => {
         JSON.stringify({ user: safe_user_sm_vc, token: fake_token_sm_vc })
       )
 
+      Notify.create({ message: `Bienvenido, ${safe_user_sm_vc.nombre_sm_vc}`, color: 'positive', icon: 'check_circle' })
       return true
     } catch (err_sm_vc) {
       error_sm_vc.value = err_sm_vc?.message || 'Error inesperado al iniciar sesión.'
+      Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'error' })
       return false
     } finally {
       loading_sm_vc.value = false
     }
   }
 
-  function logout_sm_vc() {
+  const logout_sm_vc = () => {
     user_sm_vc.value = null
     token_sm_vc.value = null
     LocalStorage.remove('sentinnel_session')
+    Notify.create({ message: 'Sesión finalizada correctamente', color: 'info', icon: 'info' })
   }
 
-  function ban_user_sm_vc(id_target_sm_vc) {
+  const ban_user_sm_vc = (id_target_sm_vc) => {
     /* Soft-delete: marca como inactivo en la copia reactiva */
-    const usuario_sm_vc = MOCK_USERS_sm_vc.value.find((u) => u.id_sm_vc === id_target_sm_vc)
+    const usuario_sm_vc = MOCK_USERS_sm_vc.value.find((u_sm_vc) => u_sm_vc.id_sm_vc === id_target_sm_vc)
     if (usuario_sm_vc) {
       usuario_sm_vc.activo_sm_vc = !usuario_sm_vc.activo_sm_vc
+      Notify.create({ message: `Usuario ${usuario_sm_vc.activo_sm_vc ? 'reactivado' : 'suspendido'}`, color: 'warning' })
     }
   }
 
-  function crear_usuario_sm_vc(datos_sm_vc) {
+  const crear_usuario_sm_vc = (datos_sm_vc) => {
     /* Acción mock: agrega un usuario al array reactivo local */
     const nuevo_sm_vc = {
       id_sm_vc: `USR-${String(MOCK_USERS_sm_vc.value.length + 1).padStart(3, '0')}`,
@@ -158,11 +166,12 @@ export const useAuthStore = defineStore('auth', () => {
       profesor_id_sm_vc: datos_sm_vc.profesor_id_sm_vc || null
     }
     MOCK_USERS_sm_vc.value.push(nuevo_sm_vc)
+    Notify.create({ message: 'Usuario creado exitosamente', color: 'positive' })
     return nuevo_sm_vc
   }
 
-  function actualizar_usuario_sm_vc(datos_sm_vc) {
-    const idx_sm_vc = MOCK_USERS_sm_vc.value.findIndex(u => u.id_sm_vc === datos_sm_vc.id_sm_vc)
+  const actualizar_usuario_sm_vc = (datos_sm_vc) => {
+    const idx_sm_vc = MOCK_USERS_sm_vc.value.findIndex(u_sm_vc => u_sm_vc.id_sm_vc === datos_sm_vc.id_sm_vc)
     if (idx_sm_vc !== -1) {
       MOCK_USERS_sm_vc.value[idx_sm_vc] = { 
         ...MOCK_USERS_sm_vc.value[idx_sm_vc], 
@@ -170,32 +179,35 @@ export const useAuthStore = defineStore('auth', () => {
         // No permitir que sobreescriban id_sm_vc
         id_sm_vc: MOCK_USERS_sm_vc.value[idx_sm_vc].id_sm_vc 
       }
+      Notify.create({ message: 'Usuario actualizado', color: 'positive' })
       return MOCK_USERS_sm_vc.value[idx_sm_vc]
     }
-    throw new Error('Usuario no encontrado')
+    const err_sm_vc = new Error('Usuario no encontrado')
+    Notify.create({ message: err_sm_vc.message, color: 'negative' })
+    throw err_sm_vc
   }
 
   return {
     /* State */
-    user: user_sm_vc,
+    user_sm_vc,
     token_sm_vc,
     loading_sm_vc,
     error_sm_vc,
-    MOCK_USERS: MOCK_USERS_sm_vc,
+    MOCK_USERS_sm_vc,
 
     /* Getters */
-    isAuthenticated: is_authenticated_sm_vc,
-    rol: rol_sm_vc,
-    isAdmin: is_admin_sm_vc,
-    isProfesor: is_profesor_sm_vc,
-    isEstudiante: is_estudiante_sm_vc,
-    nombreCorto: nombre_corto_sm_vc,
+    is_authenticated_sm_vc,
+    rol_sm_vc,
+    is_admin_sm_vc,
+    is_profesor_sm_vc,
+    is_estudiante_sm_vc,
+    nombre_corto_sm_vc,
 
     /* Actions */
-    login: login_sm_vc,
-    logout: logout_sm_vc,
-    banUser: ban_user_sm_vc,
-    crearUsuario: crear_usuario_sm_vc,
-    actualizarUsuario: actualizar_usuario_sm_vc
+    login_sm_vc,
+    logout_sm_vc,
+    ban_user_sm_vc,
+    crear_usuario_sm_vc,
+    actualizar_usuario_sm_vc
   }
 })

@@ -15,8 +15,8 @@
         </div>
         <p class="page-subtitle_sm_vc">
           Alertas para
-          <span class="highlight_sm_vc">{{ auth_sm_vc.user?.nombre_sm_vc }}</span>
-          — ID: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.id_sm_vc }}</span>
+          <span class="highlight_sm_vc">{{ auth_sm_vc.user_sm_vc?.nombre_sm_vc }}</span>
+          — ID: <span class="code-tag_sm_vc">{{ auth_sm_vc.user_sm_vc?.id_sm_vc }}</span>
         </p>
       </div>
 
@@ -30,7 +30,7 @@
             :class="{ 'filter-chip--active_sm_vc': store_sm_vc.filtroTipo_sm_vc === filtro.value }"
             :style="store_sm_vc.filtroTipo_sm_vc === filtro.value
               ? { borderColor: filtro.color, color: filtro.color } : {}"
-            @click="store_sm_vc.setFiltroTipo(filtro.value)">
+            @click="store_sm_vc.setFiltroTipo_sm_vc(filtro.value)">
             <q-icon :name="filtro.icon" size="12px" />
             {{ filtro.label }}
             <span v-if="filtro.count > 0" class="chip-count_sm_vc">
@@ -40,22 +40,22 @@
         </div>
 
         <q-btn
-          v-if="store_sm_vc.conteoNoLeidas > 0"
+          v-if="store_sm_vc.conteoNoLeidas_sm_vc > 0"
           flat dense no-caps label="Marcar todas como leídas"
           icon="done_all" color="teal-3" size="sm"
-          @click="store_sm_vc.marcarTodasLeidas()" />
+          @click="store_sm_vc.marcarTodasLeidas_sm_vc()" />
       </div>
     </div>
 
     <!-- Contadores -->
     <div class="stats-row_sm_vc">
       <div class="stat-chip_sm_vc">
-        <span class="stat-num_sm_vc">{{ store_sm_vc.misNotificaciones.length }}</span>
+        <span class="stat-num_sm_vc">{{ store_sm_vc.misNotificaciones_sm_vc.length }}</span>
         <span class="stat-label_sm_vc">Total</span>
       </div>
       <div class="stat-chip_sm_vc stat-chip--unread_sm_vc">
         <span class="stat-num_sm_vc stat-num--unread_sm_vc">
-          {{ store_sm_vc.conteoNoLeidas }}
+          {{ store_sm_vc.conteoNoLeidas_sm_vc }}
         </span>
         <span class="stat-label_sm_vc">Sin Leer</span>
       </div>
@@ -66,27 +66,27 @@
       <transition-group name="notif-list" tag="div" class="notif-list_sm_vc">
 
         <div
-          v-for="notif in store_sm_vc.notificacionesFiltradas"
+          v-for="notif in store_sm_vc.notificacionesFiltradas_sm_vc"
           :key="notif.id_sm_vc"
           class="notif-card_sm_vc"
           :class="{ 'notif-card--unread_sm_vc': !notif.leida_sm_vc }"
-          :style="{ '--tipo-color': store_sm_vc.getTipoMeta(notif.tipo_sm_vc).color }"
-          @click="store_sm_vc.marcarLeida(notif.id_sm_vc)">
+          :style="{ '--tipo-color': store_sm_vc.getTipoMeta_sm_vc(notif.tipo_sm_vc).color }"
+          @click="store_sm_vc.marcarLeida_sm_vc(notif.id_sm_vc)">
 
           <div class="notif-type-bar_sm_vc" />
 
           <div class="notif-icon-wrap_sm_vc">
             <q-icon
-              :name="store_sm_vc.getTipoMeta(notif.tipo_sm_vc).icon"
+              :name="store_sm_vc.getTipoMeta_sm_vc(notif.tipo_sm_vc).icon"
               size="20px"
-              :style="{ color: store_sm_vc.getTipoMeta(notif.tipo_sm_vc).color }" />
+              :style="{ color: store_sm_vc.getTipoMeta_sm_vc(notif.tipo_sm_vc).color }" />
           </div>
 
           <div class="notif-content_sm_vc">
             <div class="notif-header_sm_vc">
               <div
                 class="notif-tipo-tag_sm_vc"
-                :style="{ color: store_sm_vc.getTipoMeta(notif.tipo_sm_vc).color }">
+                :style="{ color: store_sm_vc.getTipoMeta_sm_vc(notif.tipo_sm_vc).color }">
                 {{ notif.tipo_sm_vc }}
               </div>
               <span v-if="!notif.leida_sm_vc" class="unread-dot_sm_vc" />
@@ -109,7 +109,7 @@
           </div>
         </div>
 
-        <div v-if="store_sm_vc.notificacionesFiltradas.length === 0" key="empty"
+        <div v-if="store_sm_vc.notificacionesFiltradas_sm_vc.length === 0" key="empty"
           class="empty-state_sm_vc">
           <q-icon name="notifications_off" size="48px" color="blue-grey-8" />
           <p>No hay notificaciones para este filtro.</p>
@@ -147,28 +147,28 @@ const tipoFiltros_sm_vc = computed(() => [
     label: 'Todas',
     icon: 'format_list_bulleted',
     color: '#7aa0b8',
-    count: store_sm_vc.misNotificaciones.length
+    count: store_sm_vc.misNotificaciones_sm_vc.length
   },
   {
     value: 'URGENTE',
     label: 'Urgentes',
     icon: 'error',
     color: '#ff4b6e',
-    count: store_sm_vc.misNotificaciones.filter((n) => n.tipo_sm_vc === 'URGENTE').length
+    count: store_sm_vc.misNotificaciones_sm_vc.filter((n_sm_vc) => n_sm_vc.tipo_sm_vc === 'URGENTE').length
   },
   {
     value: 'IMPORTANTE',
     label: 'Importantes',
     icon: 'warning',
     color: '#f0a500',
-    count: store_sm_vc.misNotificaciones.filter((n) => n.tipo_sm_vc === 'IMPORTANTE').length
+    count: store_sm_vc.misNotificaciones_sm_vc.filter((n_sm_vc) => n_sm_vc.tipo_sm_vc === 'IMPORTANTE').length
   },
   {
     value: 'INFORMATIVA',
     label: 'Informativas',
     icon: 'info',
     color: '#6fffe9',
-    count: store_sm_vc.misNotificaciones.filter((n) => n.tipo_sm_vc === 'INFORMATIVA').length
+    count: store_sm_vc.misNotificaciones_sm_vc.filter((n_sm_vc) => n_sm_vc.tipo_sm_vc === 'INFORMATIVA').length
   }
 ])
 </script>
