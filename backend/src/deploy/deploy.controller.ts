@@ -51,8 +51,8 @@ export class DeployController {
     return this.deployService.registrarDeploy_sm_vc(
       estudianteId,
       dto,
-      files?.codigo?.[0],
-      files?.documentacion?.[0],
+      files?.codigo?.[0] as Express.Multer.File,
+      files?.documentacion?.[0] as Express.Multer.File,
       req.user.id_sm_vc,
     );
   }
