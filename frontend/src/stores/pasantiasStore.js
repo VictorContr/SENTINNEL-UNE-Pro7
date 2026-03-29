@@ -61,8 +61,8 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     cargando_sm_vc.value = true
     try {
       const resp_sm_vc = await apiGetProgresoEstudiante_sm_vc(id_sm_vc)
-      // Puede sobreescribir el arreglo global o devolverlo 
-      // Si el profesor revisa múltiples, devolvemos en lugar de pisar
+      // Guardamos en el estado para que los getters reactivos funcionen
+      progreso_sm_vc.value = resp_sm_vc
       return resp_sm_vc
     } catch (err_sm_vc) {
       Notify.create({ message: err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al obtener progreso del estudiante.', color: 'negative', icon: 'error' })
@@ -98,6 +98,12 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     progreso_sm_vc.value.length > 0 && 
     progreso_sm_vc.value.every((p_sm_vc) => p_sm_vc.estado_aprobacion_sm_vc === 'APROBADO' || p_sm_vc.aprobado_sm_vc === true)
   )
+
+  const getProgresoEstudiante = (id_sm_vc) => {
+    // Retornamos el progreso actual filtrado o directo si confiamos en el fetch_progreso previa
+    // Por simplicidad en la transición a backend real:
+    return progreso_sm_vc.value || []
+  }
 
   /* ── Fallbacks Legacy UI (Sin NestJS mapeado aún) ── */
   const getConversacion = () => []
@@ -138,6 +144,7 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     fetch_materias_sm_vc,
     fetch_mi_progreso_sm_vc,
     fetch_progreso_estudiante_sm_vc,
+    getProgresoEstudiante,
     submit_entrega_sm_vc,
 
     /* Actions Legacy fallback */

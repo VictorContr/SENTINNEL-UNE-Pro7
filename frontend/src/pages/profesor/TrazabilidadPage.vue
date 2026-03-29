@@ -167,11 +167,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, watchEffect, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
+import { useUsersStore } from 'src/stores/usersStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -180,12 +181,13 @@ const router_sm_vc  = useRouter()
 const store_sm_vc   = usePasantiasStore()
 const auth_sm_vc    = useAuthStore()
 const progressBar_sm_vc = useProgressBarStore()
+const usersStore_sm_vc = useUsersStore()
 
 /* ── Computed principales ── */
 const estudianteId_sm_vc = computed(() => route_sm_vc.params.id_sm_vc)
 
 const estudiante_sm_vc = computed(() =>
-  auth_sm_vc.MOCK_USERS.find((u) => u.id_sm_vc === estudianteId_sm_vc.value) ?? null
+  usersStore_sm_vc.usuarioActual_sm_vc
 )
 
 const progresoEstudiante_sm_vc = computed(() =>
@@ -210,6 +212,15 @@ const materiaSeleccionada_sm_vc = ref(null)
 const materiasConFases_sm_vc = computed(() =>
   progressBar_sm_vc.enriquecerMateriasTrazabilidad_sm_vc(progresoEstudiante_sm_vc.value)
 )
+
+onMounted(async () => {
+  if (estudianteId_sm_vc.value) {
+    await Promise.all([
+      store_sm_vc.fetch_progreso_estudiante_sm_vc(estudianteId_sm_vc.value),
+      usersStore_sm_vc.fetch_usuario_sm_vc(estudianteId_sm_vc.value)
+    ])
+  }
+})
 
 // Inicialización reactiva segura
 watchEffect(() => {

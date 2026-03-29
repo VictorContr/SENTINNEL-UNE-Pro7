@@ -161,10 +161,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, watchEffect } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useAuthStore } from 'src/stores/authStore'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
+import { useUsersStore } from 'src/stores/usersStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -181,13 +182,14 @@ const props = defineProps({
 const pasantiasStore_sm_vc = usePasantiasStore()
 const authStore_sm_vc = useAuthStore()
 const progressBarStore_sm_vc = useProgressBarStore()
+const usersStore_sm_vc = useUsersStore()
 
 const stepActivo_sm_vc = ref(null)
 /** true = solo chat de la materia del paso activo; el stepper se desmonta (v-if). */
 const vistaSoloConversacion_sm_vc = ref(false)
 
 const fichaEstudiante_sm_vc = computed(() =>
-  authStore_sm_vc.MOCK_USERS.find((u) => u.id_sm_vc === props.estudianteId) ?? null
+  usersStore_sm_vc.usuarioActual_sm_vc
 )
 
 const inicialesEstudiante_sm_vc = computed(() => {
@@ -220,10 +222,17 @@ const materiaPasoActivo_sm_vc = computed(() =>
 
 watch(
   () => props.estudianteId,
-  () => {
+  async (newId) => {
     stepActivo_sm_vc.value = null
     vistaSoloConversacion_sm_vc.value = false
-  }
+    if (newId) {
+      await Promise.all([
+        pasantiasStore_sm_vc.fetch_progreso_estudiante_sm_vc(newId),
+        usersStore_sm_vc.fetch_usuario_sm_vc(newId)
+      ])
+    }
+  },
+  { immediate: true }
 )
 
 watchEffect(() => {

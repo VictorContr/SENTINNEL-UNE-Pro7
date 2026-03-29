@@ -165,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, watchEffect, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
@@ -180,6 +180,10 @@ const $q_sm_vc    = useQuasar()
 const store_sm_vc = usePasantiasStore()
 const auth_sm_vc  = useAuthStore()
 const progressBar_sm_vc = useProgressBarStore()
+
+onMounted(async () => {
+  await store_sm_vc.fetch_mi_progreso_sm_vc()
+})
 
 /* ── Estado local del Stepper ── */
 // stepActivo_sm_vc guarda el id_sm_vc de la materia cuyo step está expandido.
