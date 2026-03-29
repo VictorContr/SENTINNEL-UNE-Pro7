@@ -74,6 +74,28 @@
 
       <template #body-cell-acciones="props">
         <q-td :props="props" class="text-center">
+          <q-btn
+            v-if="props.row.rol_sm_vc === 'ESTUDIANTE'"
+            flat
+            dense
+            round
+            icon="track_changes"
+            color="teal-3"
+            size="sm"
+            :to="`/admin/trazabilidad/${props.row.id_sm_vc}`">
+            <q-tooltip class="bg-dark">Trazabilidad académica</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="props.row.rol_sm_vc === 'ESTUDIANTE'"
+            flat
+            dense
+            round
+            icon="rocket_launch"
+            color="teal-3"
+            size="sm"
+            :to="`/admin/trazabilidad/${props.row.id_sm_vc}/deploy`">
+            <q-tooltip class="bg-dark">Deploy Final</q-tooltip>
+          </q-btn>
           <q-btn flat dense round icon="edit" color="teal-3" size="sm" @click="abrirEditar_sm_vc(props.row)">
             <q-tooltip class="bg-dark">Editar usuario</q-tooltip>
           </q-btn>
@@ -81,7 +103,7 @@
             :icon="props.row.activo_sm_vc ? 'block' : 'restore'"
             :color="props.row.activo_sm_vc ? 'amber-4' : 'teal-3'"
             size="sm"
-            :disable="props.row.id_sm_vc === auth_sm_vc.user?.id_sm_vc"
+            :disable="props.row.id_sm_vc === auth_sm_vc.user_sm_vc?.id_sm_vc"
             @click="confirmarBan_sm_vc(props.row)">
             <q-tooltip class="bg-dark">
               {{ props.row.activo_sm_vc ? 'Revocar permisos' : 'Restaurar acceso' }}
@@ -128,13 +150,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
+import { useUsersStore } from 'src/stores/usersStore'
 import DialogNuevoUsuario from 'src/components/shared/usuarios/DialogNuevoUsuario.vue'
 
 const auth_sm_vc = useAuthStore()
+const usersStore_sm_vc = useUsersStore()
 const $q_sm_vc = useQuasar()
+
+/* ── Initial Load ── */
+onMounted(() => {
+  usersStore_sm_vc.fetch_usuarios_sm_vc()
+})
 
 /* ── State ── */
 const busqueda_sm_vc = ref('')
@@ -156,7 +185,7 @@ const columns_sm_vc = [
 /* ── Usuarios filtrados ── */
 const usuariosFiltrados_sm_vc = computed(() => {
   const q_sm_vc = busqueda_sm_vc.value.toLowerCase()
-  return auth_sm_vc.MOCK_USERS.filter(
+  return (usersStore_sm_vc.usuarios_sm_vc || []).filter(
     (u) =>
       u.nombre_sm_vc.toLowerCase().includes(q_sm_vc) ||
       u.correo_sm_vc.toLowerCase().includes(q_sm_vc) ||
@@ -166,7 +195,7 @@ const usuariosFiltrados_sm_vc = computed(() => {
 
 /* ── Opciones de profesores para el dialog ── */
 const profesoresOpc_sm_vc = computed(() =>
-  auth_sm_vc.MOCK_USERS
+  (usersStore_sm_vc.usuarios_sm_vc || [])
     .filter((u) => u.rol_sm_vc === 'PROFESOR' && u.activo_sm_vc)
     .map((u) => ({ label: u.nombre_sm_vc, value: u.id_sm_vc }))
 )
@@ -177,16 +206,17 @@ const confirmarBan_sm_vc = (usuario_sm_vc) => {
   dialogBan_sm_vc.value = true
 }
 
-const ejecutarBan_sm_vc = () => {
+const ejecutarBan_sm_vc = async () => {
   if (!usuarioTarget_sm_vc.value) return
-  auth_sm_vc.banUser(usuarioTarget_sm_vc.value.id_sm_vc)
-  const accion_sm_vc = usuarioTarget_sm_vc.value.activo_sm_vc ? 'restaurado' : 'revocado'
-  $q_sm_vc.notify({
-    type: 'info',
-    message: `Acceso ${accion_sm_vc} para ${usuarioTarget_sm_vc.value.nombre_sm_vc}.`,
-    position: 'top-right',
-    timeout: 3000
-  })
+  const success_sm_vc = await usersStore_sm_vc.ban_usuario_sm_vc(usuarioTarget_sm_vc.value.id_sm_vc)
+  if (success_sm_vc) {
+    const accion_sm_vc = usuarioTarget_sm_vc.value.activo_sm_vc ? 'revocado' : 'restaurado'
+    $q_sm_vc.notify({
+      type: 'info',
+      message: `Acceso ${accion_sm_vc} con éxito.`,
+      position: 'top-right'
+    })
+  }
 }
 
 /* ── Handler editar usuario ── */
@@ -196,30 +226,34 @@ const abrirEditar_sm_vc = (usuario_sm_vc) => {
 }
 
 /* ── Handler nuevo/editar usuario ── */
-const handleGuardar_sm_vc = (datos_sm_vc) => {
+const handleGuardar_sm_vc = async (datos_sm_vc) => {
   try {
     const esEdicion_sm_vc = !!datos_sm_vc.id_sm_vc
+    let resp_sm_vc = null
     
     if (esEdicion_sm_vc) {
-      const editado_sm_vc = auth_sm_vc.actualizarUsuario(datos_sm_vc)
-      $q_sm_vc.notify({
-        type: 'positive',
-        message: `Usuario ${editado_sm_vc.nombre_sm_vc} actualizado exitosamente.`,
-        icon: 'check_circle',
-        position: 'top-right',
-        timeout: 4000
-      })
+      resp_sm_vc = await usersStore_sm_vc.update_usuario_sm_vc(datos_sm_vc)
+      if (resp_sm_vc) {
+        $q_sm_vc.notify({
+          type: 'positive',
+          message: `Usuario ${resp_sm_vc.nombre_sm_vc} actualizado exitosamente.`,
+          icon: 'check_circle',
+          position: 'top-right'
+        })
+      }
     } else {
-      const nuevo_sm_vc = auth_sm_vc.crearUsuario(datos_sm_vc)
-      $q_sm_vc.notify({
-        type: 'positive',
-        message: `Usuario ${nuevo_sm_vc.nombre_sm_vc} registrado exitosamente.`,
-        caption: `ID: ${nuevo_sm_vc.id_sm_vc}`,
-        icon: 'check_circle',
-        position: 'top-right',
-        timeout: 4000
-      })
+      resp_sm_vc = await usersStore_sm_vc.create_usuario_sm_vc(datos_sm_vc)
+      if (resp_sm_vc) {
+        $q_sm_vc.notify({
+          type: 'positive',
+          message: `Usuario ${resp_sm_vc.nombre_sm_vc} registrado exitosamente.`,
+          caption: `ID: ${resp_sm_vc.id_sm_vc}`,
+          icon: 'check_circle',
+          position: 'top-right'
+        })
+      }
     }
+    if (resp_sm_vc) dialogNuevo_sm_vc.value = false
   } catch (err_sm_vc) {
     $q_sm_vc.notify({
       type: 'negative',

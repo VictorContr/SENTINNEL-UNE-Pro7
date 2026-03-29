@@ -108,15 +108,15 @@ const beneficios_sm_vc = [
     icon_sm_vc: 'linear_scale',
     color_sm_vc: '#7ec8e3',
     titulo_sm_vc: 'Flujo Step-by-Step Bloqueante',
-    cuerpo_sm_vc: 'Un pasante solo puede avanzar a Pasantías II si aprueba Pasantías I. El sistema bloquea el acceso hasta cumplir los requisitos mínimos.',
-    tags_sm_vc: ['3 Materias', 'Desbloqueo Secuencial', 'Control Docente']
+    cuerpo_sm_vc: 'Un estudiante solo puede avanzar a Seminario de Grado si aprueba Investigación y Desarrollo. El sistema bloquea el acceso hasta cumplir los requisitos.',
+    tags_sm_vc: ['4 Materias', 'Desbloqueo Secuencial', 'Control Docente']
   },
   {
     id_sm_vc: 'ben-03',
     icon_sm_vc: 'rocket_launch',
     color_sm_vc: '#f0a500',
     titulo_sm_vc: 'Módulo de Deploy Final',
-    cuerpo_sm_vc: 'Una vez aprobadas las 3 materias, el pasante registra la URL de producción y sube el código fuente comprimido como evidencia técnica.',
+    cuerpo_sm_vc: 'Una vez aprobadas las 4 materias, el estudiante registra la URL de producción y sube el código fuente comprimido como evidencia técnica.',
     tags_sm_vc: ['URL Producción', 'Código Fuente', 'Evidencia Técnica']
   },
   {
@@ -132,10 +132,11 @@ const beneficios_sm_vc = [
 /* ── Pasos del flujo ── */
 const pasos_sm_vc = [
   { id_sm_vc: 'p1', titulo_sm_vc: 'Registro Admin', desc_sm_vc: 'Carga masiva de cohorte', icon_sm_vc: 'upload_file' },
-  { id_sm_vc: 'p2', titulo_sm_vc: 'Pasantías I',    desc_sm_vc: 'Informe + Correcciones',  icon_sm_vc: 'description' },
-  { id_sm_vc: 'p3', titulo_sm_vc: 'Pasantías II',   desc_sm_vc: 'Desarrollo del proyecto', icon_sm_vc: 'code' },
-  { id_sm_vc: 'p4', titulo_sm_vc: 'Pasantías III',  desc_sm_vc: 'Defensa y tesis',         icon_sm_vc: 'school' },
-  { id_sm_vc: 'p5', titulo_sm_vc: 'Deploy',         desc_sm_vc: 'URL + Código fuente',      icon_sm_vc: 'rocket_launch' }
+  { id_sm_vc: 'p2', titulo_sm_vc: 'Investigación y Desarrollo', desc_sm_vc: 'Anteproyecto',  icon_sm_vc: 'description' },
+  { id_sm_vc: 'p3', titulo_sm_vc: 'Seminario de Grado',   desc_sm_vc: 'Desarrollo inicial', icon_sm_vc: 'code' },
+  { id_sm_vc: 'p4', titulo_sm_vc: 'Trabajo de Grado I',  desc_sm_vc: 'Desarrollo avanzado',         icon_sm_vc: 'laptop_mac' },
+  { id_sm_vc: 'p5', titulo_sm_vc: 'Trabajo de Grado II',  desc_sm_vc: 'Defensa y tesis',         icon_sm_vc: 'school' },
+  { id_sm_vc: 'p6', titulo_sm_vc: 'Deploy',         desc_sm_vc: 'URL + Código fuente',      icon_sm_vc: 'rocket_launch' }
 ]
 
 /* ── Intersection Observer para animar la entrada ── */

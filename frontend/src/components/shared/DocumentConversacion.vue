@@ -51,7 +51,7 @@ import ConvFormProfesor from './conv/ConvFormProfesor.vue'
 
 /* ── Props ── */
 const props = defineProps({
-  materiaId: { type: String, required: true },
+  materiaId: { type: [String, Number], required: true },
   estudianteId: { type: String, required: true },
   readonly: { type: Boolean, default: false },
   estadoProgreso: { type: String, default: null }

@@ -39,11 +39,11 @@
             </div>
           </div>
 
-          <!-- Mensaje de error -->
+          <!-- Mensaje de error (delegado a quasar en store, pero se mantiene si es necesario) -->
           <transition name="slide-down">
-            <div v-if="auth.error_sm_vc" class="error-banner_sm_vc">
+            <div v-if="auth_sm_vc.error_sm_vc" class="error-banner_sm_vc">
               <q-icon name="warning" size="18px" />
-              <span>{{ auth.error_sm_vc }}</span>
+              <span>{{ auth_sm_vc.error_sm_vc }}</span>
             </div>
           </transition>
 
@@ -84,7 +84,7 @@
               </q-input>
             </div>
 
-            <q-btn type="submit" :loading="auth.loading_sm_vc"
+            <q-btn type="submit" :loading="auth_sm_vc.loading_sm_vc"
               label="INICIAR SESIÓN" unelevated class="btn-cta_sm_vc login-btn_sm_vc"
               :ripple="{ color: 'white' }"
             >
@@ -161,6 +161,42 @@
         </div>
       </section>
     </div>
+
+    <!-- Modal Cambio de Clave Inicial -->
+    <q-dialog v-model="show_cambio_clave_sm_vc" persistent backdrop-filter="blur(8px)">
+      <q-card :class="isDark_sm_vc ? 'bg-dark text-white' : 'bg-white text-dark'" style="min-width: 400px; border: 1px solid var(--sn-borde); border-radius: 12px;">
+        <q-card-section class="q-pb-none">
+          <div class="text-h6" style="color: var(--sn-primario);">Requiere cambio de contraseña</div>
+          <div class="text-caption" style="color: var(--sn-texto-secundario);">Por motivos de seguridad, debes cambiar tu contraseña temporal antes de continuar.</div>
+        </q-card-section>
+        <q-card-section>
+          <q-form @submit.prevent="submit_cambio_clave_sm_vc" class="q-gutter-md q-mt-sm">
+            <q-input 
+              v-model="nueva_clave_sm_vc" 
+              type="password" 
+              label="Nueva Contraseña" 
+              dense outlined 
+              :dark="isDark_sm_vc" 
+              color="teal-3"
+              :rules="[val => !!val || 'Requerido', val => val.length >= 6 || 'Mínimo 6 caracteres']" 
+            />
+            <q-input 
+              v-model="confirmar_clave_sm_vc" 
+              type="password" 
+              label="Confirmar Contraseña" 
+              dense outlined 
+              :dark="isDark_sm_vc" 
+              color="teal-3"
+              :rules="[val => !!val || 'Requerido']" 
+            />
+            <div class="row justify-end q-mt-md">
+              <q-btn flat label="Cancelar" color="grey-6" v-close-popup @click="cerrar_modal_cambio" class="q-mr-sm" no-caps />
+              <q-btn unelevated label="Actualizar" color="teal-6" type="submit" :loading="auth_sm_vc.loading_sm_vc" no-caps />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -172,11 +208,11 @@ import { useConfigStore } from 'src/stores/configStore'
 import { useQuasar } from 'quasar'
 
 /* ── Store & Router ── */
-const auth = useAuthStore()
+const auth_sm_vc = useAuthStore()
 const configStore_sm_vc = useConfigStore()
 const router_sm_vc = useRouter()
 const route_sm_vc = useRoute()
-const $q_vc = useQuasar()
+const $q_sm_vc = useQuasar()
 
 /* ── Theme state ── */
 const isDark_sm_vc = computed(() => configStore_sm_vc.isDark_sm_vc)
@@ -190,13 +226,19 @@ const correo_sm_vc = ref('')
 const clave_sm_vc = ref('')
 const show_pass_sm_vc = ref(false)
 
+/* ── Change Password State ── */
+const show_cambio_clave_sm_vc = ref(false)
+const nueva_clave_sm_vc = ref('')
+const confirmar_clave_sm_vc = ref('')
+const temp_user_correo_sm_vc = ref('')
+
 /* ── Canvas background ── */
 const canvas_ref_sm_vc = ref(null)
 let anim_frame_sm_vc = null
 let canvas_color_sm_vc = null // color actual del canvas, se recalcula con el tema
 
 /* ── Función para obtener el color de acento desde el CSS ── */
-function getCanvasColor_sm_vc() {
+const getCanvasColor_sm_vc = () => {
   const raw_sm_vc = getComputedStyle(document.documentElement)
     .getPropertyValue('--sn-acento')
     .trim()
@@ -207,7 +249,7 @@ function getCanvasColor_sm_vc() {
  * Convierte un color hex a rgba string para el canvas.
  * Necesario porque canvas 2D no soporta var() directamente.
  */
-function hexToRgb_sm_vc(hex_sm_vc) {
+const hexToRgb_sm_vc = (hex_sm_vc) => {
   const result_sm_vc = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex_sm_vc)
   if (!result_sm_vc) return '111, 255, 233' // fallback
   return `${parseInt(result_sm_vc[1], 16)}, ${parseInt(result_sm_vc[2], 16)}, ${parseInt(result_sm_vc[3], 16)}`
@@ -237,26 +279,60 @@ const features_sm_vc = [
 ]
 
 /* ── Login handler ── */
-async function handle_login_sm_vc() {
-  const ok_sm_vc = await auth.login(correo_sm_vc.value, clave_sm_vc.value)
-  if (ok_sm_vc) {
+const handle_login_sm_vc = async () => {
+  const result_sm_vc = await auth_sm_vc.login_sm_vc(correo_sm_vc.value, clave_sm_vc.value)
+  if (result_sm_vc === true) {
+    // Opcional: mantener el estado de carga activo mientras redirige
+    auth_sm_vc.loading_sm_vc = true
+    
+    // Configurar el destino
     const redirect_sm_vc = route_sm_vc.query.redirect || '/notificaciones'
-    router_sm_vc.push(redirect_sm_vc)
+    
+    // Realizar la redirección después de 3 segundos
+    setTimeout(() => {
+      auth_sm_vc.loading_sm_vc = false
+      router_sm_vc.push(redirect_sm_vc)
+    }, 3000)
+  } else if (result_sm_vc && result_sm_vc.requires_password_change) {
+    temp_user_correo_sm_vc.value = result_sm_vc.user.correo_sm_vc || correo_sm_vc.value
+    show_cambio_clave_sm_vc.value = true
   }
 }
 
+const submit_cambio_clave_sm_vc = async () => {
+  if (nueva_clave_sm_vc.value !== confirmar_clave_sm_vc.value) {
+    $q_sm_vc.notify({ message: 'Las contraseñas no coinciden.', color: 'negative', icon: 'error' })
+    return
+  }
+  const ok = await auth_sm_vc.cambiar_clave_inicial_sm_vc(
+    temp_user_correo_sm_vc.value,
+    clave_sm_vc.value,
+    nueva_clave_sm_vc.value
+  )
+  if (ok) {
+    cerrar_modal_cambio()
+    clave_sm_vc.value = '' // Borramos para forzar que inicie sesión con la nueva
+  }
+}
+
+const cerrar_modal_cambio = () => {
+  show_cambio_clave_sm_vc.value = false
+  nueva_clave_sm_vc.value = ''
+  confirmar_clave_sm_vc.value = ''
+}
+
 /* ── Animated grid canvas ── */
-function init_canvas_sm_vc() {
+const init_canvas_sm_vc = () => {
   const canvas_sm_vc = canvas_ref_sm_vc.value
   if (!canvas_sm_vc) return
   const ctx_sm_vc = canvas_sm_vc.getContext('2d')
 
   const resize_sm_vc = () => {
-    canvas_sm_vc.width = $q_vc.screen.width
-    canvas_sm_vc.height = $q_vc.screen.height
+    canvas_sm_vc.width = $q_sm_vc.screen.width
+    canvas_sm_vc.height = $q_sm_vc.screen.height
   }
   resize_sm_vc()
-  watch(() => [$q_vc.screen.width, $q_vc.screen.height], resize_sm_vc)
+  watch(() => [$q_sm_vc.screen.width, $q_sm_vc.screen.height], resize_sm_vc)
 
   const cols_sm_vc = 40
   const rows_sm_vc = 25
@@ -333,8 +409,8 @@ onUnmounted(() => {
 .input-icon_sm_vc { color: var(--sn-primario); }
 .login-btn_sm_vc { width: 100%; height: 46px; margin-top: 0.5rem; }
 .btn-loader_sm_vc { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; color: var(--sn-fondo); }
-.form-footer_sm_vc { margin-top: 1.25rem; text-align: center; font-size: 0.7rem; color: var(--sn-texto-apagado); font-family: var(--sn-font-sans); }
-.security-badge_sm_vc { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.62rem; color: var(--sn-texto-apagado); letter-spacing: 0.08em; }
+.form-footer_sm_vc { margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: var(--sn-acento-sec); font-family: var(--sn-font-sans); font-weight: 500; }
+.security-badge_sm_vc { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.75rem; color: var(--sn-primario); letter-spacing: 0.08em; font-weight: 500; }
 .security-icon_sm_vc { color: var(--sn-primario); }
 
 /* ── Quasar input overrides para LoginPage ── */

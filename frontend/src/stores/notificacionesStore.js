@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════════
 // notificacionesStore.js — Gestiona alertas filtradas por receptor.
 // Sufijos _sm_vc en todas las variables internas y seeds de datos.
-// La API pública permanece compatible con componentes ya existentes.
+// Se usa estrictamente Arrow Functions y sintaxis reactiva.
 // ══════════════════════════════════════════════════════════════════
 
 import { defineStore } from 'pinia'
@@ -75,60 +75,60 @@ export const useNotificacionesStore = defineStore('notificaciones', () => {
   const auth_sm_vc = useAuthStore()
 
   /* ── State ── */
-  const todas_sm_vc     = ref([...MOCK_NOTIFICACIONES_sm_vc])
-  const loading_sm_vc   = ref(false)
-  const filtroTipo_sm_vc = ref(null)
+  const todas_sm_vc       = ref([...MOCK_NOTIFICACIONES_sm_vc])
+  const loading_sm_vc     = ref(false)
+  const filtroTipo_sm_vc  = ref(null)
 
   /* ── Getters ── */
-  const misNotificaciones = computed(() => {
-    if (!auth_sm_vc.user) return []
-    return todas_sm_vc.value.filter((n) => n.receptor_id_sm_vc === auth_sm_vc.user.id_sm_vc)
+  const misNotificaciones_sm_vc = computed(() => {
+    if (!auth_sm_vc.user_sm_vc) return []
+    return todas_sm_vc.value.filter((n_sm_vc) => n_sm_vc.receptor_id_sm_vc === auth_sm_vc.user_sm_vc.id_sm_vc)
   })
 
-  const noLeidas = computed(() =>
-    misNotificaciones.value.filter((n) => !n.leida_sm_vc)
+  const noLeidas_sm_vc = computed(() =>
+    misNotificaciones_sm_vc.value.filter((n_sm_vc) => !n_sm_vc.leida_sm_vc)
   )
 
-  const notificacionesFiltradas = computed(() => {
-    if (!filtroTipo_sm_vc.value) return misNotificaciones.value
-    return misNotificaciones.value.filter((n) => n.tipo_sm_vc === filtroTipo_sm_vc.value)
+  const notificacionesFiltradas_sm_vc = computed(() => {
+    if (!filtroTipo_sm_vc.value) return misNotificaciones_sm_vc.value
+    return misNotificaciones_sm_vc.value.filter((n_sm_vc) => n_sm_vc.tipo_sm_vc === filtroTipo_sm_vc.value)
   })
 
-  const conteoNoLeidas = computed(() => noLeidas.value.length)
+  const conteoNoLeidas_sm_vc = computed(() => noLeidas_sm_vc.value.length)
 
   /* ── Actions ── */
-  const marcarLeida = (id_sm_vc) => {
-    const idx_sm_vc = todas_sm_vc.value.findIndex((n) => n.id_sm_vc === id_sm_vc)
+  const marcarLeida_sm_vc = (id_sm_vc) => {
+    const idx_sm_vc = todas_sm_vc.value.findIndex((n_sm_vc) => n_sm_vc.id_sm_vc === id_sm_vc)
     if (idx_sm_vc !== -1) todas_sm_vc.value[idx_sm_vc].leida_sm_vc = true
   }
 
-  const marcarTodasLeidas = () => {
-    todas_sm_vc.value = todas_sm_vc.value.map((n) =>
-      n.receptor_id_sm_vc === auth_sm_vc.user?.id_sm_vc
-        ? { ...n, leida_sm_vc: true }
-        : n
+  const marcarTodasLeidas_sm_vc = () => {
+    todas_sm_vc.value = todas_sm_vc.value.map((n_sm_vc) =>
+      n_sm_vc.receptor_id_sm_vc === auth_sm_vc.user_sm_vc?.id_sm_vc
+        ? { ...n_sm_vc, leida_sm_vc: true }
+        : n_sm_vc
     )
   }
 
-  const setFiltroTipo = (tipo_sm_vc) => {
+  const setFiltroTipo_sm_vc = (tipo_sm_vc) => {
     filtroTipo_sm_vc.value = tipo_sm_vc
   }
 
-  const getTipoMeta = (tipo_sm_vc) =>
+  const getTipoMeta_sm_vc = (tipo_sm_vc) =>
     TIPO_ALERTA_sm_vc[tipo_sm_vc] ?? TIPO_ALERTA_sm_vc.INFORMATIVA
 
   return {
     todas_sm_vc,
     loading_sm_vc,
     filtroTipo_sm_vc,
-    misNotificaciones,
-    noLeidas,
-    notificacionesFiltradas,
-    conteoNoLeidas,
-    TIPO_ALERTA: TIPO_ALERTA_sm_vc,
-    marcarLeida,
-    marcarTodasLeidas,
-    setFiltroTipo,
-    getTipoMeta
+    misNotificaciones_sm_vc,
+    noLeidas_sm_vc,
+    notificacionesFiltradas_sm_vc,
+    conteoNoLeidas_sm_vc,
+    TIPO_ALERTA_sm_vc,
+    marcarLeida_sm_vc,
+    marcarTodasLeidas_sm_vc,
+    setFiltroTipo_sm_vc,
+    getTipoMeta_sm_vc
   }
 })

@@ -87,10 +87,16 @@
         <!-- 5. FAQ -->
         <FAQSection :is-dark_sm_vc="isDark_sm_vc" />
 
-        <!-- 6. Footer -->
-        <FooterSection
-          :is-dark_sm_vc="isDark_sm_vc"
-          @toggle-theme="configStore_sm_vc.toggleTheme_sm_vc()" />
+        <!-- 6. Contacto (formulario + solicitar demo) -->
+        <div id="contacto">
+          <ContactoSection :is-dark_sm_vc="isDark_sm_vc" />
+        </div>
+
+        <!-- 7. Mapa — Universidad Nueva Esparta -->
+        <MapaSection :is-dark_sm_vc="isDark_sm_vc" />
+
+        <!-- 8. Footer -->
+        <FooterSection />
 
         <!-- Botón de scroll to top -->
         <transition name="fade-up">
@@ -121,6 +127,8 @@ import MockUpVisual      from 'src/components/shared/landing/MockUpVisual.vue'
 import TestimoniosSection from 'src/components/shared/landing/TestimoniosSection.vue'
 import FAQSection        from 'src/components/shared/landing/FAQSection.vue'
 import FooterSection     from 'src/components/shared/landing/FooterSection.vue'
+import ContactoSection   from 'src/components/shared/landing/ContactoSection.vue'
+import MapaSection       from 'src/components/shared/landing/MapaSection.vue'
 
 /* ── Enrutador ── */
 const router_sm_vc = useRouter()
@@ -152,7 +160,8 @@ const navAnlas_sm_vc = [
   { label_sm_vc: 'Beneficios',  href_sm_vc: '#beneficios' },
   { label_sm_vc: 'Demo',        href_sm_vc: '#demo' },
   { label_sm_vc: 'Testimonios', href_sm_vc: '#testimonios' },
-  { label_sm_vc: 'FAQ',         href_sm_vc: '#faq' }
+  { label_sm_vc: 'FAQ',         href_sm_vc: '#faq' },
+  { label_sm_vc: 'Contacto',    href_sm_vc: '#contacto' }
 ]
 
 /* ── Lifecycle ── */
