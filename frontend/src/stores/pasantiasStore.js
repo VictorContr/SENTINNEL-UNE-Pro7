@@ -99,7 +99,7 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     progreso_sm_vc.value.every((p_sm_vc) => p_sm_vc.estado_aprobacion_sm_vc === 'APROBADO' || p_sm_vc.aprobado_sm_vc === true)
   )
 
-  const getProgresoEstudiante = (id_sm_vc) => {
+  const getProgresoEstudiante = () => {
     // Retornamos el progreso actual filtrado o directo si confiamos en el fetch_progreso previa
     // Por simplicidad en la transición a backend real:
     return progreso_sm_vc.value || []

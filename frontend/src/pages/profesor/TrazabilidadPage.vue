@@ -170,7 +170,6 @@
 import { ref, computed, watchEffect, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
-import { useAuthStore } from 'src/stores/authStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
 import { useUsersStore } from 'src/stores/usersStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
@@ -179,7 +178,6 @@ import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue
 const route_sm_vc   = useRoute()
 const router_sm_vc  = useRouter()
 const store_sm_vc   = usePasantiasStore()
-const auth_sm_vc    = useAuthStore()
 const progressBar_sm_vc = useProgressBarStore()
 const usersStore_sm_vc = useUsersStore()
 

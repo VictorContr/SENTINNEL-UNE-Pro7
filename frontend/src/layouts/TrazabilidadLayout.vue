@@ -161,8 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, watchEffect, onMounted } from 'vue'
-import { useAuthStore } from 'src/stores/authStore'
+import { ref, computed, watch, watchEffect } from 'vue'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
 import { useUsersStore } from 'src/stores/usersStore'
@@ -180,7 +179,6 @@ const props = defineProps({
 })
 
 const pasantiasStore_sm_vc = usePasantiasStore()
-const authStore_sm_vc = useAuthStore()
 const progressBarStore_sm_vc = useProgressBarStore()
 const usersStore_sm_vc = useUsersStore()
 
