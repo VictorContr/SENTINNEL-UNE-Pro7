@@ -3,17 +3,15 @@
 //
 // Gestiona el estado y la lógica del formulario de contacto
 // de la Landing Page. Delega el transporte HTTP a contactoService.js
-// y provee feedback al usuario via $q.notify (mismo patrón que
-// testimoniosStore.js).
+// y provee feedback al usuario via Notify.
 // =============================================================
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { Notify } from 'quasar';
 import { enviarContacto_sm_vc as postContacto_sm_vc } from 'src/services/contactoService.js';
 
 export const useContactoStore = defineStore('contacto', () => {
-  const $q_sm_vc = useQuasar();
 
   /* ── State ── */
   const enviando_sm_vc = ref(false);  // true mientras la petición HTTP está en vuelo
@@ -36,7 +34,7 @@ export const useContactoStore = defineStore('contacto', () => {
       await postContacto_sm_vc(datos_sm_vc);
       exito_sm_vc.value = true;
 
-      $q_sm_vc.notify({
+      Notify.create({
         type:     'positive',
         message:  '¡Mensaje enviado!',
         caption:  'Nos pondremos en contacto contigo pronto.',
@@ -46,15 +44,15 @@ export const useContactoStore = defineStore('contacto', () => {
       });
     } catch (err_sm_vc) {
       console.error('[contactoStore] Error al enviar formulario:', err_sm_vc);
-      let errorMsg = err_sm_vc?.response?.data?.message ?? err_sm_vc?.message ?? 'Error desconocido';
+      let errorMsg_sm_vc = err_sm_vc?.response?.data?.message ?? err_sm_vc?.message ?? 'Error desconocido';
       
-      if (Array.isArray(errorMsg)) {
-        errorMsg = errorMsg.join(' ');
+      if (Array.isArray(errorMsg_sm_vc)) {
+        errorMsg_sm_vc = errorMsg_sm_vc.join(' ');
       }
       
-      error_sm_vc.value = errorMsg;
+      error_sm_vc.value = errorMsg_sm_vc;
 
-      $q_sm_vc.notify({
+      Notify.create({
         type:     'negative',
         message:  'No se pudo enviar el mensaje',
         caption:  error_sm_vc.value,

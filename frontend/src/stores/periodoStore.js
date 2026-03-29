@@ -1,26 +1,24 @@
 // ══════════════════════════════════════════════════════════════════
-// periodoStore.js — Store Mock-First del Periodo Académico Global
-// Extendido para manejar fechaInicio y fechaCierre del periodo.
-// Mantiene compatibilidad con periodoFormateado_sm_vc().
+// periodoStore.js — Store del Periodo Académico Global (Módulo Admin)
+// Gestiona GET/PUT del periodo académico mediante la arquitectura
+// _sm_vc delegando en adminService.js (Axios API).
 // ══════════════════════════════════════════════════════════════════
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useQuasar } from 'quasar'
+import { Notify } from 'quasar'
 import { usePasantiasStore } from './pasantiasStore'
-
-const DELAY_MOCK_sm_vc = 800
-
-const simularDelay_sm_vc = () =>
-  new Promise((r) => setTimeout(r, DELAY_MOCK_sm_vc))
+import { 
+  obtenerPeriodoActual_sm_vc as getPeriodoApi_sm_vc, 
+  actualizarPeriodo_sm_vc as putPeriodoApi_sm_vc 
+} from 'src/services/adminService'
 
 export const usePeriodoStore = defineStore('periodo', () => {
-  const $q_sm_vc = useQuasar()
 
   /* ── Estado ── */
-  const periodoActual_sm_vc = ref('P-165')
-  const fechaInicio_sm_vc   = ref('')   // formato YYYY/MM
-  const fechaCierre_sm_vc   = ref('')   // formato YYYY/MM
+  const periodoActual_sm_vc = ref('P-165') // Fallback default
+  const fechaInicio_sm_vc   = ref('')   // YYYY/MM
+  const fechaCierre_sm_vc   = ref('')   // YYYY/MM
   const loading_sm_vc       = ref(false)
 
   /* ── Formatea el periodo actual para visualización ── */
@@ -35,16 +33,20 @@ export const usePeriodoStore = defineStore('periodo', () => {
     return base_sm_vc
   }
 
-  /* ── Simula GET /api/admin/configuracion/periodo ── */
+  /* ── GET /admin/configuracion/periodo ── */
   const cargarPeriodoActual_sm_vc = async () => {
     loading_sm_vc.value = true
     try {
-      await simularDelay_sm_vc()
-      // Mock: los valores ya están inicializados en los refs
-    } catch {
-      $q_sm_vc.notify({
+      const resp_sm_vc = await getPeriodoApi_sm_vc()
+      if (resp_sm_vc) {
+        periodoActual_sm_vc.value = resp_sm_vc.periodoActual_sm_vc || resp_sm_vc.codigo_sm_vc || periodoActual_sm_vc.value
+        fechaInicio_sm_vc.value   = resp_sm_vc.fechaInicio_sm_vc || resp_sm_vc.fecha_inicio_sm_vc || fechaInicio_sm_vc.value
+        fechaCierre_sm_vc.value   = resp_sm_vc.fechaCierre_sm_vc || resp_sm_vc.fecha_cierre_sm_vc || fechaCierre_sm_vc.value
+      }
+    } catch (err_sm_vc) {
+      Notify.create({
         type: 'negative',
-        message: 'No se pudo cargar el periodo académico.',
+        message: err_sm_vc.response?.data?.message || err_sm_vc.message || 'No se pudo cargar el periodo académico.',
         position: 'top-right'
       })
     } finally {
@@ -52,12 +54,11 @@ export const usePeriodoStore = defineStore('periodo', () => {
     }
   }
 
-  /* ── Simula PUT /api/admin/configuracion/periodo ── */
-  // Acepta un objeto { fechaInicio: 'YYYY/MM', fechaCierre: 'YYYY/MM' }
+  /* ── PUT /admin/configuracion/periodo ── */
   const actualizarPeriodo_sm_vc = async ({ fechaInicio, fechaCierre }) => {
     // Validación de presencia
     if (!fechaInicio || !fechaCierre) {
-      $q_sm_vc.notify({
+      Notify.create({
         type: 'warning',
         message: 'Debes seleccionar ambas fechas (inicio y cierre).',
         position: 'top-right', icon: 'warning'
@@ -65,9 +66,9 @@ export const usePeriodoStore = defineStore('periodo', () => {
       return false
     }
 
-    // Validación de rango: cierre debe ser estrictamente posterior al inicio
+    // Validación de rango
     if (fechaCierre <= fechaInicio) {
-      $q_sm_vc.notify({
+      Notify.create({
         type: 'negative',
         message: 'La fecha de cierre debe ser posterior a la de inicio.',
         position: 'top-right', icon: 'error'
@@ -77,22 +78,33 @@ export const usePeriodoStore = defineStore('periodo', () => {
 
     loading_sm_vc.value = true
     try {
-      await simularDelay_sm_vc()
+      // DTO que espera el NestJS admin endpoint
+      const dto_sm_vc = {
+        fecha_inicio_sm_vc: fechaInicio,
+        fecha_cierre_sm_vc: fechaCierre
+      }
+      
+      const resp_sm_vc = await putPeriodoApi_sm_vc(dto_sm_vc)
 
-      // Actualizar estado del store
+      // Actualizar estado local desde la respuesta real del servidor
       fechaInicio_sm_vc.value = fechaInicio
       fechaCierre_sm_vc.value = fechaCierre
+      
+      if (resp_sm_vc?.codigo_sm_vc) {
+        periodoActual_sm_vc.value = resp_sm_vc.codigo_sm_vc
+      } else {
+        // Fallback local si la API solo devuelve OK
+        const numActual_sm_vc = parseInt(periodoActual_sm_vc.value.replace('P-', ''), 10) || 165
+        periodoActual_sm_vc.value = `P-${numActual_sm_vc + 1}`
+      }
 
-      // Generar código de periodo incrementándolo en +1 (Mock)
-      // Ej: P-165 → P-166 (lógica real sería asíncrona del backend)
-      const numActual_sm_vc = parseInt(periodoActual_sm_vc.value.replace('P-', ''), 10) || 165
-      periodoActual_sm_vc.value = `P-${numActual_sm_vc + 1}`
-
-      // Conectar con pasantiasStore para reprobar los incompletos
+      // Hook de pasantias
       const pasantias_sm_vc = usePasantiasStore()
-      pasantias_sm_vc.procesarCambioPeriodo_sm_vc(periodoActual_sm_vc.value)
+      if (pasantias_sm_vc.procesarCambioPeriodo_sm_vc) {
+        pasantias_sm_vc.procesarCambioPeriodo_sm_vc(periodoActual_sm_vc.value)
+      }
 
-      $q_sm_vc.notify({
+      Notify.create({
         type: 'positive',
         message: `Periodo actualizado correctamente`,
         caption: `${formatearMes_sm_vc(fechaInicio)} → ${formatearMes_sm_vc(fechaCierre)}`,
@@ -101,10 +113,10 @@ export const usePeriodoStore = defineStore('periodo', () => {
         timeout: 4000
       })
       return true
-    } catch {
-      $q_sm_vc.notify({
+    } catch (err_sm_vc) {
+      Notify.create({
         type: 'negative',
-        message: 'Error al actualizar el periodo académico.',
+        message: err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al actualizar el periodo académico.',
         position: 'top-right'
       })
       return false
@@ -113,7 +125,7 @@ export const usePeriodoStore = defineStore('periodo', () => {
     }
   }
 
-  /* ── Utilidad interna: formatea YYYY/MM → "Mes YYYY" ── */
+  /* ── Utilidad interna ── */
   const formatearMes_sm_vc = (valor_sm_vc) => {
     if (!valor_sm_vc) return ''
     const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
@@ -123,7 +135,6 @@ export const usePeriodoStore = defineStore('periodo', () => {
     return `${mesCap_sm_vc} ${anio_sm_vc}`
   }
 
-  /* ── Utilidad interna: formatea YYYY/MM → "Mes" capitalizado ── */
   const formatearMesSolo_sm_vc = (valor_sm_vc) => {
     if (!valor_sm_vc) return ''
     const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')

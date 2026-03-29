@@ -50,10 +50,10 @@ export declare class PasantiasController_sm_vc {
         };
     } & {
         id_sm_vc: number;
+        fecha_actualizacion_sm_vc: Date;
         estudiante_id_sm_vc: number;
         requisito_id_sm_vc: number;
         estado_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
-        fecha_actualizacion_sm_vc: Date;
     }>;
     getProgresoEstudiante_sm_vc(id: string): Promise<{
         materiaActiva: {
@@ -69,10 +69,10 @@ export declare class PasantiasController_sm_vc {
                     } | null;
                 } & {
                     id_sm_vc: number;
+                    fecha_actualizacion_sm_vc: Date;
                     estudiante_id_sm_vc: number;
                     requisito_id_sm_vc: number;
                     estado_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
-                    fecha_actualizacion_sm_vc: Date;
                 })[];
             } & {
                 id_sm_vc: number;
@@ -110,10 +110,10 @@ export declare class PasantiasController_sm_vc {
                     } | null;
                 } & {
                     id_sm_vc: number;
+                    fecha_actualizacion_sm_vc: Date;
                     estudiante_id_sm_vc: number;
                     requisito_id_sm_vc: number;
                     estado_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
-                    fecha_actualizacion_sm_vc: Date;
                 })[];
             } & {
                 id_sm_vc: number;

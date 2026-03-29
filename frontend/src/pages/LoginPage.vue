@@ -33,9 +33,9 @@
           <div class="demo-hints_sm_vc">
             <span class="demo-tag_sm_vc">Demo</span>
             <div class="demo-list_sm_vc">
-              <span><strong>Admin:</strong> admin@une.edu.ve | admin123</span>
-              <span><strong>Profesor:</strong> profesor@une.edu.ve | prof123</span>
-              <span><strong>Estudiante:</strong> estudiante@une.edu.ve | est123</span>
+              <span><strong>Admin:</strong> admin@mock.com | 123456</span>
+              <span><strong>Profesor:</strong> profesor@mock.com | 123456</span>
+              <span><strong>Estudiante:</strong> luis@mock.com | 123456</span>
             </div>
           </div>
 
@@ -282,8 +282,17 @@ const features_sm_vc = [
 const handle_login_sm_vc = async () => {
   const result_sm_vc = await auth_sm_vc.login_sm_vc(correo_sm_vc.value, clave_sm_vc.value)
   if (result_sm_vc === true) {
+    // Opcional: mantener el estado de carga activo mientras redirige
+    auth_sm_vc.loading_sm_vc = true
+    
+    // Configurar el destino
     const redirect_sm_vc = route_sm_vc.query.redirect || '/notificaciones'
-    router_sm_vc.push(redirect_sm_vc)
+    
+    // Realizar la redirección después de 3 segundos
+    setTimeout(() => {
+      auth_sm_vc.loading_sm_vc = false
+      router_sm_vc.push(redirect_sm_vc)
+    }, 3000)
   } else if (result_sm_vc && result_sm_vc.requires_password_change) {
     temp_user_correo_sm_vc.value = result_sm_vc.user.correo_sm_vc || correo_sm_vc.value
     show_cambio_clave_sm_vc.value = true

@@ -7,11 +7,12 @@
       <q-toolbar class="sntnl-toolbar_sm_vc">
         <!-- Hamburger (mobile) -->
         <q-btn
+          v-show="$q.screen.width < 960"
           flat
           dense
           round
           icon="menu"
-          class="hamburger-btn_sm_vc q-mr-sm lt-md"
+          class="hamburger-btn_sm_vc q-mr-sm"
           @click="drawer_open_sm_vc = !drawer_open_sm_vc"
           aria-label="Abrir menú"
         />
@@ -235,7 +236,7 @@
           </q-item>
 
           <!-- ── SECCIÓN ADMINISTRADOR ── -->
-          <template v-if="auth.isAdmin">
+          <template v-if="auth.is_admin_sm_vc">
             <div class="nav-section-label_sm_vc">
               <q-icon name="admin_panel_settings" size="12px" class="q-mr-xs" />
               Administración
@@ -264,7 +265,7 @@
           </template>
 
           <!-- ── SECCIÓN PROFESOR ── -->
-          <template v-if="auth.isProfesor">
+          <template v-if="auth.is_profesor_sm_vc">
             <div class="nav-section-label_sm_vc">
               <q-icon name="school" size="12px" class="q-mr-xs" /> Docencia
             </div>
@@ -292,7 +293,7 @@
           </template>
 
           <!-- ── SECCIÓN ESTUDIANTE ── -->
-          <template v-if="auth.isEstudiante">
+          <template v-if="auth.is_estudiante_sm_vc">
             <div class="nav-section-label_sm_vc">
               <q-icon name="person" size="12px" class="q-mr-xs" /> Mi Pasantía
             </div>
@@ -392,7 +393,7 @@ function navigate_sm_vc(to_sm_vc) {
 
 /* ── Logout ── */
 function handle_logout_sm_vc() {
-  auth.logout();
+  auth.logout_sm_vc();
   router_sm_vc.push("/login");
 }
 

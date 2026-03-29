@@ -5,12 +5,12 @@ export declare class AdminController {
     constructor(adminService: AdminService);
     obtenerPeriodoActual(): Promise<{
         id_sm_vc: number;
-        fecha_actualizacion_sm_vc: Date;
         periodo_actual_sm_vc: string;
+        fecha_actualizacion_sm_vc: Date;
     }>;
     actualizarPeriodo(dto: ActualizarPeriodoDto): Promise<{
         id_sm_vc: number;
-        fecha_actualizacion_sm_vc: Date;
         periodo_actual_sm_vc: string;
+        fecha_actualizacion_sm_vc: Date;
     }>;
 }

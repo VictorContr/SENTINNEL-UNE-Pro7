@@ -11,7 +11,19 @@ const api = axios.create({
 })
 
 export default defineBoot(() => {
-  // Reservado para interceptores futuros (JWT header injection, etc.)
+  // Integramos el interceptor para agregar el token JWT a todas las peticiones
+  api.interceptors.request.use(
+    (config_sm_vc) => {
+      const token_sm_vc = localStorage.getItem('token_sm_vc')
+      if (token_sm_vc) {
+        config_sm_vc.headers.Authorization = `Bearer ${token_sm_vc}`
+      }
+      return config_sm_vc
+    },
+    (error_sm_vc) => {
+      return Promise.reject(error_sm_vc)
+    }
+  )
 })
 
 export { api }
