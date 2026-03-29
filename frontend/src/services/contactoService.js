@@ -22,9 +22,10 @@ const BASE_URL_sm_vc = import.meta.env.VITE_API_URL || 'http://localhost:3000/ap
  * @param {string} payload.asunto_sm_vc - Asunto/motivo del contacto
  * @returns {Promise<{message: string}>} Respuesta del backend
  */
-export const enviarContacto_sm_vc = async ({ nombre_sm_vc, correo_sm_vc, asunto_sm_vc }) => {
+export const enviarContacto_sm_vc = async ({ nombre_sm_vc, cedula_sm_vc, correo_sm_vc, asunto_sm_vc }) => {
   const response = await axios.post(`${BASE_URL_sm_vc}/mailer/contacto`, {
     nombre_sm_vc,
+    cedula_sm_vc,
     correo_sm_vc,
     asunto_sm_vc,
   });

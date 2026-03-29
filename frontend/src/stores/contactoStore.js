@@ -25,7 +25,7 @@ export const useContactoStore = defineStore('contacto', () => {
    * Envía el formulario de contacto al backend NestJS.
    * Muestra notificaciones Quasar en caso de éxito o fallo.
    *
-   * @param {{ nombre_sm_vc: string, correo_sm_vc: string, asunto_sm_vc: string }} datos
+   * @param {{ nombre_sm_vc: string, cedula_sm_vc: string, correo_sm_vc: string, asunto_sm_vc: string }} datos_sm_vc
    */
   const enviarFormulario_sm_vc = async (datos_sm_vc) => {
     enviando_sm_vc.value = true;
@@ -46,7 +46,13 @@ export const useContactoStore = defineStore('contacto', () => {
       });
     } catch (err_sm_vc) {
       console.error('[contactoStore] Error al enviar formulario:', err_sm_vc);
-      error_sm_vc.value = err_sm_vc?.response?.data?.message ?? err_sm_vc?.message ?? 'Error desconocido';
+      let errorMsg = err_sm_vc?.response?.data?.message ?? err_sm_vc?.message ?? 'Error desconocido';
+      
+      if (Array.isArray(errorMsg)) {
+        errorMsg = errorMsg.join(' ');
+      }
+      
+      error_sm_vc.value = errorMsg;
 
       $q_sm_vc.notify({
         type:     'negative',
