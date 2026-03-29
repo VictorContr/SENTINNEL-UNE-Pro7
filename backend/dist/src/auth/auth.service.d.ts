@@ -13,7 +13,7 @@ export declare class AuthService_sm_vc {
             nombre_sm_vc: string;
             apellido_sm_vc: string;
             telefono_sm_vc: string | null;
-            rol_sm_vc: import(".prisma/client").$Enums.RolUsuario;
+            rol_sm_vc: import("@prisma/client").$Enums.RolUsuario;
             activo_sm_vc: boolean;
             fecha_creacion_sm_vc: Date;
         };
@@ -25,7 +25,7 @@ export declare class AuthService_sm_vc {
         nombre_sm_vc: string;
         apellido_sm_vc: string;
         telefono_sm_vc: string | null;
-        rol_sm_vc: import(".prisma/client").$Enums.RolUsuario;
+        rol_sm_vc: import("@prisma/client").$Enums.RolUsuario;
         activo_sm_vc: boolean;
         fecha_creacion_sm_vc: Date;
     }>;

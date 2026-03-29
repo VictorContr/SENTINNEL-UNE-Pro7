@@ -52,7 +52,7 @@ export declare class PasantiasController_sm_vc {
         id_sm_vc: number;
         estudiante_id_sm_vc: number;
         requisito_id_sm_vc: number;
-        estado_sm_vc: import(".prisma/client").$Enums.EstadoAprobacion;
+        estado_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
         fecha_actualizacion_sm_vc: Date;
     }>;
     getProgresoEstudiante_sm_vc(id: string): Promise<{
@@ -63,7 +63,7 @@ export declare class PasantiasController_sm_vc {
                         id_sm_vc: number;
                         profesor_id_sm_vc: number;
                         entrega_id_sm_vc: number;
-                        decision_sm_vc: import(".prisma/client").$Enums.EstadoAprobacion;
+                        decision_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
                         observaciones_sm_vc: string | null;
                         fecha_evaluacion_sm_vc: Date;
                     } | null;
@@ -71,7 +71,7 @@ export declare class PasantiasController_sm_vc {
                     id_sm_vc: number;
                     estudiante_id_sm_vc: number;
                     requisito_id_sm_vc: number;
-                    estado_sm_vc: import(".prisma/client").$Enums.EstadoAprobacion;
+                    estado_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
                     fecha_actualizacion_sm_vc: Date;
                 })[];
             } & {
@@ -104,7 +104,7 @@ export declare class PasantiasController_sm_vc {
                         id_sm_vc: number;
                         profesor_id_sm_vc: number;
                         entrega_id_sm_vc: number;
-                        decision_sm_vc: import(".prisma/client").$Enums.EstadoAprobacion;
+                        decision_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
                         observaciones_sm_vc: string | null;
                         fecha_evaluacion_sm_vc: Date;
                     } | null;
@@ -112,7 +112,7 @@ export declare class PasantiasController_sm_vc {
                     id_sm_vc: number;
                     estudiante_id_sm_vc: number;
                     requisito_id_sm_vc: number;
-                    estado_sm_vc: import(".prisma/client").$Enums.EstadoAprobacion;
+                    estado_sm_vc: import("@prisma/client").$Enums.EstadoAprobacion;
                     fecha_actualizacion_sm_vc: Date;
                 })[];
             } & {
