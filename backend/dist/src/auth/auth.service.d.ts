@@ -8,9 +8,9 @@ export declare class AuthService_sm_vc {
         requires_password_change: boolean;
         user_sm_vc: {
             id_sm_vc: number;
+            nombre_sm_vc: string;
             cedula_sm_vc: string;
             correo_sm_vc: string;
-            nombre_sm_vc: string;
             apellido_sm_vc: string;
             telefono_sm_vc: string | null;
             rol_sm_vc: import("@prisma/client").$Enums.RolUsuario;
@@ -23,9 +23,9 @@ export declare class AuthService_sm_vc {
         access_token_sm_vc: string;
         user_sm_vc: {
             id_sm_vc: number;
+            nombre_sm_vc: string;
             cedula_sm_vc: string;
             correo_sm_vc: string;
-            nombre_sm_vc: string;
             apellido_sm_vc: string;
             telefono_sm_vc: string | null;
             rol_sm_vc: import("@prisma/client").$Enums.RolUsuario;
@@ -40,9 +40,9 @@ export declare class AuthService_sm_vc {
     }>;
     validateUser_sm_vc(userId_sm_vc: number): Promise<{
         id_sm_vc: number;
+        nombre_sm_vc: string;
         cedula_sm_vc: string;
         correo_sm_vc: string;
-        nombre_sm_vc: string;
         apellido_sm_vc: string;
         telefono_sm_vc: string | null;
         rol_sm_vc: import("@prisma/client").$Enums.RolUsuario;
