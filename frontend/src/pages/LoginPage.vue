@@ -33,9 +33,9 @@
           <div class="demo-hints_sm_vc">
             <span class="demo-tag_sm_vc">Demo</span>
             <div class="demo-list_sm_vc">
-              <span><strong>Admin:</strong> admin@une.edu.ve | admin123</span>
-              <span><strong>Profesor:</strong> profesor@une.edu.ve | prof123</span>
-              <span><strong>Estudiante:</strong> estudiante@une.edu.ve | est123</span>
+              <span><strong>Admin:</strong> admin@une.edu.ve | Admin@2025!</span>
+              <span><strong>Profesor:</strong> ana.torres@une.edu.ve | Prof@2025!</span>
+              <span><strong>Estudiante:</strong> deploy@estudiante.une.edu.ve | Deploy@2025!</span>
             </div>
           </div>
 
