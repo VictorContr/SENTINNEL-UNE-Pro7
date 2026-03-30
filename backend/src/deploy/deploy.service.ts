@@ -118,7 +118,8 @@ export class DeployService {
       // 5. Emitir evento de trazabilidad
       this.eventEmitter_sm_vc.emit('deploy.completado_sm_vc', {
         estudianteId: estudianteId,
-        url_sm_vc: dto.url_produccion_sm_vc,
+        descripcion_sm_vc: `Registro de Deploy finalizado exitosamente. URL: ${dto.url_produccion_sm_vc}`,
+        url_sm_vc:    dto.url_produccion_sm_vc,
       });
 
       return this.generarRespuesta_sm_vc(resultado_sm_vc);

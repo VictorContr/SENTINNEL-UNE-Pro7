@@ -322,29 +322,42 @@ async function main() {
     ],
   });
 
-  console.log('✔ Notificaciones creadas');
+  // ── 10. Sincronización de Flags de Deploy ──
+  // Buscamos a todos los estudiantes para verificar si ya deben tener habilitado el deploy
+  const estudiantes_sm_vc = await prisma.estudiante.findMany({
+    include: {
+      entregas: {
+        where: { estado_sm_vc: EstadoAprobacion.APROBADO },
+      },
+    },
+  });
 
-  console.log('✔ Conversaciones iniciales creadas para estudiantes');
+  const totalRequisitos_sm_vc = await prisma.requisito.count();
+
+  for (const est_sm_vc of estudiantes_sm_vc) {
+    // Si el número de entregas aprobadas es igual al total de requisitos del sistema
+    if (est_sm_vc.entregas.length === totalRequisitos_sm_vc) {
+      await prisma.estudiante.update({
+        where: { id_sm_vc: est_sm_vc.id_sm_vc },
+        data: { puede_hacer_deploy_sm_vc: true },
+      });
+      console.log(`📡 Estudiante ${est_sm_vc.id_sm_vc} detectado como APTO para Deploy.`);
+    }
+  }
+
+  console.log('✔ Sincronización de flags de deploy completada');
 
   console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║          🎉  Seed SENTINNEL completado                  ║
-╠══════════════════════════════════════════════════════════╣
-║  CREDENCIALES DE ACCESO                                  ║
-║  Admin:    admin@une.edu.ve           / Admin@2025!      ║
-║  Profe 1:  ana.torres@une.edu.ve      / Prof@2025!       ║
-║  Profe 2:  roberto.gomez@une.edu.ve   / Prof@2025!       ║
-║  Est 1-5:  test1-5@estudiante.une.edu.ve / Est@2025!     ║
-╠══════════════════════════════════════════════════════════╣
-║  ESTADOS SIMULADOS                                       ║
-║  Luis (test1)     → M1: 1 req ENTREGADO                  ║
-║  María (test2)    → M2: M1 completada, M2 parcial        ║
-║  Carlos (test3)   → M3: M1 y M2 completadas              ║
-║  Valentina (test4)→ M1: Sin entregas (bloqueado)         ║
-║  Andrés (test5)   → M1: 1 req REPROBADO                  ║
 ╚══════════════════════════════════════════════════════════╝`);
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

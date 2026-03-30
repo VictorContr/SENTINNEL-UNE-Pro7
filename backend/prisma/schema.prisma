@@ -69,7 +69,7 @@ model Usuario {
   requiere_cambio_clave_sm_vc Boolean    @default(true)
   fecha_creacion_sm_vc        DateTime   @default(now())
 
-  estudiantePerfil        Estudiante?             @relation("UsuarioAEstudiante")
+  estudiante_sm_vc        Estudiante?             @relation("UsuarioAEstudiante")
   estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")
   documentosSubidos       Documento[]             @relation("UsuarioSubeDocumento")
   evaluacionesRealizadas  Evaluacion[]            @relation("ProfesorEvalua")

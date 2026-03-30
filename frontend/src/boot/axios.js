@@ -7,7 +7,7 @@ import axios from 'axios'
  * NO se inyecta en globalProperties (Options API prohibida).
  */
 const api = axios.create({
-  baseURL: process.env.API_URL || 'http://localhost:3000/api'
+  baseURL: process.env.API_URL || 'http://localhost:4000/api'
 })
 
 import { LocalStorage } from 'quasar'
