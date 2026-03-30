@@ -34,24 +34,36 @@ const routes = [
         meta: { requiresAuth: true, roles: [] },
       },
 
-      /* ── ADMINISTRADOR ── */
+      /* ── ADMIN ── */
       {
         path: "/admin/usuarios",
         name: "admin-usuarios",
         component: () => import("src/pages/admin/UsuariosPage.vue"),
-        meta: { requiresAuth: true, roles: ["ADMINISTRADOR"] },
+        meta: { requiresAuth: true, roles: ["ADMIN"] },
       },
       {
         path: "/admin/carga-masiva",
         name: "admin-carga-masiva",
         component: () => import("src/pages/admin/CargaMasivaPage.vue"),
-        meta: { requiresAuth: true, roles: ["ADMINISTRADOR"] },
+        meta: { requiresAuth: true, roles: ["ADMIN"] },
       },
       {
         path: "/admin/cambio-periodo",
         name: "admin-cambio-periodo",
         component: () => import("src/pages/admin/CambioPeriodoPage.vue"),
-        meta: { requiresAuth: true, roles: ["ADMINISTRADOR"] },
+        meta: { requiresAuth: true, roles: ["ADMIN"] },
+      },
+      {
+        path: "/admin/trazabilidad/:estudianteId",
+        name: "admin-trazabilidad",
+        component: () => import("src/pages/admin/TrazabilidadPage.vue"),
+        meta: { requiresAuth: true, roles: ["ADMIN"] },
+      },
+      {
+        path: "/admin/trazabilidad/:estudianteId/deploy",
+        name: "admin-deploy",
+        component: () => import("src/pages/admin/DeployPage.vue"),
+        meta: { requiresAuth: true, roles: ["ADMIN"] },
       },
 
       /* ── PROFESOR ── */

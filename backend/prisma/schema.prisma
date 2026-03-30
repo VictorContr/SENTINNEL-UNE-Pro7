@@ -69,11 +69,10 @@ model Usuario {
   requiere_cambio_clave_sm_vc Boolean    @default(true)
   fecha_creacion_sm_vc        DateTime   @default(now())
 
-  estudiantePerfil        Estudiante?             @relation("UsuarioAEstudiante")
+  estudiante_sm_vc        Estudiante?             @relation("UsuarioAEstudiante")
   estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")
   documentosSubidos       Documento[]             @relation("UsuarioSubeDocumento")
   evaluacionesRealizadas  Evaluacion[]            @relation("ProfesorEvalua")
-  accionesHistorial       HistorialTrazabilidad[] @relation("ActorHistorial")
   notificacionesEnviadas  Notificacion[]          @relation("NotificacionesEnviadas")
   notificacionesRecibidas Notificacion[]          @relation("NotificacionesRecibidas")
 
@@ -93,13 +92,14 @@ model Estudiante {
   tutor_empresarial_sm_vc String @db.VarChar(100)
   titulo_proyecto_sm_vc   String @db.VarChar(255)
   materia_activa_id_sm_vc Int
+  puede_hacer_deploy_sm_vc Boolean @default(false)
 
   usuario       Usuario                 @relation("UsuarioAEstudiante",  fields: [usuario_id_sm_vc],  references: [id_sm_vc])
   profesorTutor Usuario?                @relation("TutorAEstudiante",    fields: [profesor_id_sm_vc], references: [id_sm_vc])
   materiaActiva Materia                 @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc])
   entregas      Entrega[]
   proyectoDeploy ProyectoDeploy?
-  historial     HistorialTrazabilidad[]
+  conversacion   Conversacion?
 
   @@map("tdestudiante_sm_vc")
 }
@@ -174,8 +174,7 @@ model Documento {
   fecha_subida_sm_vc      DateTime      @default(now())
 
   entrega         Entrega?        @relation(fields: [entrega_id_sm_vc],        references: [id_sm_vc])
-  usuario         Usuario         @relation("UsuarioSubeDocumento",
-                                   fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
+  usuario         Usuario         @relation("UsuarioSubeDocumento", fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
   deployCodigo    ProyectoDeploy? @relation("DeployCodigoZIP")
   deployDocs      ProyectoDeploy? @relation("DeployDocumentacion")
 
@@ -219,20 +218,29 @@ model ProyectoDeploy {
 }
 
 // ==========================================
-// HISTORIAL DE TRAZABILIDAD
+// CONVERSACIÓN (Trazabilidad interactiva)
 // ==========================================
-model HistorialTrazabilidad {
+model Conversacion {
   id_sm_vc            Int      @id @default(autoincrement())
-  estudiante_id_sm_vc Int
-  actor_id_sm_vc      Int
-  accion_sm_vc        String   @db.VarChar(100)
-  detalles_sm_vc      String   @db.Text
-  fecha_sm_vc         DateTime @default(now())
+  estudiante_id_sm_vc Int      @unique
+  fecha_creacion_sm_vc DateTime @default(now())
 
-  estudiante Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
-  actor      Usuario    @relation("ActorHistorial", fields: [actor_id_sm_vc], references: [id_sm_vc])
+  estudiante Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+  mensajes   Mensaje[]
 
-  @@map("tdhistorialtrazabilidad_sm_vc")
+  @@map("tdconversacion_sm_vc")
+}
+
+model Mensaje {
+  id_sm_vc              Int      @id @default(autoincrement())
+  conversacion_id_sm_vc Int
+  contenido_sm_vc       String   @db.Text
+  es_sistema_sm_vc      Boolean  @default(true)
+  fecha_creacion_sm_vc  DateTime @default(now())
+
+  conversacion Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+
+  @@map("tdmensaje_sm_vc")
 }
 
 // ==========================================

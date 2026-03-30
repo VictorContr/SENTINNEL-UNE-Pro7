@@ -1,4 +1,4 @@
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 import { BadRequestException } from '@nestjs/common';
 import * as fs from 'fs';
@@ -29,19 +29,7 @@ export const multerDocumentosConfig = {
 };
 
 export const multerDeployConfig = {
-  storage: diskStorage({
-    destination: (_req, file, cb) => {
-      const isZip = ['application/zip', 'application/x-zip-compressed',
-        'application/octet-stream'].includes(file.mimetype);
-      const dest = `./uploads/deploy/${isZip ? 'codigo' : 'documentacion'}`;
-      ensureDir(dest);
-      cb(null, dest);
-    },
-    filename: (_req, file, cb) => {
-      const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      cb(null, `${unique}${extname(file.originalname)}`);
-    },
-  }),
+  storage: memoryStorage(),
   fileFilter: (_req: any, file: any, cb: any) => {
     const allowed = [
       'application/pdf',

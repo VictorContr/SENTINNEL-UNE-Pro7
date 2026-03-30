@@ -30,8 +30,8 @@
         <div class="footer-theme-toggle_sm_vc">
           <q-toggle
             :model-value="isDark_sm_vc"
-            @update:model-value="$emit('toggleTheme')"
-            icon="dark_mode"
+            @update:model-value="toggleTheme_sm_vc"
+            :icon="isDark_sm_vc ? 'nights_stay' : 'wb_sunny'"
             color="teal"
             dense
             :label="isDark_sm_vc ? 'Modo Oscuro' : 'Modo Claro'"
@@ -92,11 +92,12 @@
 
 <script setup>
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useConfigStore } from 'src/stores/configStore'
 
-// const props = defineProps({
-//   isDark_sm_vc: { type: Boolean, default: true }
-// })
-defineEmits(['toggleTheme'])
+const configStore_sm_vc = useConfigStore()
+const { isDark_sm_vc } = storeToRefs(configStore_sm_vc)
+const { toggleTheme_sm_vc } = configStore_sm_vc
 
 const anioActual_sm_vc = computed(() => new Date().getFullYear())
 

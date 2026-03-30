@@ -7,8 +7,9 @@
       'materia-card--locked': materia.bloqueada,
       'materia-card--reprobado':
         materia.estado_aprobacion_sm_vc === 'REPROBADO',
+      'materia-card--readonly': readonly,
     }"
-    @click="!materia.bloqueada && emit('click', materia)"
+    @click="handleCardClick_sm_vc"
   >
     <!-- Borde top de acento -->
     <div class="card-accent-top" />
@@ -47,7 +48,7 @@
     <div class="progress-section">
       <div class="progress-numbers">
         <span>Requisitos</span>
-        <span>{{ materia.requisitos_aprobados_sm_int }}/{{ materia.total_requisitos_sm_int }}</span>
+        <span>{{ requisitosAprobadosVisual_sm_vc }}/{{ materia.total_requisitos_sm_int }}</span>
       </div>
       <q-linear-progress
         :value="materia.progreso_decimal"
@@ -104,7 +105,11 @@
 
     <!-- Footer: acción o bloqueo -->
     <div class="card-footer">
-      <span v-if="materia.bloqueada" class="locked-msg">
+      <span v-if="readonly" class="readonly-footer_sm_vc">
+        <q-icon name="visibility" size="12px" />
+        Solo lectura — sin acciones
+      </span>
+      <span v-else-if="materia.bloqueada" class="locked-msg">
         <q-icon name="lock" size="12px" />
         Requiere aprobar la materia anterior
       </span>
@@ -130,9 +135,23 @@ const props = defineProps({
   estudianteId: { type: String, required: true },
   showDescription: { type: Boolean, default: false },
   showRequisitos: { type: Boolean, default: true },
+  /** Vista auditoría: no emite click ni sugiere edición. */
+  readonly: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["click"]);
+
+const handleCardClick_sm_vc = () => {
+  if (props.readonly || props.materia.bloqueada) return;
+  emit("click", props.materia);
+};
+
+const requisitosAprobadosVisual_sm_vc = computed(() => {
+  if (props.materia.estado_aprobacion_sm_vc === "APROBADO") {
+    return props.materia.total_requisitos_sm_int;
+  }
+  return props.materia.requisitos_aprobados_sm_int;
+});
 
 /* Determina si un requisito ha sido completado (basado en el detalle de aprobación o entregas previas) */
 const isRequisitoCompletado_sm_vc = (requisito_id_sm_vc) => {
@@ -167,7 +186,7 @@ const progressColor = computed(() => {
   font-family: var(--sn-font-mono);
 }
 
-.materia-card:hover:not(.materia-card--locked) {
+.materia-card:hover:not(.materia-card--locked):not(.materia-card--readonly) {
   border-color: var(--sn-borde-hover);
   background: var(--sn-surface-hover);
   transform: translateY(-2px);
@@ -184,6 +203,22 @@ const progressColor = computed(() => {
 .materia-card--locked {
   cursor: not-allowed;
   opacity: 0.45;
+}
+.materia-card--readonly {
+  cursor: default;
+}
+.materia-card--readonly:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--sn-borde);
+  background: var(--sn-surface-alpha);
+}
+.readonly-footer_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.6rem;
+  color: var(--sn-texto-dim);
 }
 .materia-card--reprobado {
   border-color: rgba(255, 143, 163, 0.15);
@@ -361,7 +396,8 @@ const progressColor = computed(() => {
   transition: color 0.15s;
 }
 
-.materia-card:hover:not(.materia-card--locked) .card-action {
+.materia-card:hover:not(.materia-card--locked):not(.materia-card--readonly)
+  .card-action {
   color: var(--sn-primario);
 }
 

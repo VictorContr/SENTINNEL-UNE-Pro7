@@ -93,7 +93,7 @@ const faqs_sm_vc = [
     id_sm_vc: 'faq-03',
     icon_sm_vc: 'linear_scale',
     categoria_sm_vc: 'Flujo del Sistema',
-    pregunta_sm_vc: '¿Puedo entregar en Pasantías II sin haber aprobado Pasantías I?',
+    pregunta_sm_vc: '¿Puedo entregar en Seminario de Grado sin haber aprobado Investigación y Desarrollo?',
     respuesta_sm_vc: 'No. El sistema bloquea el acceso a cada materia hasta que la anterior esté en estado APROBADO. Este control es automático e irreversible para garantizar la integridad del proceso.',
     nota_sm_vc: null
   },
@@ -102,7 +102,7 @@ const faqs_sm_vc = [
     icon_sm_vc: 'rocket_launch',
     categoria_sm_vc: 'Módulo Deploy',
     pregunta_sm_vc: '¿Cuándo se habilita el módulo de Deploy?',
-    respuesta_sm_vc: 'El módulo de Deploy se desbloquea únicamente cuando las tres materias (Pasantías I, II y III) están en estado APROBADO. Allí deberás registrar la URL de tu aplicación en producción, subir el archivo ZIP con el código fuente y adjuntar la documentación técnica en PDF.',
+    respuesta_sm_vc: 'El módulo de Deploy se desbloquea únicamente cuando las cuatro materias (Investigación, Seminario, TG I y TG II) están en estado APROBADO. Allí deberás registrar la URL de tu aplicación en producción, subir el archivo ZIP con el código fuente y adjuntar la documentación técnica en PDF.',
     nota_sm_vc: 'Puedes actualizar tu deploy si cometiste algún error, siempre que el periodo esté activo.'
   },
   {

@@ -15,14 +15,56 @@
       <q-card-section>
         <div class="dialog-form_sm_vc">
 
-          <div class="field-group_sm_vc">
-            <label class="field-label_sm_vc">
-              Nombre Completo <span class="req-mark_sm_vc">*</span>
-            </label>
-            <q-input
-              v-model="form_sm_vc.nombre_sm_vc"
-              dense outlined color="teal-3" class="sntnl-input_sm_vc"
-              placeholder="Ej: Juan Pérez" />
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-sm-6">
+              <div class="field-group_sm_vc">
+                <label class="field-label_sm_vc">
+                  Nombre <span class="req-mark_sm_vc">*</span>
+                </label>
+                <q-input
+                  v-model="form_sm_vc.nombre_sm_vc"
+                  dense outlined color="teal-3" class="sntnl-input_sm_vc"
+                  placeholder="Ej: Juan" />
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="field-group_sm_vc">
+                <label class="field-label_sm_vc">
+                  Apellido <span class="req-mark_sm_vc">*</span>
+                </label>
+                <q-input
+                  v-model="form_sm_vc.apellido_sm_vc"
+                  dense outlined color="teal-3" class="sntnl-input_sm_vc"
+                  placeholder="Ej: Pérez" />
+              </div>
+            </div>
+          </div>
+
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-sm-6">
+              <div class="field-group_sm_vc">
+                <label class="field-label_sm_vc">
+                  Cédula <span class="req-mark_sm_vc">*</span>
+                </label>
+                <q-input
+                  v-model="form_sm_vc.cedula_sm_vc"
+                  dense outlined color="teal-3" class="sntnl-input_sm_vc"
+                  placeholder="V-12345678" />
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="field-group_sm_vc">
+                <label class="field-label_sm_vc">
+                  Rol <span class="req-mark_sm_vc">*</span>
+                </label>
+                <q-select
+                  v-model="form_sm_vc.rol_sm_vc"
+                  :options="rolOptions_sm_vc"
+                  dense outlined color="teal-3"
+                  class="sntnl-select_sm_vc"
+                  emit-value map-options />
+              </div>
+            </div>
           </div>
 
           <div class="field-group_sm_vc">
@@ -36,36 +78,17 @@
           </div>
 
           <div class="field-group_sm_vc">
-            <label class="field-label_sm_vc">
-              Rol <span class="req-mark_sm_vc">*</span>
-            </label>
-            <q-select
-              v-model="form_sm_vc.rol_sm_vc"
-              :options="['ADMINISTRADOR', 'PROFESOR', 'ESTUDIANTE']"
-              dense outlined color="teal-3"
-              class="sntnl-select_sm_vc" />
-          </div>
-
-          <div class="field-group_sm_vc">
-            <label class="field-label_sm_vc">Contraseña Temporal</label>
+            <label class="field-label_sm_vc">{{ usuarioAEditar ? 'Nueva Contraseña (opcional)' : 'Contraseña Temporal *' }}</label>
             <q-input
               v-model="form_sm_vc.clave_sm_vc"
               dense outlined color="teal-3" class="sntnl-input_sm_vc"
-              placeholder="temp123" type="password" />
+              placeholder="********" type="password" />
           </div>
 
-          <!-- Campos extra para estudiante -->
+          <!-- Campos extra para estudiante (Solo lectura o asignación de tutor) -->
           <template v-if="form_sm_vc.rol_sm_vc === 'ESTUDIANTE'">
             <div class="field-group_sm_vc">
-              <label class="field-label_sm_vc">Periodo</label>
-              <q-input
-                v-model="form_sm_vc.cohorte_sm_vc"
-                dense outlined color="teal-3" class="sntnl-input_sm_vc"
-                placeholder="2024-A" />
-            </div>
-
-            <div class="field-group_sm_vc">
-              <label class="field-label_sm_vc">Profesor Asignado</label>
+              <label class="field-label_sm_vc">Profesor Asignado (Tutor)</label>
               <q-select
                 v-model="form_sm_vc.profesor_id_sm_vc"
                 :options="profesoresOpc"
@@ -97,12 +120,19 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'guardar'])
 
+const rolOptions_sm_vc = [
+  { label: 'Administrador', value: 'ADMIN' },
+  { label: 'Profesor', value: 'PROFESOR' },
+  { label: 'Estudiante', value: 'ESTUDIANTE' }
+]
+
 const estadoInicial_sm_vc = () => ({
   nombre_sm_vc: '',
+  apellido_sm_vc: '',
+  cedula_sm_vc: '',
   correo_sm_vc: '',
   rol_sm_vc: 'ESTUDIANTE',
   clave_sm_vc: '',
-  cohorte_sm_vc: '',
   profesor_id_sm_vc: null
 })
 
@@ -111,7 +141,7 @@ const form_sm_vc = ref(estadoInicial_sm_vc())
 watch(() => props.usuarioAEditar, (newVal) => {
   if (newVal) {
     // Rellenamos el form si es edición
-    form_sm_vc.value = { ...newVal, clave_sm_vc: '' } // no traemos la clave por seguridad mock
+    form_sm_vc.value = { ...newVal, clave_sm_vc: '' } 
   } else {
     form_sm_vc.value = estadoInicial_sm_vc()
   }
@@ -123,10 +153,15 @@ const cancelar_sm_vc = () => {
 }
 
 const guardar_sm_vc = () => {
-  if (!form_sm_vc.value.nombre_sm_vc || !form_sm_vc.value.correo_sm_vc) return
-  emit('guardar', { ...form_sm_vc.value })
-  form_sm_vc.value = estadoInicial_sm_vc()
-  emit('update:modelValue', false)
+  const f = form_sm_vc.value
+  // Validación básica
+  if (!f.nombre_sm_vc || !f.apellido_sm_vc || !f.cedula_sm_vc || !f.correo_sm_vc || !f.rol_sm_vc) {
+    return
+  }
+  // En creación la clave es obligatoria
+  if (!props.usuarioAEditar && !f.clave_sm_vc) return
+
+  emit('guardar', { ...f })
 }
 </script>
 

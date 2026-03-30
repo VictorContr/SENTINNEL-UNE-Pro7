@@ -28,22 +28,27 @@ export default route(function (/* { store, ssrContext } */) {
 
     // Ruta pública: si ya está autenticado, redirigir a dashboard (notificaciones)
     if (!to.meta.requiresAuth) {
-      if (auth.isAuthenticated && (to.name === 'login' || to.name === 'landing')) {
+      if (auth.is_authenticated_sm_vc && (to.name === 'login' || to.name === 'landing')) {
         return { name: 'notificaciones' }
       }
       return true
     }
 
     // Ruta privada: no autenticado → login
-    if (!auth.isAuthenticated) {
+    if (!auth.is_authenticated_sm_vc) {
       return { name: 'login', query: { redirect: to.fullPath } }
     }
 
     // Verificar roles requeridos
     const requiredRoles = to.meta.roles ?? []
-    if (requiredRoles.length > 0 && !requiredRoles.includes(auth.user?.rol_sm_vc)) {
-      // Redirigir a notificaciones si no tiene el rol
-      return { name: 'notificaciones' }
+    const roleMap = { 'ADMINISTRADOR': 'ADMIN' }
+    if (requiredRoles.length > 0) {
+      const userRole = auth.user_sm_vc?.rol_sm_vc
+      const matches = requiredRoles.some(r => r === userRole || roleMap[r] === userRole || r === roleMap[userRole])
+      if (!matches) {
+        // Redirigir a notificaciones si no tiene el rol
+        return { name: 'notificaciones' }
+      }
     }
 
     return true

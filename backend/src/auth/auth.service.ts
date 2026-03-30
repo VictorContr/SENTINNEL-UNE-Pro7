@@ -13,6 +13,7 @@ export class AuthService_sm_vc {
   async login_sm_vc(correo_sm_vc: string, clave_sm_vc: string) {
     const usuario_sm_vc = await this.prisma.usuario.findUnique({
       where: { correo_sm_vc },
+      include: { estudiante_sm_vc: true },
     });
 
     if (!usuario_sm_vc) {
@@ -87,6 +88,7 @@ export class AuthService_sm_vc {
   async validateUser_sm_vc(userId_sm_vc: number) {
     const usuario_sm_vc = await this.prisma.usuario.findUnique({
       where: { id_sm_vc: userId_sm_vc },
+      include: { estudiante_sm_vc: true },
     });
 
     if (!usuario_sm_vc || !usuario_sm_vc.activo_sm_vc) {

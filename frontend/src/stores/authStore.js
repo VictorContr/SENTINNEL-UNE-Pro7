@@ -1,49 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { LocalStorage } from 'quasar'
+import { LocalStorage, Notify } from 'quasar'
+import { login_sm_vc, cambiarClaveInicial_sm_vc as cambiarClaveService_sm_vc } from 'src/services/authService'
 
 /**
  * SENTINNEL – authStore
- * Simula autenticación JWT con roles y sesión persistente en localStorage.
- * Campos de usuario respetan la convención de sufijos Prisma (_sm_vc, _sm_int, etc.)
+ * Manejo global de autenticación JWT y estado de sesión.
  */
-
-/* ── Usuarios ficticios para el prototipo ── */
-const MOCK_USERS_SEED_sm_vc = [
-  {
-    id_sm_vc: 'USR-001',
-    nombre_sm_vc: 'Carlos Mendoza',
-    correo_sm_vc: 'admin@une.edu.ve',
-    clave_sm_vc: 'admin123',
-    rol_sm_vc: 'ADMINISTRADOR',
-    avatar_sm_vc: null,
-    activo_sm_vc: true,
-    cohorte_sm_vc: null,
-    profesor_id_sm_vc: null
-  },
-  {
-    id_sm_vc: 'USR-002',
-    nombre_sm_vc: 'Prof. Ana Torres',
-    correo_sm_vc: 'profesor@une.edu.ve',
-    clave_sm_vc: 'prof123',
-    rol_sm_vc: 'PROFESOR',
-    avatar_sm_vc: null,
-    activo_sm_vc: true,
-    cohorte_sm_vc: null,
-    profesor_id_sm_vc: null
-  },
-  {
-    id_sm_vc: 'USR-003',
-    nombre_sm_vc: 'Luis Ramírez',
-    correo_sm_vc: 'estudiante@une.edu.ve',
-    clave_sm_vc: 'est123',
-    rol_sm_vc: 'ESTUDIANTE',
-    avatar_sm_vc: null,
-    activo_sm_vc: true,
-    cohorte_sm_vc: '2024-A',
-    profesor_id_sm_vc: 'USR-002'
-  }
-]
 
 export const useAuthStore = defineStore('auth', () => {
   /* ── State ── */
@@ -52,17 +15,12 @@ export const useAuthStore = defineStore('auth', () => {
   const loading_sm_vc = ref(false)
   const error_sm_vc = ref(null)
 
-  /* ── Reactive copy of mock users (not mutating the seed) ── */
-  const MOCK_USERS_sm_vc = ref(
-    MOCK_USERS_SEED_sm_vc.map((u) => ({ ...u }))
-  )
-
   /* ── Hydrate from localStorage ── */
   const _hidratar_sm_vc = () => {
     try {
       const stored_sm_vc = LocalStorage.getItem('sentinnel_session')
       if (stored_sm_vc) {
-        const parsed_sm_vc = JSON.parse(stored_sm_vc)
+        const parsed_sm_vc = typeof stored_sm_vc === 'string' ? JSON.parse(stored_sm_vc) : stored_sm_vc
         user_sm_vc.value = parsed_sm_vc.user
         token_sm_vc.value = parsed_sm_vc.token
       }
@@ -75,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
   /* ── Getters ── */
   const is_authenticated_sm_vc = computed(() => !!token_sm_vc.value && !!user_sm_vc.value)
   const rol_sm_vc = computed(() => user_sm_vc.value?.rol_sm_vc ?? null)
-  const is_admin_sm_vc = computed(() => rol_sm_vc.value === 'ADMINISTRADOR')
+  const is_admin_sm_vc = computed(() => rol_sm_vc.value === 'ADMINISTRADOR' || rol_sm_vc.value === 'ADMIN')
   const is_profesor_sm_vc = computed(() => rol_sm_vc.value === 'PROFESOR')
   const is_estudiante_sm_vc = computed(() => rol_sm_vc.value === 'ESTUDIANTE')
   const nombre_corto_sm_vc = computed(() => {
@@ -84,118 +42,87 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   /* ── Actions ── */
-  async function login_sm_vc(correo_input_sm_vc, clave_input_sm_vc) {
+  const action_login_sm_vc = async (correo_input_sm_vc, clave_input_sm_vc) => {
     loading_sm_vc.value = true
     error_sm_vc.value = null
 
     try {
-      /* Simular latencia de red */
-      await new Promise((r) => setTimeout(r, 900))
-
-      const found_sm_vc = MOCK_USERS_sm_vc.value.find(
-        (u) =>
-          u.correo_sm_vc === correo_input_sm_vc.trim().toLowerCase() &&
-          u.clave_sm_vc === clave_input_sm_vc
+      const data_sm_vc = await login_sm_vc(
+        correo_input_sm_vc.trim().toLowerCase(),
+        clave_input_sm_vc
       )
 
-      if (!found_sm_vc) {
-        error_sm_vc.value = 'Credenciales inválidas. Verifica tu correo y contraseña.'
-        return false
+      if (data_sm_vc.requires_password_change) {
+        return { 
+          requires_password_change: true, 
+          user: data_sm_vc.user_sm_vc || data_sm_vc.usuario_sm_vc
+        }
       }
 
-      if (!found_sm_vc.activo_sm_vc) {
-        error_sm_vc.value = 'Tu cuenta ha sido revocada. Contacta al administrador.'
-        return false
-      }
-
-      /* Generar token simulado */
-      const fake_token_sm_vc = `sntnl_${btoa(found_sm_vc.id_sm_vc + ':' + Date.now())}`
-      const safe_user_sm_vc = { ...found_sm_vc }
-      delete safe_user_sm_vc.clave_sm_vc
-
-      user_sm_vc.value = safe_user_sm_vc
-      token_sm_vc.value = fake_token_sm_vc
+      user_sm_vc.value = data_sm_vc.user_sm_vc || data_sm_vc.usuario_sm_vc || data_sm_vc.user
+      token_sm_vc.value = data_sm_vc.access_token_sm_vc || data_sm_vc.token || data_sm_vc.access_token
 
       LocalStorage.set(
         'sentinnel_session',
-        JSON.stringify({ user: safe_user_sm_vc, token: fake_token_sm_vc })
+        JSON.stringify({ user: user_sm_vc.value, token: token_sm_vc.value })
       )
+      
+      // Actualizamos localStorage para Axios (para que lo lea de acá si hace falta)
+      LocalStorage.set('token_sm_vc', token_sm_vc.value)
 
+      Notify.create({ message: `Bienvenido, ${user_sm_vc.value?.nombre_sm_vc || ''}`, color: 'positive', icon: 'check_circle' })
       return true
     } catch (err_sm_vc) {
-      error_sm_vc.value = err_sm_vc?.message || 'Error inesperado al iniciar sesión.'
+      error_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc?.message || 'Error inesperado al iniciar sesión.'
+      Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'error' })
       return false
     } finally {
       loading_sm_vc.value = false
     }
   }
 
-  function logout_sm_vc() {
+  const cambiar_clave_inicial_sm_vc = async (correo_sm_vc, clave_temporal_sm_vc, nueva_clave_sm_vc) => {
+    loading_sm_vc.value = true
+    error_sm_vc.value = null
+    try {
+      const resp_sm_vc = await cambiarClaveService_sm_vc(correo_sm_vc, clave_temporal_sm_vc, nueva_clave_sm_vc)
+      Notify.create({ message: resp_sm_vc.message || 'Contraseña cambiada exitosamente.', color: 'positive' })
+      return true
+    } catch (err_sm_vc) {
+      error_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc?.message || 'Error al cambiar la contraseña.'
+      Notify.create({ message: error_sm_vc.value, color: 'negative', icon: 'error' })
+      return false
+    } finally {
+      loading_sm_vc.value = false
+    }
+  }
+
+  const logout_sm_vc = () => {
     user_sm_vc.value = null
     token_sm_vc.value = null
     LocalStorage.remove('sentinnel_session')
-  }
-
-  function ban_user_sm_vc(id_target_sm_vc) {
-    /* Soft-delete: marca como inactivo en la copia reactiva */
-    const usuario_sm_vc = MOCK_USERS_sm_vc.value.find((u) => u.id_sm_vc === id_target_sm_vc)
-    if (usuario_sm_vc) {
-      usuario_sm_vc.activo_sm_vc = !usuario_sm_vc.activo_sm_vc
-    }
-  }
-
-  function crear_usuario_sm_vc(datos_sm_vc) {
-    /* Acción mock: agrega un usuario al array reactivo local */
-    const nuevo_sm_vc = {
-      id_sm_vc: `USR-${String(MOCK_USERS_sm_vc.value.length + 1).padStart(3, '0')}`,
-      nombre_sm_vc: datos_sm_vc.nombre_sm_vc,
-      correo_sm_vc: datos_sm_vc.correo_sm_vc,
-      clave_sm_vc: datos_sm_vc.clave_sm_vc || 'temp123',
-      rol_sm_vc: datos_sm_vc.rol_sm_vc || 'ESTUDIANTE',
-      avatar_sm_vc: null,
-      activo_sm_vc: true,
-      cohorte_sm_vc: datos_sm_vc.cohorte_sm_vc || null,
-      profesor_id_sm_vc: datos_sm_vc.profesor_id_sm_vc || null
-    }
-    MOCK_USERS_sm_vc.value.push(nuevo_sm_vc)
-    return nuevo_sm_vc
-  }
-
-  function actualizar_usuario_sm_vc(datos_sm_vc) {
-    const idx_sm_vc = MOCK_USERS_sm_vc.value.findIndex(u => u.id_sm_vc === datos_sm_vc.id_sm_vc)
-    if (idx_sm_vc !== -1) {
-      MOCK_USERS_sm_vc.value[idx_sm_vc] = { 
-        ...MOCK_USERS_sm_vc.value[idx_sm_vc], 
-        ...datos_sm_vc,
-        // No permitir que sobreescriban id_sm_vc
-        id_sm_vc: MOCK_USERS_sm_vc.value[idx_sm_vc].id_sm_vc 
-      }
-      return MOCK_USERS_sm_vc.value[idx_sm_vc]
-    }
-    throw new Error('Usuario no encontrado')
+    LocalStorage.remove('token_sm_vc')
+    Notify.create({ message: 'Sesión finalizada correctamente', color: 'info', icon: 'info' })
   }
 
   return {
     /* State */
-    user: user_sm_vc,
+    user_sm_vc,
     token_sm_vc,
     loading_sm_vc,
     error_sm_vc,
-    MOCK_USERS: MOCK_USERS_sm_vc,
 
     /* Getters */
-    isAuthenticated: is_authenticated_sm_vc,
-    rol: rol_sm_vc,
-    isAdmin: is_admin_sm_vc,
-    isProfesor: is_profesor_sm_vc,
-    isEstudiante: is_estudiante_sm_vc,
-    nombreCorto: nombre_corto_sm_vc,
+    is_authenticated_sm_vc,
+    rol_sm_vc,
+    is_admin_sm_vc,
+    is_profesor_sm_vc,
+    is_estudiante_sm_vc,
+    nombre_corto_sm_vc,
 
     /* Actions */
-    login: login_sm_vc,
-    logout: logout_sm_vc,
-    banUser: ban_user_sm_vc,
-    crearUsuario: crear_usuario_sm_vc,
-    actualizarUsuario: actualizar_usuario_sm_vc
+    login_sm_vc: action_login_sm_vc,
+    logout_sm_vc,
+    cambiar_clave_inicial_sm_vc
   }
 })
