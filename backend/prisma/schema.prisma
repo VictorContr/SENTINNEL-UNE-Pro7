@@ -92,6 +92,7 @@ model Estudiante {
   tutor_empresarial_sm_vc String @db.VarChar(100)
   titulo_proyecto_sm_vc   String @db.VarChar(255)
   materia_activa_id_sm_vc Int
+  puede_hacer_deploy_sm_vc Boolean @default(false)
 
   usuario       Usuario                 @relation("UsuarioAEstudiante",  fields: [usuario_id_sm_vc],  references: [id_sm_vc])
   profesorTutor Usuario?                @relation("TutorAEstudiante",    fields: [profesor_id_sm_vc], references: [id_sm_vc])

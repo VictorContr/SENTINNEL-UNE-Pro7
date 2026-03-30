@@ -187,6 +187,11 @@ export class EvaluacionesService {
 
     if (!siguienteMateria) {
       // El estudiante completó la última materia
+      await this.prisma.estudiante.update({
+        where: { id_sm_vc: estudianteId },
+        data:  { puede_hacer_deploy_sm_vc: true },
+      });
+
       this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
         estudianteId: estudianteId,
         descripcion_sm_vc: `¡Proceso completado! Todas las materias aprobadas. Deploy habilitado.`,

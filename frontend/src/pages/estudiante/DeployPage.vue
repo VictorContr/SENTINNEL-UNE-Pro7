@@ -21,50 +21,23 @@
     </div>
 
     <!-- Estado bloqueado -->
-    <div v-if="!store_sm_vc.todasAprobadas" class="locked-state_sm_vc">
+    <div v-if="!puedeHacerDeploy_sm_vc" class="locked-state_sm_vc">
       <div class="locked-icon_sm_vc">
         <q-icon name="lock" size="32px" color="blue-grey-7" />
       </div>
       <div>
         <p class="locked-title_sm_vc">Formulario bloqueado</p>
         <p class="locked-desc_sm_vc">
-          Debes aprobar las 4 materias antes de registrar tu deploy.
+          Debes aprobar todos los requisitos académicos antes de registrar tu deploy.
         </p>
-        <div class="locked-progress_sm_vc">
-          <div
-            v-for="mat in store_sm_vc.miProgreso"
-            :key="mat.id_sm_vc"
-            class="lock-mat_sm_vc">
-            <q-icon
-              :name="mat.estado_aprobacion_sm_vc === 'APROBADO'
-                ? 'check_circle' : 'radio_button_unchecked'"
-              :color="mat.estado_aprobacion_sm_vc === 'APROBADO'
-                ? 'teal-4' : 'blue-grey-8'"
-              size="14px" />
-            <span>{{ mat.nombre_sm_vc }}</span>
-          </div>
-        </div>
       </div>
     </div>
 
     <!-- Formulario activo -->
     <template v-else>
-      <!-- Banner de deploy existente -->
-      <div v-if="store_sm_vc.miDeploy" class="existing-deploy-banner_sm_vc">
-        <q-icon name="info" size="16px" color="teal-3" />
-        <span>Ya tienes un deploy registrado. Puedes actualizarlo.</span>
-        <div class="existing-url_sm_vc">
-          <q-icon name="link" size="12px" color="teal-3" />
-          <a :href="store_sm_vc.miDeploy.url_produccion_sm_vc"
-            target="_blank" class="url-link_sm_vc">
-            {{ store_sm_vc.miDeploy.url_produccion_sm_vc }}
-          </a>
-        </div>
-      </div>
-
       <div class="section-notice_sm_vc">
         <q-icon name="check_circle" size="16px" color="teal-4" />
-        <span>Todas tus materias están aprobadas. Completa los datos a continuación.</span>
+        <span>Elegibilidad académica confirmada. Completa los datos a continuación.</span>
       </div>
 
       <q-form @submit.prevent="registrarDeploy_sm_vc" class="deploy-form_sm_vc">
@@ -74,18 +47,18 @@
             URL de Producción <span class="req-mark_sm_vc">*</span>
             <q-icon name="help_outline" size="12px" color="blue-grey-6" class="q-ml-xs">
               <q-tooltip class="bg-dark text-caption">
-                URL donde está desplegada tu app (Netlify, Vercel, Railway…)
+                URL donde está desplegada tu app (vía HTTPS)
               </q-tooltip>
             </q-icon>
           </label>
           <q-input
             v-model="form_sm_vc.url_produccion_sm_vc"
             dense outlined color="teal-3" class="sntnl-input_sm_vc"
-            :placeholder="store_sm_vc.miDeploy?.url_produccion_sm_vc
-              || 'https://mi-proyecto.netlify.app'"
+            placeholder="https://mi-proyecto.netlify.app"
+            lazy-rules
             :rules="[
               val => !!val || 'Campo requerido',
-              val => /^https?:\/\/.+/.test(val) || 'URL inválida'
+              val => /^https:\/\/.+/.test(val) || 'La URL debe empezar con https://'
             ]">
             <template #prepend>
               <q-icon name="link" color="teal-3" size="18px" />
@@ -100,7 +73,8 @@
             <span class="format-hint_sm_vc">.zip</span>
           </label>
           <DeployUploadZone
-            v-model="form_sm_vc.archivo_codigo_nombre_sm_vc"
+            v-model="form_sm_vc.archivo_zip_nombre_sm_vc"
+            @archivo-seleccionado="handleZipSeleccionado_sm_vc"
             accept=".zip"
             icon="folder_zip"
             accent-color="teal" />
@@ -113,7 +87,8 @@
             <span class="format-hint_sm_vc">.pdf</span>
           </label>
           <DeployUploadZone
-            v-model="form_sm_vc.documentacion_nombre_sm_vc"
+            v-model="form_sm_vc.archivo_pdf_nombre_sm_vc"
+            @archivo-seleccionado="handlePdfSeleccionado_sm_vc"
             accept=".pdf"
             icon="picture_as_pdf"
             accent-color="amber" />
@@ -124,14 +99,14 @@
 
         <q-btn
           type="submit" unelevated no-caps
-          :label="store_sm_vc.miDeploy ? 'Actualizar Deploy' : 'Registrar Deploy'"
+          label="Registrar Deploy en Producción"
           icon="rocket_launch"
           class="submit-btn_sm_vc"
-          :loading="submitting_sm_vc"
+          :loading="deployStore_sm_vc.loading_sm_vc"
           :disable="!todosOk_sm_vc" >
           <template #loading>
             <q-spinner-dots color="#0b132b" size="20px" />
-            <span class="q-ml-sm loader-text_sm_vc">Registrando…</span>
+            <span class="q-ml-sm loader-text_sm_vc">Subiendo archivos…</span>
           </template>
         </q-btn>
       </q-form>
@@ -142,39 +117,43 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-import { usePasantiasStore } from 'src/stores/pasantiasStore'
+import { useAuthStore } from 'src/stores/authStore'
+import { useDeployStore } from 'src/stores/deployStore'
 import DeployUploadZone from 'src/components/shared/deploy/DeployUploadZone.vue'
 import DeployChecklist from 'src/components/shared/deploy/DeployChecklist.vue'
 
 const router_sm_vc = useRouter()
-const $q_sm_vc = useQuasar()
-const store_sm_vc = usePasantiasStore()
+const authStore_sm_vc = useAuthStore()
+const deployStore_sm_vc = useDeployStore()
 
-const submitting_sm_vc = ref(false)
+// Acceso reactivo al estado del estudiante
+const estudiante_sm_vc = computed(() => authStore_sm_vc.user_sm_vc?.estudiante_sm_vc)
+const puedeHacerDeploy_sm_vc = computed(() => estudiante_sm_vc.value?.puede_hacer_deploy_sm_vc ?? false)
 
 const form_sm_vc = ref({
-  url_produccion_sm_vc: store_sm_vc.miDeploy?.url_produccion_sm_vc ?? '',
-  archivo_codigo_nombre_sm_vc: '',
-  documentacion_nombre_sm_vc: ''
+  url_produccion_sm_vc: '',
+  archivo_zip_sm_vc: null,
+  archivo_pdf_sm_vc: null,
+  archivo_zip_nombre_sm_vc: '',
+  archivo_pdf_nombre_sm_vc: ''
 })
 
 const preflightChecks_sm_vc = computed(() => [
   {
-    label: 'URL de producción ingresada',
-    ok: /^https?:\/\/.+/.test(form_sm_vc.value.url_produccion_sm_vc)
+    label: 'URL de producción (HTTPS obligatoria)',
+    ok: /^https:\/\/.+/.test(form_sm_vc.value.url_produccion_sm_vc)
   },
   {
     label: 'Archivo de código .zip adjunto',
-    ok: !!form_sm_vc.value.archivo_codigo_nombre_sm_vc
+    ok: !!form_sm_vc.value.archivo_zip_sm_vc
   },
   {
     label: 'Documentación técnica .pdf adjunta',
-    ok: !!form_sm_vc.value.documentacion_nombre_sm_vc
+    ok: !!form_sm_vc.value.archivo_pdf_sm_vc
   },
   {
-    label: 'Todas las materias aprobadas',
-    ok: store_sm_vc.todasAprobadas
+    label: 'Elegibilidad académica confirmada',
+    ok: puedeHacerDeploy_sm_vc.value
   }
 ])
 
@@ -182,24 +161,31 @@ const todosOk_sm_vc = computed(() =>
   preflightChecks_sm_vc.value.every((c) => c.ok)
 )
 
+const handleZipSeleccionado_sm_vc = (file_sm_vc) => {
+  form_sm_vc.value.archivo_zip_sm_vc = file_sm_vc
+}
+
+const handlePdfSeleccionado_sm_vc = (file_sm_vc) => {
+  form_sm_vc.value.archivo_pdf_sm_vc = file_sm_vc
+}
+
 const registrarDeploy_sm_vc = async () => {
-  submitting_sm_vc.value = true
-  await new Promise((r) => setTimeout(r, 1200))
-  store_sm_vc.registrarDeploy({
-    url_produccion_sm_vc: form_sm_vc.value.url_produccion_sm_vc,
-    archivo_codigo_nombre: form_sm_vc.value.archivo_codigo_nombre_sm_vc,
-    documentacion_nombre: form_sm_vc.value.documentacion_nombre_sm_vc
-  })
-  submitting_sm_vc.value = false
-  $q_sm_vc.notify({
-    type: 'positive',
-    message: '¡Deploy registrado exitosamente!',
-    caption: form_sm_vc.value.url_produccion_sm_vc,
-    icon: 'rocket_launch',
-    position: 'top-right',
-    timeout: 5000
-  })
-  router_sm_vc.push('/estudiante/trazabilidad')
+  if (!todosOk_sm_vc.value) return
+
+  const formData_sm_vc = new FormData()
+  formData_sm_vc.append('url_produccion_sm_vc', form_sm_vc.value.url_produccion_sm_vc)
+  formData_sm_vc.append('archivo_zip_sm_vc', form_sm_vc.value.archivo_zip_sm_vc)
+  formData_sm_vc.append('archivo_pdf_sm_vc', form_sm_vc.value.archivo_pdf_sm_vc)
+
+  try {
+    await deployStore_sm_vc.enviar_deploy_sm_vc(
+      estudiante_sm_vc.value.id_sm_vc,
+      formData_sm_vc
+    )
+    router_sm_vc.push('/estudiante/trazabilidad')
+  } catch (error_sm_vc) {
+    console.error('Error en el despliegue:', error_sm_vc)
+  }
 }
 </script>
 

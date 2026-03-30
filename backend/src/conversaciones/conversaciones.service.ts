@@ -20,6 +20,11 @@ export class ConversacionesService {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
 
+  @OnEvent('deploy.completado_sm_vc')
+  async manejarDeployCompletado_sm_vc(payload: { estudianteId: number; descripcion_sm_vc: string }) {
+    await this.registrarMensajeSistema_sm_vc(payload);
+  }
+
   private async registrarMensajeSistema_sm_vc(payload: { estudianteId: number; descripcion_sm_vc: string }) {
     try {
       // 1. Buscar la conversación del estudiante
