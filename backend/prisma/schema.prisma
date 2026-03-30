@@ -69,35 +69,35 @@ model Usuario {
   requiere_cambio_clave_sm_vc Boolean    @default(true)
   fecha_creacion_sm_vc        DateTime   @default(now())
 
-  estudiante_sm_vc        Estudiante?             @relation("UsuarioAEstudiante")
-  estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")
-  documentosSubidos       Documento[]             @relation("UsuarioSubeDocumento")
-  evaluacionesRealizadas  Evaluacion[]            @relation("ProfesorEvalua")
-  notificacionesEnviadas  Notificacion[]          @relation("NotificacionesEnviadas")
-  notificacionesRecibidas Notificacion[]          @relation("NotificacionesRecibidas")
+  estudiante_sm_vc        Estudiante?    @relation("UsuarioAEstudiante")
+  estudiantesTutor        Estudiante[]   @relation("TutorAEstudiante")
+  documentosSubidos       Documento[]    @relation("UsuarioSubeDocumento")
+  evaluacionesRealizadas  Evaluacion[]   @relation("ProfesorEvalua")
+  notificacionesEnviadas  Notificacion[] @relation("NotificacionesEnviadas")
+  notificacionesRecibidas Notificacion[] @relation("NotificacionesRecibidas")
 
   @@map("tdusuario_sm_vc")
 }
 
 // ==========================================
 // ESTUDIANTE (Perfil extendido)
-// materia_activa_id apunta a la materia
-// en la que el estudiante está habilitado
 // ==========================================
 model Estudiante {
-  id_sm_vc                Int    @id @default(autoincrement())
-  usuario_id_sm_vc        Int    @unique
-  profesor_id_sm_vc       Int?
-  empresa_sm_vc           String @db.VarChar(150)
-  tutor_empresarial_sm_vc String @db.VarChar(100)
-  titulo_proyecto_sm_vc   String @db.VarChar(255)
-  materia_activa_id_sm_vc Int
+  id_sm_vc                 Int     @id @default(autoincrement())
+  usuario_id_sm_vc         Int     @unique
+  profesor_id_sm_vc        Int?
+  empresa_sm_vc            String  @db.VarChar(150)
+  tutor_empresarial_sm_vc  String  @db.VarChar(100)
+  titulo_proyecto_sm_vc    String  @db.VarChar(255)
+  materia_activa_id_sm_vc  Int
   puede_hacer_deploy_sm_vc Boolean @default(false)
 
-  usuario       Usuario                 @relation("UsuarioAEstudiante",  fields: [usuario_id_sm_vc],  references: [id_sm_vc])
-  profesorTutor Usuario?                @relation("TutorAEstudiante",    fields: [profesor_id_sm_vc], references: [id_sm_vc])
-  materiaActiva Materia                 @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc])
-  entregas      Entrega[]
+  usuario       Usuario         @relation("UsuarioAEstudiante",  fields: [usuario_id_sm_vc],  references: [id_sm_vc], onDelete: Restrict)
+  profesorTutor Usuario?        @relation("TutorAEstudiante",    fields: [profesor_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
+  materiaActiva Materia         @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc], onDelete: Restrict)
+
+  // Cascade: al borrar un Estudiante se borran sus entregas, deploy y conversacion
+  entregas       Entrega[]
   proyectoDeploy ProyectoDeploy?
   conversacion   Conversacion?
 
@@ -105,10 +105,7 @@ model Estudiante {
 }
 
 // ==========================================
-// MATERIA (3 secuenciales por periodo)
-// posicion: 1=Inv. y Desarrollo
-//           2=Seminario de Grado
-//           3=Trabajo de Grado I
+// MATERIA
 // ==========================================
 model Materia {
   id_sm_vc          Int     @id @default(autoincrement())
@@ -125,7 +122,7 @@ model Materia {
 }
 
 // ==========================================
-// REQUISITO (Capítulos / Entregables)
+// REQUISITO
 // ==========================================
 model Requisito {
   id_sm_vc          Int    @id @default(autoincrement())
@@ -134,14 +131,15 @@ model Requisito {
   descripcion_sm_vc String @db.Text
   posicion_sm_vc    Int
 
-  materia  Materia   @relation(fields: [materia_id_sm_vc], references: [id_sm_vc])
+  materia  Materia   @relation(fields: [materia_id_sm_vc], references: [id_sm_vc], onDelete: Restrict)
   entregas Entrega[]
 
   @@map("tdrequisito_sm_vc")
 }
 
 // ==========================================
-// ENTREGA (Estado de aprobación por requisito)
+// ENTREGA
+// FIX #4: onDelete: Cascade en ambas FK
 // ==========================================
 model Entrega {
   id_sm_vc                  Int              @id @default(autoincrement())
@@ -150,8 +148,11 @@ model Entrega {
   estado_sm_vc              EstadoAprobacion @default(PENDIENTE)
   fecha_actualizacion_sm_vc DateTime         @updatedAt
 
-  estudiante Estudiante  @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
-  requisito  Requisito   @relation(fields: [requisito_id_sm_vc],  references: [id_sm_vc])
+  // Cascade: si se borra el Estudiante → se borran sus Entregas
+  estudiante Estudiante  @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+  // Restrict: no se puede borrar un Requisito si tiene Entregas activas
+  requisito  Requisito   @relation(fields: [requisito_id_sm_vc],  references: [id_sm_vc], onDelete: Restrict)
+
   documentos Documento[]
   evaluacion Evaluacion?
 
@@ -160,7 +161,8 @@ model Entrega {
 }
 
 // ==========================================
-// DOCUMENTO (PDF / ZIP almacenado en disco)
+// DOCUMENTO
+// FIX #4: onDelete: SetNull en la FK a Entrega (ya era nullable)
 // ==========================================
 model Documento {
   id_sm_vc                Int           @id @default(autoincrement())
@@ -173,16 +175,19 @@ model Documento {
   mime_type_sm_vc         String?       @db.VarChar(100)
   fecha_subida_sm_vc      DateTime      @default(now())
 
-  entrega         Entrega?        @relation(fields: [entrega_id_sm_vc],        references: [id_sm_vc])
-  usuario         Usuario         @relation("UsuarioSubeDocumento", fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
-  deployCodigo    ProyectoDeploy? @relation("DeployCodigoZIP")
-  deployDocs      ProyectoDeploy? @relation("DeployDocumentacion")
+  // SetNull: si se borra la Entrega el documento queda huérfano (revisable por admin)
+  entrega  Entrega? @relation(fields: [entrega_id_sm_vc],        references: [id_sm_vc], onDelete: SetNull)
+  usuario  Usuario  @relation("UsuarioSubeDocumento", fields: [usuario_subida_id_sm_vc], references: [id_sm_vc], onDelete: Restrict)
+
+  deployCodigo ProyectoDeploy? @relation("DeployCodigoZIP")
+  deployDocs   ProyectoDeploy? @relation("DeployDocumentacion")
 
   @@map("tddocumento_sm_vc")
 }
 
 // ==========================================
-// EVALUACION (Decisión del profesor)
+// EVALUACION
+// FIX #4: onDelete: Cascade en FK a Entrega
 // ==========================================
 model Evaluacion {
   id_sm_vc               Int              @id @default(autoincrement())
@@ -192,15 +197,16 @@ model Evaluacion {
   observaciones_sm_vc    String?          @db.Text
   fecha_evaluacion_sm_vc DateTime         @default(now())
 
-  entrega  Entrega @relation(fields: [entrega_id_sm_vc],  references: [id_sm_vc])
-  profesor Usuario @relation("ProfesorEvalua", fields: [profesor_id_sm_vc], references: [id_sm_vc])
+  // Cascade: si se borra la Entrega → se borra su Evaluacion
+  entrega  Entrega @relation(fields: [entrega_id_sm_vc],  references: [id_sm_vc], onDelete: Cascade)
+  profesor Usuario @relation("ProfesorEvalua", fields: [profesor_id_sm_vc], references: [id_sm_vc], onDelete: Restrict)
 
   @@map("tdevaluacion_sm_vc")
 }
 
 // ==========================================
-// PROYECTO DEPLOY (Habilitado al completar
-// la Materia 3 — Trabajo de Grado I)
+// PROYECTO DEPLOY
+// FIX #4: onDelete: Cascade en FK a Estudiante
 // ==========================================
 model ProyectoDeploy {
   id_sm_vc                       Int      @id @default(autoincrement())
@@ -210,19 +216,20 @@ model ProyectoDeploy {
   documentacion_tecnica_id_sm_vc Int      @unique
   fecha_deploy_sm_vc             DateTime @default(now())
 
-  estudiante           Estudiante @relation(fields: [estudiante_id_sm_vc],            references: [id_sm_vc])
-  archivoCodigo        Documento  @relation("DeployCodigoZIP",        fields: [archivo_codigo_id_sm_vc],        references: [id_sm_vc])
-  documentacionTecnica Documento  @relation("DeployDocumentacion",   fields: [documentacion_tecnica_id_sm_vc], references: [id_sm_vc])
+  // Cascade: si se borra el Estudiante → se borra su ProyectoDeploy
+  estudiante           Estudiante @relation(fields: [estudiante_id_sm_vc],            references: [id_sm_vc], onDelete: Cascade)
+  archivoCodigo        Documento  @relation("DeployCodigoZIP",      fields: [archivo_codigo_id_sm_vc],        references: [id_sm_vc], onDelete: Restrict)
+  documentacionTecnica Documento  @relation("DeployDocumentacion",  fields: [documentacion_tecnica_id_sm_vc], references: [id_sm_vc], onDelete: Restrict)
 
   @@map("tdproyectodeploy_sm_vc")
 }
 
 // ==========================================
-// CONVERSACIÓN (Trazabilidad interactiva)
+// CONVERSACIÓN — ya tenía Cascade, se mantiene
 // ==========================================
 model Conversacion {
-  id_sm_vc            Int      @id @default(autoincrement())
-  estudiante_id_sm_vc Int      @unique
+  id_sm_vc             Int      @id @default(autoincrement())
+  estudiante_id_sm_vc  Int      @unique
   fecha_creacion_sm_vc DateTime @default(now())
 
   estudiante Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
@@ -256,8 +263,8 @@ model Notificacion {
   leida_sm_vc          Boolean          @default(false)
   fecha_creacion_sm_vc DateTime         @default(now())
 
-  emisor   Usuario @relation("NotificacionesEnviadas",  fields: [emisor_id_sm_vc],    references: [id_sm_vc])
-  receptor Usuario @relation("NotificacionesRecibidas", fields: [receptor_id_sm_vc],  references: [id_sm_vc])
+  emisor   Usuario @relation("NotificacionesEnviadas",  fields: [emisor_id_sm_vc],   references: [id_sm_vc], onDelete: Restrict)
+  receptor Usuario @relation("NotificacionesRecibidas", fields: [receptor_id_sm_vc], references: [id_sm_vc], onDelete: Restrict)
 
   @@map("tdnotificacion_sm_vc")
 }
