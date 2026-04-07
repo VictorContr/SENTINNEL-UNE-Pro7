@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import {
   Controller, Post, Get, Patch, Param, Body,
   UploadedFiles, UseInterceptors, UseGuards,
@@ -24,6 +25,7 @@ interface MulterFile {
   filename: string;
   path: string;
   buffer: Buffer;
+  stream: Readable;
 }
 
 @Controller('deploy')

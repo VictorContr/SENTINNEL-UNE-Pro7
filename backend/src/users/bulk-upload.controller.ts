@@ -1,7 +1,7 @@
 import {
   Controller, Post, UseInterceptors,
   UploadedFile, BadRequestException,
-  ParseIntPipe, Body, Res,
+  ParseIntPipe, Body, Res, UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService_sm_vc } from './users.service';

@@ -25,7 +25,8 @@ export const useUsersStore = defineStore('users', () => {
     error_usuarios_sm_vc.value = null
     try {
       const data_sm_vc = await findAll_sm_vc()
-      usuarios_sm_vc.value = data_sm_vc
+      // Si el backend retorna un objeto paginado con usuarios_sm_vc, extraemos el arreglo.
+      usuarios_sm_vc.value = Array.isArray(data_sm_vc) ? data_sm_vc : (data_sm_vc.usuarios_sm_vc || [])
     } catch (err_sm_vc) {
       error_usuarios_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al obtener usuarios.'
       Notify.create({ message: error_usuarios_sm_vc.value, color: 'negative', icon: 'error' })
