@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url = env("DATABASE_URL")
 }
 
 // ==========================================
@@ -40,6 +41,19 @@ enum TipoNotificacion {
   URGENTE
   INFORMATIVA
   @@map("tiponotificacion_sm_vc")
+}
+
+// ==========================================
+// PERÍODO ACADÉMICO
+// ==========================================
+model PeriodoAcademico {
+  id_sm_vc            Int      @id @default(autoincrement())
+  nombre_sm_vc        String   @db.VarChar(20)
+  fecha_inicio_sm_vc  DateTime
+  fecha_fin_sm_vc     DateTime
+  estado_activo_sm_vc Boolean  @default(false)
+  
+  @@map("tdperiodoacademico_sm_vc")
 }
 
 // ==========================================

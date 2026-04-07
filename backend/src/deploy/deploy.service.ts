@@ -141,6 +141,9 @@ export class DeployService {
     const deploy = await this.prisma.proyectoDeploy.findUnique({
       where: { estudiante_id_sm_vc: estudianteId },
       include: {
+        estudiante: {
+          include: { usuario: true }
+        },
         archivoCodigo:        true,
         documentacionTecnica: true,
       },
@@ -150,6 +153,70 @@ export class DeployService {
     return this.generarRespuesta_sm_vc(deploy);
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // PATCH /api/deploy/:id
+  // Actualiza el deploy de un estudiante.
+  // ─────────────────────────────────────────────────────────────────
+  async actualizarDeploy_sm_vc(
+    deployId: number,
+    dto: CrearDeployDto_sm_vc,
+    usuarioActorId: number,
+  ) {
+    try {
+      // 1. Verificar que el deploy existe y obtener el estudiante
+      const deployExistente = await this.prisma.proyectoDeploy.findUnique({
+        where: { id_sm_vc: deployId },
+        include: { estudiante: { include: { usuario: true } } },
+      });
+
+      if (!deployExistente) {
+        throw new NotFoundException(`Deploy ${deployId} no encontrado.`);
+      }
+
+      const estudianteId = deployExistente.estudiante.usuario.id_sm_vc;
+
+      // 2. Validar ownership: el usuario solo puede actualizar su propio deploy
+      if (usuarioActorId !== estudianteId) {
+        throw new ForbiddenException('Solo puedes actualizar tu propio deploy.');
+      }
+
+      // 3. Validar que el estudiante aún puede hacer deploy
+      if (!deployExistente.estudiante.puede_hacer_deploy_sm_vc) {
+        throw new ForbiddenException(
+          'No tienes permiso para actualizar el deploy. Debes aprobar todos los requisitos de la última materia primero.',
+        );
+      }
+
+      // 4. Actualizar solo la URL de producción
+      const resultado_sm_vc = await this.prisma.proyectoDeploy.update({
+        where: { id_sm_vc: deployId },
+        data: {
+          url_produccion_sm_vc: dto.url_produccion_sm_vc,
+          fecha_deploy_sm_vc: new Date(),
+        },
+        include: {
+          archivoCodigo:        true,
+          documentacionTecnica: true,
+        },
+      });
+
+      // 5. Emitir evento de trazabilidad
+      this.eventEmitter_sm_vc.emit('deploy.actualizado_sm_vc', {
+        estudianteId,
+        deployId,
+        descripcion_sm_vc: `Deploy actualizado exitosamente. Nueva URL: ${dto.url_produccion_sm_vc}`,
+        url_sm_vc: dto.url_produccion_sm_vc,
+      });
+
+      return this.generarRespuesta_sm_vc(resultado_sm_vc);
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) throw error;
+      throw new InternalServerErrorException('Error al actualizar el deploy en el servidor.');
+    }
+  }
 
   private generarRespuesta_sm_vc(deploy: any) {
     return {
