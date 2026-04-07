@@ -74,10 +74,11 @@ export class DocumentosService {
       });
 
       // ── Post-transacción: evento de trazabilidad ──
+      // Incluye materiaId para que el log quede segmentado por materia
       this.eventEmitter_sm_vc.emit('documento.subido_sm_vc', {
         estudianteId:     entrega.estudiante.id_sm_vc,
-        descripcion_sm_vc: `Documento "${file.originalname}" subido para ` +
-          `"${entrega.requisito.nombre_sm_vc}" (${entrega.requisito.materia.nombre_sm_vc}).`,
+        materiaId:        entrega.requisito.materia_id_sm_vc,
+        descripcion_sm_vc: `Documento "${file.originalname}" subido para "${entrega.requisito.nombre_sm_vc}" (${entrega.requisito.materia.nombre_sm_vc}).`,
       });
 
       return this.generarRespuesta_sm_vc(documento);
@@ -124,7 +125,7 @@ export class DocumentosService {
 
     const { ruta_archivo_sm_vc, nombre_archivo_sm_vc, mime_type_sm_vc } = documento;
     let fullPath = ruta_archivo_sm_vc;
-    
+
     // Si la ruta del seed o upload no es absoluta
     if (!path.isAbsolute(fullPath)) {
       fullPath = path.join(process.cwd(), fullPath);

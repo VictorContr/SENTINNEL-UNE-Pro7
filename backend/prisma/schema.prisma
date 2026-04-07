@@ -74,6 +74,7 @@ model Materia {
   descripcion_sm_vc String?
   estudiantes       Estudiante[]
   requisitos        Requisito[]
+  mensajes          Mensaje[]
 
   @@unique([posicion_sm_vc, periodo_sm_vc])
   @@map("tdmateria_sm_vc")
@@ -168,7 +169,10 @@ model Mensaje {
   contenido_sm_vc       String
   es_sistema_sm_vc      Boolean      @default(true)
   fecha_creacion_sm_vc  DateTime     @default(now())
+  /// Segmentación por materia: null = log global (deploy, inicio de ciclo, etc.)
+  materia_id_sm_vc      Int?
   conversacion          Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+  materia               Materia?     @relation(fields: [materia_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
 
   @@map("tdmensaje_sm_vc")
 }

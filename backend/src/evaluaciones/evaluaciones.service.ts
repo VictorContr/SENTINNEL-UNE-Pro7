@@ -86,9 +86,10 @@ export class EvaluacionesService {
 
       // ── Post-transacción: efectos secundarios (no críticos para la consistencia) ──
 
-      // Evento de trazabilidad
+      // Evento de trazabilidad (incluye materiaId para segmentación)
       this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
         estudianteId:     estudianteId,
+        materiaId:        materiaId,
         descripcion_sm_vc: `Requisito "${requisitoNombre}" evaluado como ${dto.decision_sm_vc}.` +
           (dto.observaciones_sm_vc ? ` Obs: ${dto.observaciones_sm_vc}` : ''),
       });
@@ -190,6 +191,7 @@ export class EvaluacionesService {
         data:  { puede_hacer_deploy_sm_vc: true },
       });
 
+      // Log global de deploy (sin materia específica → materiaId no se pasa = null)
       this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
         estudianteId:     estudianteId,
         descripcion_sm_vc: '¡Proceso completado! Todas las materias aprobadas. Deploy habilitado.',
@@ -214,8 +216,10 @@ export class EvaluacionesService {
       data:  { materia_activa_id_sm_vc: siguienteMateria.id_sm_vc },
     });
 
+    // Log de avance de materia (contexto de la materia recién completada que lo despachó)
     this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
       estudianteId:     estudianteId,
+      materiaId:        materiaId,
       descripcion_sm_vc: `Materia "${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
     });
 

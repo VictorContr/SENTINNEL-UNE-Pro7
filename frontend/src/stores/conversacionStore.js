@@ -1,8 +1,10 @@
 // ══════════════════════════════════════════════════════════════════
 // conversacionStore.js — Store de Conversaciones y Trazabilidad
-// Consume el endpoint /conversaciones/:estudianteId que retorna
-// { id_sm_vc, estudiante_id_sm_vc, mensajes_sm_vc: [...] }.
-// Extrae el array mensajes_sm_vc como dicta el claude.md del módulo.
+// Consume el endpoint /conversaciones/:estudianteId
+// con soporte de filtro por materia: ?materiaId=X
+//
+// Contrato del backend:
+//   { id_sm_vc, estudiante_id_sm_vc, materia_id_sm_vc, mensajes_sm_vc: [...] }
 // ══════════════════════════════════════════════════════════════════
 
 import { defineStore } from 'pinia'
@@ -12,32 +14,35 @@ import { getConversacionesByEstudianteId_sm_vc } from 'src/services/conversacion
 
 export const useConversacionStore_sm_vc = defineStore('conversacion', () => {
   /* ── State ── */
-  const conversaciones_sm_vc = ref([])
+  const conversaciones_sm_vc = ref([])   // Array de nodos del timeline (TEXTO + DOCUMENTO)
   const cargando_sm_vc       = ref(false)
   const error_sm_vc          = ref(null)
+  const materiaActiva_sm_vc  = ref(null) // Refleja el último filtro de materia aplicado
 
   /* ── Actions ── */
 
   /**
    * Obtiene el historial de trazabilidad de un estudiante.
-   * El backend retorna { id_sm_vc, estudiante_id_sm_vc, mensajes_sm_vc: [...] }.
-   * FIX: se extrae data.mensajes_sm_vc || [] en vez de asignar el objeto completo.
    *
-   * @param {number|string} estudianteId_sm_vc
+   * @param {number|string} estudianteId_sm_vc - ID del estudiante (o usuario).
+   * @param {number|null}   materiaId_sm_vc    - Opcional. Si se envía, filtra por materia.
+   *                                             Si es null/undefined → historial global.
    * @returns {Promise<Array|null>}
    */
-  const obtenerConversacion_sm_vc = async (estudianteId_sm_vc) => {
+  const obtenerConversacion_sm_vc = async (estudianteId_sm_vc, materiaId_sm_vc = null) => {
     if (!estudianteId_sm_vc) return null
 
-    cargando_sm_vc.value = true
-    error_sm_vc.value    = null
+    cargando_sm_vc.value    = true
+    error_sm_vc.value       = null
+    materiaActiva_sm_vc.value = materiaId_sm_vc
 
     try {
-      const data = await getConversacionesByEstudianteId_sm_vc(estudianteId_sm_vc)
+      const data = await getConversacionesByEstudianteId_sm_vc(
+        estudianteId_sm_vc,
+        materiaId_sm_vc,
+      )
 
-      // ── FIX: el contrato del backend entrega mensajes_sm_vc anidados ──
-      // Antes: conversaciones_sm_vc.value = data  ← asignaba el objeto padre
-      // Ahora: extraemos el array para que ConvTimeline lo itere correctamente
+      // Extraemos el array de nodos del timeline del objeto envolvente del backend
       conversaciones_sm_vc.value = data.mensajes_sm_vc || []
 
       return conversaciones_sm_vc.value
@@ -59,17 +64,17 @@ export const useConversacionStore_sm_vc = defineStore('conversacion', () => {
 
       return null
     } finally {
-      // ── Siempre liberar el spinner independientemente del resultado ──
       cargando_sm_vc.value = false
     }
   }
 
   /**
-   * Resetea el estado de conversaciones al navegar entre estudiantes.
+   * Resetea el estado de conversaciones al navegar entre estudiantes o la materialista.
    */
   const limpiarConversaciones_sm_vc = () => {
-    conversaciones_sm_vc.value = []
-    error_sm_vc.value          = null
+    conversaciones_sm_vc.value   = []
+    error_sm_vc.value            = null
+    materiaActiva_sm_vc.value    = null
   }
 
   return {
@@ -77,6 +82,7 @@ export const useConversacionStore_sm_vc = defineStore('conversacion', () => {
     conversaciones_sm_vc,
     cargando_sm_vc,
     error_sm_vc,
+    materiaActiva_sm_vc,
 
     /* Actions */
     obtenerConversacion_sm_vc,

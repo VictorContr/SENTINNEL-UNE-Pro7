@@ -109,18 +109,31 @@ const idEstudianteFinal_sm_vc = computed(() =>
   props.estudianteId || auth_sm_vc.user?.id_sm_vc || null
 )
 
-/* ── Lifecycle: carga inicial y recarga reactiva al cambiar de estudiante ── */
+/* ── Lifecycle: carga inicial y recarga reactiva al cambiar de estudiante o materia ── */
 const cargarDatos_sm_vc = () => {
   if (idEstudianteFinal_sm_vc.value) {
-    conversacionStore_sm_vc.obtenerConversacion_sm_vc(idEstudianteFinal_sm_vc.value)
+    // Pasamos el materiaId al store para segmentar el historial.
+    // Si no hay materiaId (null), el store devuelve el historial global.
+    conversacionStore_sm_vc.obtenerConversacion_sm_vc(
+      idEstudianteFinal_sm_vc.value,
+      props.materiaId ?? null,
+    )
   }
 }
 
 onMounted(cargarDatos_sm_vc)
 
-// Recargar si el ID de estudiante cambia (ej. navegación entre perfiles de prof)
+// Recargar si el ID de estudiante cambia (navegación entre perfiles de Profesor)
 watch(idEstudianteFinal_sm_vc, (nuevoId_sm_vc, viejoId_sm_vc) => {
   if (nuevoId_sm_vc && nuevoId_sm_vc !== viejoId_sm_vc) {
+    conversacionStore_sm_vc.limpiarConversaciones_sm_vc()
+    cargarDatos_sm_vc()
+  }
+})
+
+// Recargar si la materia cambia (el profesor abre otra materia del mismo estudiante)
+watch(() => props.materiaId, (nuevaMateria_sm_vc, viejaMateria_sm_vc) => {
+  if (nuevaMateria_sm_vc !== viejaMateria_sm_vc) {
     conversacionStore_sm_vc.limpiarConversaciones_sm_vc()
     cargarDatos_sm_vc()
   }
