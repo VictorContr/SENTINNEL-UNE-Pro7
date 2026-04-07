@@ -43,6 +43,19 @@ enum TipoNotificacion {
 }
 
 // ==========================================
+// PERÍODO ACADÉMICO
+// ==========================================
+model PeriodoAcademico {
+  id_sm_vc            Int      @id @default(autoincrement())
+  nombre_sm_vc        String   @db.VarChar(20)
+  fecha_inicio_sm_vc  DateTime
+  fecha_fin_sm_vc     DateTime
+  estado_activo_sm_vc Boolean  @default(false)
+  
+  @@map("tdperiodoacademico_sm_vc")
+}
+
+// ==========================================
 // CONFIGURACIÓN GLOBAL (Singleton ID=1)
 // ==========================================
 model ConfiguracionSistema {

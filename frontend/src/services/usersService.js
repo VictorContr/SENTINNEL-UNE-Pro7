@@ -7,10 +7,10 @@ import { api } from 'src/boot/axios'
 
 /**
  * Obtiene todos los usuarios (Ruta protegida para ADMIN)
- * @returns {Promise<Array>} Lista de usuarios
+ * @returns {Promise<Array|Object>} Respuesta de usuarios
  */
 export const findAll_sm_vc = async () => {
-  const respuesta_sm_vc = await api.get('/users')
+  const respuesta_sm_vc = await api.get('/users?limit_sm_vc=1000')
   return respuesta_sm_vc.data
 }
 

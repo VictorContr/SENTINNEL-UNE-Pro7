@@ -54,20 +54,26 @@
         <!-- Código fuente .zip -->
         <div class="deploy-field-item_sm_vc">
           <label class="deploy-field-label_sm_vc">Código Fuente (.zip)</label>
-          <div class="deploy-file-chip_sm_vc">
+          <div class="deploy-file-chip_sm_vc border-teal-500/20 bg-teal-500/5">
             <q-icon name="folder_zip" size="14px" color="teal-3" />
-            <span>{{ deployEstudiante_sm_vc.archivo_codigo_id_sm_vc }}</span>
-            <q-btn flat dense no-caps label="Descargar" color="teal-3" size="xs" />
+            <span class="truncate">{{ deployEstudiante_sm_vc.archivo_codigo_sm_vc?.nombre_sm_vc }}</span>
+            <q-btn
+              flat dense no-caps label="Descargar"
+              color="teal-3" size="xs"
+              @click="deployStore_sm_vc.descargarArchivo_sm_vc(estudianteId_sm_vc, 'zip')" />
           </div>
         </div>
 
         <!-- Documentación .pdf -->
         <div class="deploy-field-item_sm_vc">
           <label class="deploy-field-label_sm_vc">Documentación (.pdf)</label>
-          <div class="deploy-file-chip_sm_vc">
+          <div class="deploy-file-chip_sm_vc border-amber-500/20 bg-amber-500/5">
             <q-icon name="picture_as_pdf" size="14px" color="amber-4" />
-            <span>{{ deployEstudiante_sm_vc.documentacion_tecnica_id_sm_vc }}</span>
-            <q-btn flat dense no-caps label="Ver PDF" color="amber-4" size="xs" />
+            <span class="truncate">{{ deployEstudiante_sm_vc.documentacion_sm_vc?.nombre_sm_vc }}</span>
+            <q-btn
+              flat dense no-caps label="Ver PDF"
+              color="amber-4" size="xs"
+              @click="deployStore_sm_vc.descargarArchivo_sm_vc(estudianteId_sm_vc, 'pdf')" />
           </div>
         </div>
 
@@ -75,7 +81,7 @@
         <div class="deploy-field-item_sm_vc">
           <label class="deploy-field-label_sm_vc">Fecha de Registro</label>
           <span class="deploy-value_sm_vc">
-            {{ formatDate_sm_vc(deployEstudiante_sm_vc.fecha_registro_sm_vc) }}
+            {{ formatDate_sm_vc(deployEstudiante_sm_vc.fecha_deploy_sm_vc) }}
           </span>
         </div>
       </div>
@@ -84,20 +90,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { usePasantiasStore } from 'src/stores/pasantiasStore'
+import { useDeployStore } from 'src/stores/deployStore'
 
 const route_sm_vc = useRoute()
 const router_sm_vc = useRouter()
-const store_sm_vc = usePasantiasStore()
+const deployStore_sm_vc = useDeployStore()
 
 // Admin usa estudianteId en la ruta
-const estudianteId_sm_vc = computed(() => route_sm_vc.params.estudianteId)
+const estudianteId_sm_vc = computed(() => Number(route_sm_vc.params.estudianteId))
 
-const deployEstudiante_sm_vc = computed(() =>
-  store_sm_vc.getDeployEstudiante(estudianteId_sm_vc.value)
-)
+const deployEstudiante_sm_vc = computed(() => deployStore_sm_vc.datosDeploy_sm_vc)
+
+onMounted(() => {
+  if (estudianteId_sm_vc.value) {
+    deployStore_sm_vc.verificarEstadoDeploy_sm_vc(estudianteId_sm_vc.value)
+  }
+})
 
 const formatDate_sm_vc = (iso_sm_vc) =>
   new Date(iso_sm_vc).toLocaleDateString('es-VE', {

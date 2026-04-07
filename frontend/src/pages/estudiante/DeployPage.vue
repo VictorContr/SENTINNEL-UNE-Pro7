@@ -20,8 +20,23 @@
       </p>
     </div>
 
+    <!-- Estado: Deploy Completado (Aviso de persistencia) -->
+    <div v-if="deployStore_sm_vc.deployCompletado_sm_vc" class="existing-deploy-banner_sm_vc animate-in fade-in duration-500">
+      <q-icon name="info" size="20px" color="teal-3" />
+      <div class="banner-content_sm_vc">
+        <p class="banner-title_sm_vc">Ya cuentas con un despliegue registrado</p>
+        <p class="banner-desc_sm_vc">
+          Los datos a continuación son los actuales. Puedes modificarlos y volver a subir los archivos si necesitas actualizar tu entrega.
+        </p>
+      </div>
+      <q-btn
+        flat no-caps label="Ver App" icon="open_in_new"
+        color="teal-3" size="sm" class="ml-auto"
+        type="a" :href="deployStore_sm_vc.datosDeploy_sm_vc?.url_produccion_sm_vc" target="_blank" />
+    </div>
+
     <!-- Estado bloqueado -->
-    <div v-if="!puedeHacerDeploy_sm_vc" class="locked-state_sm_vc">
+    <div v-else-if="!puedeHacerDeploy_sm_vc" class="locked-state_sm_vc">
       <div class="locked-icon_sm_vc">
         <q-icon name="lock" size="32px" color="blue-grey-7" />
       </div>
@@ -99,14 +114,15 @@
 
         <q-btn
           type="submit" unelevated no-caps
-          label="Registrar Deploy en Producción"
-          icon="rocket_launch"
+          :label="deployStore_sm_vc.deployCompletado_sm_vc ? 'Actualizar Deploy en Producción' : 'Registrar Deploy en Producción'"
+          :icon="deployStore_sm_vc.deployCompletado_sm_vc ? 'sync' : 'rocket_launch'"
           class="submit-btn_sm_vc"
+          :class="{ 'update-mode_sm_vc': deployStore_sm_vc.deployCompletado_sm_vc }"
           :loading="deployStore_sm_vc.loading_sm_vc"
           :disable="!todosOk_sm_vc" >
           <template #loading>
             <q-spinner-dots color="#0b132b" size="20px" />
-            <span class="q-ml-sm loader-text_sm_vc">Subiendo archivos…</span>
+            <span class="q-ml-sm loader-text_sm_vc">{{ deployStore_sm_vc.deployCompletado_sm_vc ? 'Actualizando...' : 'Subiendo archivos...' }}</span>
           </template>
         </q-btn>
       </q-form>
@@ -115,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/authStore'
 import { useDeployStore } from 'src/stores/deployStore'
@@ -129,6 +145,20 @@ const deployStore_sm_vc = useDeployStore()
 // Acceso reactivo al estado del estudiante
 const estudiante_sm_vc = computed(() => authStore_sm_vc.user_sm_vc?.estudiante_sm_vc)
 const puedeHacerDeploy_sm_vc = computed(() => estudiante_sm_vc.value?.puede_hacer_deploy_sm_vc ?? false)
+
+onMounted(async () => {
+  if (estudiante_sm_vc.value?.id_sm_vc) {
+    await deployStore_sm_vc.verificarEstadoDeploy_sm_vc(estudiante_sm_vc.value.id_sm_vc)
+    
+    // Si ya existe deploy, pre-cargar el formulario
+    if (deployStore_sm_vc.deployCompletado_sm_vc && deployStore_sm_vc.datosDeploy_sm_vc) {
+      const data = deployStore_sm_vc.datosDeploy_sm_vc
+      form_sm_vc.value.url_produccion_sm_vc = data.url_produccion_sm_vc
+      form_sm_vc.value.archivo_zip_nombre_sm_vc = data.archivo_codigo_sm_vc?.nombre_sm_vc || ''
+      form_sm_vc.value.archivo_pdf_nombre_sm_vc = data.documentacion_sm_vc?.nombre_sm_vc || ''
+    }
+  }
+})
 
 const form_sm_vc = ref({
   url_produccion_sm_vc: '',
@@ -201,7 +231,10 @@ const registrarDeploy_sm_vc = async () => {
 .locked-desc_sm_vc { font-size: .75rem; color: var(--sn-texto-apagado); margin: 0 0 .75rem; font-family: var(--sn-font-sans); }
 .locked-progress_sm_vc { display: flex; flex-direction: column; gap: .3rem; }
 .lock-mat_sm_vc { display: flex; align-items: center; gap: .4rem; font-size: .68rem; color: var(--sn-texto-terciario); }
-.existing-deploy-banner_sm_vc { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: .75rem 1rem; background: rgba(111,255,233,.04); border: 1px solid rgba(111,255,233,.12); border-radius: 8px; margin-bottom: 1rem; max-width: 600px; font-size: .72rem; color: var(--sn-acento-sec); }
+.existing-deploy-banner_sm_vc { display: flex; align-items: flex-start; gap: 0.85rem; padding: 1rem 1.25rem; background: rgba(111,255,233,.04); border: 1px solid rgba(111,255,233,.12); border-radius: 12px; margin-bottom: 2rem; max-width: 650px; }
+.banner-content_sm_vc { flex: 1; }
+.banner-title_sm_vc { font-size: .82rem; font-weight: 700; color: var(--sn-primario); margin: 0 0 3px; letter-spacing: 0.02em; }
+.banner-desc_sm_vc { font-size: .72rem; color: var(--sn-texto-terciario); margin: 0; line-height: 1.5; font-family: var(--sn-font-sans); }
 .existing-url_sm_vc { display: flex; align-items: center; gap: .3rem; }
 .url-link_sm_vc { color: var(--sn-primario); text-decoration: none; font-size: .7rem; }
 .url-link_sm_vc:hover { text-decoration: underline; }

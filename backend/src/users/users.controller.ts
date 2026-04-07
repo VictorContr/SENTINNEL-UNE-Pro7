@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Query, Delete } from '@nestjs/common';
 import {
   JwtAuthGuard_sm_vc,
   RolesGuard_sm_vc,
@@ -15,8 +15,14 @@ export class UsersController_sm_vc {
 
   @Get()
   @Roles_sm_vc('ADMIN')
-  async findAll_sm_vc() {
-    return this.usersService.findAll_sm_vc();
+  async findAll_sm_vc(
+    @Query('page_sm_vc') page_sm_vc: string = '1',
+    @Query('limit_sm_vc') limit_sm_vc: string = '10',
+    @Query('search_sm_vc') search_sm_vc?: string,
+  ) {
+    const page = parseInt(page_sm_vc);
+    const limit = parseInt(limit_sm_vc);
+    return this.usersService.findAllPaged_sm_vc(page, limit, search_sm_vc);
   }
 
   @Post()
@@ -43,5 +49,11 @@ export class UsersController_sm_vc {
   @Roles_sm_vc('ADMIN')
   async toggleBan_sm_vc(@Param('id') id_sm_vc: string) {
     return this.usersService.toggleBan_sm_vc(id_sm_vc);
+  }
+
+  @Delete(':id')
+  @Roles_sm_vc('ADMIN')
+  async deleteUser_sm_vc(@Param('id') id_sm_vc: string) {
+    return this.usersService.deleteUser_sm_vc(id_sm_vc);
   }
 }
