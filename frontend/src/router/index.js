@@ -1,56 +1,105 @@
 import { route } from 'quasar/wrappers'
-import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
+import {
+  createRouter,
+  createMemoryHistory,
+  createWebHistory,
+  createWebHashHistory,
+} from 'vue-router'
+import { Notify } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import routes from './routes'
 
-/*
- * SENTINNEL - Router
- * Las rutas se importan desde './routes.js'.
- * El wrapper 'route' permite integrarse correctamente con el ecosistema híbrido/SSR de Quasar.
+/**
+ * SENTINNEL — Router
+ *
+ * Navigation Guard (beforeEach) verifica en orden:
+ *   1. Ruta pública → redirigir al dashboard si ya está autenticado
+ *   2. Ruta privada → redirigir a /login si no está autenticado
+ *   3. Roles requeridos → redirigir a /notificaciones si el rol no coincide
+ *   4. FIX #3: requiresDeploy → redirigir a /trazabilidad si no tiene el flag
  */
-export default route(function (/* { store, ssrContext } */) {
-  const createHistory = process.env.SERVER
+export default route(function () {
+  const createHistory_sm_vc = process.env.SERVER
     ? createMemoryHistory
-    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory)
+    : process.env.VUE_ROUTER_MODE === 'history'
+      ? createWebHistory
+      : createWebHashHistory
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
-    
-    // Dejar esto como está y en su lugar hacer cambios en quasar.config.js
-    // quasar.config.js -> build -> vueRouterMode
-    history: createHistory(process.env.VUE_ROUTER_BASE)
+    history: createHistory_sm_vc(process.env.VUE_ROUTER_BASE),
   })
 
-  /* ──────────────── NAVIGATION GUARD ──────────────── */
-  Router.beforeEach((to) => {
-    const auth = useAuthStore()
+  /* ── Navigation Guard ──────────────────────────────────────── */
+  Router.beforeEach((to_sm_vc) => {
+    const auth_sm_vc = useAuthStore()
 
-    // Ruta pública: si ya está autenticado, redirigir a dashboard (notificaciones)
-    if (!to.meta.requiresAuth) {
-      if (auth.is_authenticated_sm_vc && (to.name === 'login' || to.name === 'landing')) {
+    // ── Paso 1: Ruta pública ──────────────────────────────────
+    if (!to_sm_vc.meta.requiresAuth) {
+      // Si ya tiene sesión activa y va al login o a la landing,
+      // redirigir al dashboard principal para no mostrar el login.
+      if (
+        auth_sm_vc.is_authenticated_sm_vc &&
+        (to_sm_vc.name === 'login' || to_sm_vc.name === 'landing')
+      ) {
         return { name: 'notificaciones' }
       }
       return true
     }
 
-    // Ruta privada: no autenticado → login
-    if (!auth.is_authenticated_sm_vc) {
-      return { name: 'login', query: { redirect: to.fullPath } }
+    // ── Paso 2: Ruta privada — verificar autenticación ────────
+    if (!auth_sm_vc.is_authenticated_sm_vc) {
+      return { name: 'login', query: { redirect: to_sm_vc.fullPath } }
     }
 
-    // Verificar roles requeridos
-    const requiredRoles = to.meta.roles ?? []
-    const roleMap = { 'ADMINISTRADOR': 'ADMIN' }
-    if (requiredRoles.length > 0) {
-      const userRole = auth.user_sm_vc?.rol_sm_vc
-      const matches = requiredRoles.some(r => r === userRole || roleMap[r] === userRole || r === roleMap[userRole])
-      if (!matches) {
-        // Redirigir a notificaciones si no tiene el rol
+    // ── Paso 3: Verificar roles requeridos ────────────────────
+    const rolesRequeridos_sm_vc = to_sm_vc.meta.roles ?? []
+
+    if (rolesRequeridos_sm_vc.length > 0) {
+      const rolUsuario_sm_vc = auth_sm_vc.user_sm_vc?.rol_sm_vc
+
+      // Mapa de equivalencias: el guard acepta tanto 'ADMIN' como 'ADMINISTRADOR'
+      // para compatibilidad entre el enum de Prisma y datos legacy.
+      const mapaEquivalencias_sm_vc = { ADMINISTRADOR: 'ADMIN', ADMIN: 'ADMINISTRADOR' }
+
+      const tieneRol_sm_vc = rolesRequeridos_sm_vc.some(
+        (r_sm_vc) =>
+          r_sm_vc === rolUsuario_sm_vc ||
+          mapaEquivalencias_sm_vc[r_sm_vc] === rolUsuario_sm_vc,
+      )
+
+      if (!tieneRol_sm_vc) {
+        // El usuario está autenticado pero no tiene el rol correcto
         return { name: 'notificaciones' }
       }
     }
 
+    // ── Paso 4: FIX #3 — Verificar flag de deploy ─────────────
+    //
+    // La ruta /estudiante/deploy tiene meta.requiresDeploy = true.
+    // Solo se permite el acceso si el backend ha confirmado que el
+    // estudiante aprobó todos los requisitos de las 4 materias
+    // (campo puede_hacer_deploy_sm_vc en el perfil del estudiante).
+    //
+    // Sin este guard, un estudiante inelegible podía escribir la URL
+    // manualmente en el navegador y ver el formulario de deploy,
+    // aunque el submit fuera rechazado por el backend (mala UX).
+    if (to_sm_vc.meta.requiresDeploy === true) {
+      if (!auth_sm_vc.puede_hacer_deploy_sm_vc) {
+        Notify.create({
+          type:     'warning',
+          message:  'Módulo de Deploy no disponible',
+          caption:  'Debes aprobar todos los requisitos académicos para acceder a esta sección.',
+          icon:     'lock',
+          position: 'top',
+          timeout:  4000,
+        })
+        return { name: 'estudiante-trazabilidad' }
+      }
+    }
+
+    // ── Todos los checks pasaron ──────────────────────────────
     return true
   })
 

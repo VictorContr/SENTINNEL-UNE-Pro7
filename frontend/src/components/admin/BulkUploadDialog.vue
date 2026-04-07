@@ -78,7 +78,7 @@
                   label="Seleccionar archivo Excel (.xlsx, .xls)"
                   accept=".xlsx,.xls"
                   :filter="checkFileType"
-                  :max-file-size="5 * 1024 * 1024" // 5MB
+                  :max-file-size="5 * 1024 * 1024"
                   :max-files="1"
                   :loading="uploading"
                   @added="onFileAdded"

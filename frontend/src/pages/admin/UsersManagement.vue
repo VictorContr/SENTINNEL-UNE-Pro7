@@ -266,6 +266,7 @@ export default defineComponent({
           search_sm_vc: searchTerm.value,
         });
       } catch (error) {
+        console.error('Error cargando usuarios:', error);
         $q.notify({
           type: 'negative',
           message: usuariosStore.error_sm_vc || 'Error al cargar usuarios',
@@ -299,6 +300,7 @@ export default defineComponent({
           message: `Usuario ${user.activo_sm_vc ? 'desactivado' : 'activado'} correctamente`,
         });
       } catch (error) {
+        console.error('Error cambiando estado:', error);
         $q.notify({
           type: 'negative',
           message: usuariosStore.error_sm_vc || 'Error al cambiar estado del usuario',
@@ -321,6 +323,7 @@ export default defineComponent({
           message: 'Usuario eliminado correctamente',
         });
       } catch (error) {
+        console.error('Error eliminando usuario:', error);
         $q.notify({
           type: 'negative',
           message: usuariosStore.error_sm_vc || 'Error al eliminar usuario',

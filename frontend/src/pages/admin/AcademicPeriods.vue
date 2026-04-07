@@ -273,6 +273,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useQuasar, date } from 'quasar'
 import { api } from 'boot/axios'
 
+const $q = useQuasar()
+
 // Estado
 const loading = ref(false)
 const saving = ref(false)
@@ -401,7 +403,7 @@ const onRequest = async (props) => {
   }
 }
 
-const editPeriod = (period) => {
+const editPeriodo = (period) => {
   editingPeriod.value = { ...period }
   form.value = {
     nombre_sm_vc: period.nombre_sm_vc,
@@ -413,7 +415,7 @@ const editPeriod = (period) => {
   showCreateDialog.value = true
 }
 
-const activarPeriod = async (id) => {
+const activarPeriodo = async (id) => {
   try {
     await api.patch(`/periodos/${id}/activar`)
     await loadPeriodos()
@@ -430,7 +432,7 @@ const activarPeriod = async (id) => {
   }
 }
 
-const desactivarPeriod = async (id) => {
+const desactivarPeriodo = async (id) => {
   try {
     await api.patch(`/periodos/${id}/desactivar`)
     await loadPeriodos()
