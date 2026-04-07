@@ -61,25 +61,35 @@
 
     <!-- Requisitos pills -->
     <div v-if="showRequisitos" class="requisitos-list">
-      <div
-        v-for="req in materia.requisitos"
-        :key="req.id_sm_vc"
-        class="req-pill"
-        :class="{
-          'req-pill--done': isRequisitoCompletado_sm_vc(req.id_sm_vc),
-          'req-pill--optional': !req.obligatorio_sm_vc,
-        }"
-      >
-        <q-icon
-          :name="
-            isRequisitoCompletado_sm_vc(req.id_sm_vc)
-              ? 'check_circle'
-              : 'radio_button_unchecked'
-          "
-          size="11px"
-        />
-        <span>{{ req.nombre_sm_vc }}</span>
-        <span v-if="!req.obligatorio_sm_vc" class="optional-tag">opt</span>
+      <div v-for="req in materia.requisitos" :key="req.id_sm_vc" class="req-wrapper-block_sm_vc">
+        <div
+          class="req-pill"
+          :class="{
+            'req-pill--done': isRequisitoCompletado_sm_vc(req.id_sm_vc),
+            'req-pill--optional': !req.obligatorio_sm_vc,
+          }"
+        >
+          <q-icon
+            :name="
+              isRequisitoCompletado_sm_vc(req.id_sm_vc)
+                ? 'check_circle'
+                : 'radio_button_unchecked'
+            "
+            size="11px"
+          />
+          <span>{{ req.nombre_sm_vc }}</span>
+          <span v-if="!req.obligatorio_sm_vc" class="optional-tag">opt</span>
+        </div>
+        
+        <!-- Lista de documentos para este requisito -->
+        <div v-if="getDocumentosForRequisito_sm_vc(req.id_sm_vc).length" class="doc-list_sm_vc">
+          <div v-for="doc in getDocumentosForRequisito_sm_vc(req.id_sm_vc)" :key="doc.id_sm_vc" class="doc-item_sm_vc">
+            <q-icon name="description" size="10px" color="teal-3" />
+            <a :href="'/' + doc.ruta_archivo_sm_vc" target="_blank" class="doc-link_sm_vc" @click.stop>
+              {{ doc.nombre_archivo_sm_vc }}
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -160,6 +170,14 @@ const isRequisitoCompletado_sm_vc = (requisito_id_sm_vc) => {
   }
   const detalles_sm_vc = props.materia.progreso?.requisitos_aprobados_detalle_sm_vc ?? [];
   return detalles_sm_vc.some((d) => d.requisito_id_sm_vc === requisito_id_sm_vc);
+};
+
+/* Extraer documentos vinculados a cada entrega para renderizar en la vista */
+const getDocumentosForRequisito_sm_vc = (requisito_id_sm_vc) => {
+  const detalle_entrega = props.materia.progreso?.entregas_detalle_sm_vc?.find(
+    (e) => e.requisito_id_sm_vc === requisito_id_sm_vc
+  );
+  return detalle_entrega?.documentos_sm_vc || [];
 };
 
 const progressColor = computed(() => {
@@ -351,6 +369,35 @@ const progressColor = computed(() => {
   padding: 0 4px;
   border-radius: 2px;
   margin-left: auto;
+}
+
+/* Documentos del Requisito */
+.req-wrapper-block_sm_vc {
+  display: flex;
+  flex-direction: column;
+}
+.doc-list_sm_vc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 14px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+.doc-item_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.doc-link_sm_vc {
+  font-size: 0.55rem;
+  color: var(--sn-acento-sec);
+  text-decoration: none;
+  font-family: var(--sn-font-sans);
+}
+.doc-link_sm_vc:hover {
+  text-decoration: underline;
+  color: var(--sn-primario);
 }
 
 /* Stats */

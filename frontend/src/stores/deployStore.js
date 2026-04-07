@@ -53,6 +53,23 @@ export const useDeployStore = defineStore('deploy', () => {
    */
   const descargarArchivo_sm_vc = async (estudianteId_sm_vc, tipo_sm_vc) => {
     try {
+      // Verificar si es un archivo de simulación
+      if (datosDeploy_sm_vc.value) {
+        const doc_sm_vc = tipo_sm_vc === 'zip' || tipo_sm_vc === 'codigo'
+          ? datosDeploy_sm_vc.value.archivo_codigo_sm_vc
+          : datosDeploy_sm_vc.value.documentacion_sm_vc
+
+        if (doc_sm_vc?.mock_sm_vc) {
+          Notify.create({
+            type: 'info',
+            message: 'Este es un documento de simulación para la demostración académica',
+            position: 'top',
+            icon: 'info'
+          })
+          return
+        }
+      }
+
       const response = await api.get(`/deploy/${estudianteId_sm_vc}/descargar/${tipo_sm_vc}`, {
         responseType: 'blob'
       })
@@ -76,11 +93,20 @@ export const useDeployStore = defineStore('deploy', () => {
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch (err_sm_vc) {
-      Notify.create({
-        type: 'negative',
-        message: 'Error al descargar el archivo.',
-        position: 'top'
-      })
+      if (err_sm_vc.response?.status === 400 && err_sm_vc.response?.data?.message?.includes('simulación')) {
+        Notify.create({
+          type: 'info',
+          message: err_sm_vc.response.data.message,
+          icon: 'info',
+          position: 'top'
+        })
+      } else {
+        Notify.create({
+          type: 'negative',
+          message: 'Error al descargar el archivo.',
+          position: 'top'
+        })
+      }
       console.error('Error descargando archivo:', err_sm_vc)
     }
   }

@@ -28,7 +28,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
   const cargando_sm_vc       = ref(false)
   
   /* Fallback Mock Mantenidos para UI no conectada aún */
-  const conversaciones_sm_vc = ref([])
   const deploys_sm_vc        = ref([])
 
   /* ── Actions: API Backend ── */
@@ -49,6 +48,7 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     cargando_sm_vc.value = true
     try {
       const resp_sm_vc = await apiGetMiProgreso_sm_vc()
+      console.log('Respuesta del Backend (Mi Progreso):', resp_sm_vc)
       progreso_sm_vc.value = resp_sm_vc
     } catch (err_sm_vc) {
       Notify.create({ message: err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al obtener progreso personal.', color: 'negative', icon: 'error' })
@@ -61,6 +61,7 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     cargando_sm_vc.value = true
     try {
       const resp_sm_vc = await apiGetProgresoEstudiante_sm_vc(id_sm_vc)
+      console.log(`Respuesta del Backend (Progreso Estudiante ${id_sm_vc}):`, resp_sm_vc)
       // Guardamos en el estado para que los getters reactivos funcionen
       progreso_sm_vc.value = resp_sm_vc
       return resp_sm_vc
@@ -106,7 +107,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
   }
 
   /* ── Fallbacks Legacy UI (Sin NestJS mapeado aún) ── */
-  const getConversacion = () => []
   const getDeployEstudiante = () => null
   const miDeploy = computed(() => null)
   const getEstudiantesDelProfesor = () => []
@@ -127,7 +127,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     progreso_sm_vc,
     cargando_sm_vc,
     misEntregas_sm_vc,
-    conversaciones_sm_vc,
     deploys_sm_vc,
 
     /* Getters Legacy/Mapping */
@@ -135,7 +134,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     getMateriaById,
     miProgreso,
     todasAprobadas,
-    getConversacion,
     getDeployEstudiante,
     miDeploy,
     getEstudiantesDelProfesor,

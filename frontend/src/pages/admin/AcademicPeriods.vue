@@ -132,16 +132,9 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit.prevent="savePeriod" class="q-gutter-md">
+            <!-- El nombre del período se genera automáticamente en el servidor
+                 a partir de las fechas. No se muestra ni se envía. -->
             <div class="row q-col-gutter-md">
-              <div class="col-12 col-md-6">
-                <q-input
-                  v-model="form.nombre_sm_vc"
-                  label="Nombre del Período *"
-                  outlined
-                  dense
-                  :rules="nombreRules"
-                />
-              </div>
               <div class="col-12 col-md-6">
                 <q-input
                   v-model="form.fecha_inicio_sm_vc"
@@ -152,8 +145,6 @@
                   :rules="fechaInicioRules"
                 />
               </div>
-            </div>
-            <div class="row q-col-gutter-md">
               <div class="col-12 col-md-6">
                 <q-input
                   v-model="form.fecha_fin_sm_vc"
@@ -164,6 +155,8 @@
                   :rules="fechaFinRules"
                 />
               </div>
+            </div>
+            <div class="row q-col-gutter-md" v-if="editingPeriod">
               <div class="col-12 col-md-6">
                 <q-toggle
                   v-model="form.estado_activo_sm_vc"
@@ -290,18 +283,13 @@ const periodToDelete = ref(null)
 const successMessage = ref('')
 
 const form = ref({
-  nombre_sm_vc: '',
   fecha_inicio_sm_vc: '',
   fecha_fin_sm_vc: '',
   estado_activo_sm_vc: false,
   descripcion_sm_vc: '',
 })
 
-// Reglas de validación
-const nombreRules = [
-  val => !!val || 'El nombre es requerido',
-  val => val.length >= 3 && val.length <= 20 || 'El nombre debe tener entre 3 y 20 caracteres',
-]
+// Reglas de validación (nombre eliminado: se genera en el servidor)
 
 const fechaInicioRules = [
   val => !!val || 'La fecha de inicio es requerida',
@@ -406,7 +394,6 @@ const onRequest = async (props) => {
 const editPeriodo = (period) => {
   editingPeriod.value = { ...period }
   form.value = {
-    nombre_sm_vc: period.nombre_sm_vc,
     fecha_inicio_sm_vc: date.formatDate(period.fecha_inicio_sm_vc, 'YYYY-MM-DD'),
     fecha_fin_sm_vc: date.formatDate(period.fecha_fin_sm_vc, 'YYYY-MM-DD'),
     estado_activo_sm_vc: period.estado_activo_sm_vc,
@@ -505,7 +492,6 @@ const savePeriod = async () => {
 
 const resetForm = () => {
   form.value = {
-    nombre_sm_vc: '',
     fecha_inicio_sm_vc: '',
     fecha_fin_sm_vc: '',
     estado_activo_sm_vc: false,

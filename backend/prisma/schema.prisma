@@ -1,21 +1,198 @@
-// ==========================================
-// CONFIGURACIÓN DEL ENTORNO
-// ==========================================
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// ==========================================
-// ENUMS
-// ==========================================
+model PeriodoAcademico {
+  id_sm_vc            Int      @id @default(autoincrement())
+  nombre_sm_vc        String   @db.VarChar(100)
+  fecha_inicio_sm_vc  DateTime
+  fecha_fin_sm_vc     DateTime
+  estado_activo_sm_vc Boolean  @default(false)
+
+  @@map("tdperiodoacademico_sm_vc")
+}
+
+model ConfiguracionSistema {
+  id_sm_vc                  Int      @id @default(1)
+  periodo_actual_sm_vc      String   @db.VarChar(100)
+  fecha_actualizacion_sm_vc DateTime @updatedAt
+
+  @@map("tdconfiguracionsistema_sm_vc")
+}
+
+model Usuario {
+  id_sm_vc                    Int            @id @default(autoincrement())
+  nombre_sm_vc                String         @db.VarChar(50)
+  apellido_sm_vc              String         @db.VarChar(50)
+  cedula_sm_vc                String         @unique @db.VarChar(12)
+  correo_sm_vc                String         @unique @db.VarChar(250)
+  telefono_sm_vc              String?        @db.VarChar(20)
+  clave_sm_vc                 String         @db.VarChar(255)
+  rol_sm_vc                   RolUsuario
+  activo_sm_vc                Boolean        @default(true)
+  requiere_cambio_clave_sm_vc Boolean        @default(true)
+  fecha_creacion_sm_vc        DateTime       @default(now())
+  documentosSubidos           Documento[]    @relation("UsuarioSubeDocumento")
+  estudiantesTutor            Estudiante[]   @relation("TutorAEstudiante")
+  estudiante_sm_vc            Estudiante?    @relation("UsuarioAEstudiante")
+  evaluacionesRealizadas      Evaluacion[]   @relation("ProfesorEvalua")
+  notificacionesEnviadas      Notificacion[] @relation("NotificacionesEnviadas")
+  notificacionesRecibidas     Notificacion[] @relation("NotificacionesRecibidas")
+
+  @@map("tdusuario_sm_vc")
+}
+
+model Estudiante {
+  id_sm_vc                 Int             @id @default(autoincrement())
+  usuario_id_sm_vc         Int             @unique
+  profesor_id_sm_vc        Int?
+  empresa_sm_vc            String          @db.VarChar(150)
+  tutor_empresarial_sm_vc  String          @db.VarChar(100)
+  titulo_proyecto_sm_vc    String          @db.VarChar(255)
+  materia_activa_id_sm_vc  Int
+  puede_hacer_deploy_sm_vc Boolean         @default(false)
+  conversacion             Conversacion?
+  entregas                 Entrega[]
+  materiaActiva            Materia         @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc])
+  profesorTutor            Usuario?        @relation("TutorAEstudiante", fields: [profesor_id_sm_vc], references: [id_sm_vc])
+  usuario                  Usuario         @relation("UsuarioAEstudiante", fields: [usuario_id_sm_vc], references: [id_sm_vc])
+  proyectoDeploy           ProyectoDeploy?
+
+  @@map("tdestudiante_sm_vc")
+}
+
+model Materia {
+  id_sm_vc          Int          @id @default(autoincrement())
+  nombre_sm_vc      String       @db.VarChar(100)
+  posicion_sm_vc    Int
+  periodo_sm_vc     String       @db.VarChar(10)
+  descripcion_sm_vc String?
+  estudiantes       Estudiante[]
+  requisitos        Requisito[]
+
+  @@unique([posicion_sm_vc, periodo_sm_vc])
+  @@map("tdmateria_sm_vc")
+}
+
+model Requisito {
+  id_sm_vc          Int       @id @default(autoincrement())
+  materia_id_sm_vc  Int
+  nombre_sm_vc      String    @db.VarChar(100)
+  descripcion_sm_vc String
+  posicion_sm_vc    Int
+  entregas          Entrega[]
+  materia           Materia   @relation(fields: [materia_id_sm_vc], references: [id_sm_vc])
+
+  @@map("tdrequisito_sm_vc")
+}
+
+model Entrega {
+  id_sm_vc                  Int              @id @default(autoincrement())
+  estudiante_id_sm_vc       Int
+  requisito_id_sm_vc        Int
+  estado_sm_vc              EstadoAprobacion @default(PENDIENTE)
+  fecha_actualizacion_sm_vc DateTime         @updatedAt
+  documentos                Documento[]
+  estudiante                Estudiante       @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
+  requisito                 Requisito        @relation(fields: [requisito_id_sm_vc], references: [id_sm_vc])
+  evaluacion                Evaluacion?
+
+  @@unique([estudiante_id_sm_vc, requisito_id_sm_vc])
+  @@map("tdentrega_sm_vc")
+}
+
+model Documento {
+  id_sm_vc                Int             @id @default(autoincrement())
+  entrega_id_sm_vc        Int?
+  usuario_subida_id_sm_vc Int
+  tipo_sm_vc              TipoDocumento
+  nombre_archivo_sm_vc    String          @db.VarChar(255)
+  ruta_archivo_sm_vc      String
+  tamanio_bytes_sm_vc     Int?
+  mime_type_sm_vc         String?         @db.VarChar(100)
+  fecha_subida_sm_vc      DateTime        @default(now())
+  mock_sm_vc              Boolean         @default(false)
+  entrega                 Entrega?        @relation(fields: [entrega_id_sm_vc], references: [id_sm_vc])
+  usuario                 Usuario         @relation("UsuarioSubeDocumento", fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
+  deployCodigo            ProyectoDeploy? @relation("DeployCodigoZIP")
+  deployDocs              ProyectoDeploy? @relation("DeployDocumentacion")
+
+  @@map("tddocumento_sm_vc")
+}
+
+model Evaluacion {
+  id_sm_vc               Int              @id @default(autoincrement())
+  entrega_id_sm_vc       Int              @unique
+  profesor_id_sm_vc      Int
+  decision_sm_vc         EstadoAprobacion
+  observaciones_sm_vc    String?
+  fecha_evaluacion_sm_vc DateTime         @default(now())
+  entrega                Entrega          @relation(fields: [entrega_id_sm_vc], references: [id_sm_vc])
+  profesor               Usuario          @relation("ProfesorEvalua", fields: [profesor_id_sm_vc], references: [id_sm_vc])
+
+  @@map("tdevaluacion_sm_vc")
+}
+
+model ProyectoDeploy {
+  id_sm_vc                       Int        @id @default(autoincrement())
+  estudiante_id_sm_vc            Int        @unique
+  url_produccion_sm_vc           String
+  archivo_codigo_id_sm_vc        Int        @unique
+  documentacion_tecnica_id_sm_vc Int        @unique
+  fecha_deploy_sm_vc             DateTime   @default(now())
+  archivoCodigo                  Documento  @relation("DeployCodigoZIP", fields: [archivo_codigo_id_sm_vc], references: [id_sm_vc])
+  documentacionTecnica           Documento  @relation("DeployDocumentacion", fields: [documentacion_tecnica_id_sm_vc], references: [id_sm_vc])
+  estudiante                     Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
+
+  @@map("tdproyectodeploy_sm_vc")
+}
+
+model Conversacion {
+  id_sm_vc             Int        @id @default(autoincrement())
+  estudiante_id_sm_vc  Int        @unique
+  fecha_creacion_sm_vc DateTime   @default(now())
+  estudiante           Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+  mensajes             Mensaje[]
+
+  @@map("tdconversacion_sm_vc")
+}
+
+model Mensaje {
+  id_sm_vc              Int          @id @default(autoincrement())
+  conversacion_id_sm_vc Int
+  contenido_sm_vc       String
+  es_sistema_sm_vc      Boolean      @default(true)
+  fecha_creacion_sm_vc  DateTime     @default(now())
+  conversacion          Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+
+  @@map("tdmensaje_sm_vc")
+}
+
+model Notificacion {
+  id_sm_vc             Int              @id @default(autoincrement())
+  emisor_id_sm_vc      Int
+  receptor_id_sm_vc    Int
+  tipo_sm_vc           TipoNotificacion
+  titulo_sm_vc         String           @db.VarChar(150)
+  contenido_sm_vc      String
+  leida_sm_vc          Boolean          @default(false)
+  fecha_creacion_sm_vc DateTime         @default(now())
+  emisor               Usuario          @relation("NotificacionesEnviadas", fields: [emisor_id_sm_vc], references: [id_sm_vc])
+  receptor             Usuario          @relation("NotificacionesRecibidas", fields: [receptor_id_sm_vc], references: [id_sm_vc])
+
+  @@map("tdnotificacion_sm_vc")
+}
+
 enum RolUsuario {
   ADMIN
   PROFESOR
   ESTUDIANTE
+
   @@map("rolusuario_sm_vc")
 }
 
@@ -24,6 +201,7 @@ enum EstadoAprobacion {
   ENTREGADO
   APROBADO
   REPROBADO
+
   @@map("estadoaprobacion_sm_vc")
 }
 
@@ -32,6 +210,7 @@ enum TipoDocumento {
   CORRECCION_PROFESOR
   DOCUMENTACION_DEPLOY
   CODIGO_ZIP
+
   @@map("tipodocumento_sm_vc")
 }
 
@@ -39,238 +218,6 @@ enum TipoNotificacion {
   IMPORTANTE
   URGENTE
   INFORMATIVA
+
   @@map("tiponotificacion_sm_vc")
-}
-
-// ==========================================
-// PERÍODO ACADÉMICO
-// ==========================================
-model PeriodoAcademico {
-  id_sm_vc            Int      @id @default(autoincrement())
-  nombre_sm_vc        String   @db.VarChar(20)
-  fecha_inicio_sm_vc  DateTime
-  fecha_fin_sm_vc     DateTime
-  estado_activo_sm_vc Boolean  @default(false)
-  
-  @@map("tdperiodoacademico_sm_vc")
-}
-
-// ==========================================
-// CONFIGURACIÓN GLOBAL (Singleton ID=1)
-// ==========================================
-model ConfiguracionSistema {
-  id_sm_vc                  Int      @id @default(1)
-  periodo_actual_sm_vc      String   @db.VarChar(10)
-  fecha_actualizacion_sm_vc DateTime @updatedAt
-
-  @@map("tdconfiguracionsistema_sm_vc")
-}
-
-// ==========================================
-// USUARIO
-// ==========================================
-model Usuario {
-  id_sm_vc                    Int        @id @default(autoincrement())
-  nombre_sm_vc                String     @db.VarChar(50)
-  apellido_sm_vc              String     @db.VarChar(50)
-  cedula_sm_vc                String     @unique @db.VarChar(12)
-  correo_sm_vc                String     @unique @db.VarChar(250)
-  telefono_sm_vc              String?    @db.VarChar(20)
-  clave_sm_vc                 String     @db.VarChar(255)
-  rol_sm_vc                   RolUsuario
-  activo_sm_vc                Boolean    @default(true)
-  requiere_cambio_clave_sm_vc Boolean    @default(true)
-  fecha_creacion_sm_vc        DateTime   @default(now())
-
-  estudiante_sm_vc        Estudiante?             @relation("UsuarioAEstudiante")
-  estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")
-  documentosSubidos       Documento[]             @relation("UsuarioSubeDocumento")
-  evaluacionesRealizadas  Evaluacion[]            @relation("ProfesorEvalua")
-  notificacionesEnviadas  Notificacion[]          @relation("NotificacionesEnviadas")
-  notificacionesRecibidas Notificacion[]          @relation("NotificacionesRecibidas")
-
-  @@map("tdusuario_sm_vc")
-}
-
-// ==========================================
-// ESTUDIANTE (Perfil extendido)
-// materia_activa_id apunta a la materia
-// en la que el estudiante está habilitado
-// ==========================================
-model Estudiante {
-  id_sm_vc                Int    @id @default(autoincrement())
-  usuario_id_sm_vc        Int    @unique
-  profesor_id_sm_vc       Int?
-  empresa_sm_vc           String @db.VarChar(150)
-  tutor_empresarial_sm_vc String @db.VarChar(100)
-  titulo_proyecto_sm_vc   String @db.VarChar(255)
-  materia_activa_id_sm_vc Int
-  puede_hacer_deploy_sm_vc Boolean @default(false)
-
-  usuario       Usuario                 @relation("UsuarioAEstudiante",  fields: [usuario_id_sm_vc],  references: [id_sm_vc])
-  profesorTutor Usuario?                @relation("TutorAEstudiante",    fields: [profesor_id_sm_vc], references: [id_sm_vc])
-  materiaActiva Materia                 @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc])
-  entregas      Entrega[]
-  proyectoDeploy ProyectoDeploy?
-  conversacion   Conversacion?
-
-  @@map("tdestudiante_sm_vc")
-}
-
-// ==========================================
-// MATERIA (3 secuenciales por periodo)
-// posicion: 1=Inv. y Desarrollo
-//           2=Seminario de Grado
-//           3=Trabajo de Grado I
-// ==========================================
-model Materia {
-  id_sm_vc          Int     @id @default(autoincrement())
-  nombre_sm_vc      String  @db.VarChar(100)
-  posicion_sm_vc    Int
-  periodo_sm_vc     String  @db.VarChar(10)
-  descripcion_sm_vc String? @db.Text
-
-  requisitos  Requisito[]
-  estudiantes Estudiante[]
-
-  @@unique([posicion_sm_vc, periodo_sm_vc])
-  @@map("tdmateria_sm_vc")
-}
-
-// ==========================================
-// REQUISITO (Capítulos / Entregables)
-// ==========================================
-model Requisito {
-  id_sm_vc          Int    @id @default(autoincrement())
-  materia_id_sm_vc  Int
-  nombre_sm_vc      String @db.VarChar(100)
-  descripcion_sm_vc String @db.Text
-  posicion_sm_vc    Int
-
-  materia  Materia   @relation(fields: [materia_id_sm_vc], references: [id_sm_vc])
-  entregas Entrega[]
-
-  @@map("tdrequisito_sm_vc")
-}
-
-// ==========================================
-// ENTREGA (Estado de aprobación por requisito)
-// ==========================================
-model Entrega {
-  id_sm_vc                  Int              @id @default(autoincrement())
-  estudiante_id_sm_vc       Int
-  requisito_id_sm_vc        Int
-  estado_sm_vc              EstadoAprobacion @default(PENDIENTE)
-  fecha_actualizacion_sm_vc DateTime         @updatedAt
-
-  estudiante Estudiante  @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc])
-  requisito  Requisito   @relation(fields: [requisito_id_sm_vc],  references: [id_sm_vc])
-  documentos Documento[]
-  evaluacion Evaluacion?
-
-  @@unique([estudiante_id_sm_vc, requisito_id_sm_vc])
-  @@map("tdentrega_sm_vc")
-}
-
-// ==========================================
-// DOCUMENTO (PDF / ZIP almacenado en disco)
-// ==========================================
-model Documento {
-  id_sm_vc                Int           @id @default(autoincrement())
-  entrega_id_sm_vc        Int?
-  usuario_subida_id_sm_vc Int
-  tipo_sm_vc              TipoDocumento
-  nombre_archivo_sm_vc    String        @db.VarChar(255)
-  ruta_archivo_sm_vc      String        @db.Text
-  tamanio_bytes_sm_vc     Int?
-  mime_type_sm_vc         String?       @db.VarChar(100)
-  fecha_subida_sm_vc      DateTime      @default(now())
-
-  entrega         Entrega?        @relation(fields: [entrega_id_sm_vc],        references: [id_sm_vc])
-  usuario         Usuario         @relation("UsuarioSubeDocumento", fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
-  deployCodigo    ProyectoDeploy? @relation("DeployCodigoZIP")
-  deployDocs      ProyectoDeploy? @relation("DeployDocumentacion")
-
-  @@map("tddocumento_sm_vc")
-}
-
-// ==========================================
-// EVALUACION (Decisión del profesor)
-// ==========================================
-model Evaluacion {
-  id_sm_vc               Int              @id @default(autoincrement())
-  entrega_id_sm_vc       Int              @unique
-  profesor_id_sm_vc      Int
-  decision_sm_vc         EstadoAprobacion
-  observaciones_sm_vc    String?          @db.Text
-  fecha_evaluacion_sm_vc DateTime         @default(now())
-
-  entrega  Entrega @relation(fields: [entrega_id_sm_vc],  references: [id_sm_vc])
-  profesor Usuario @relation("ProfesorEvalua", fields: [profesor_id_sm_vc], references: [id_sm_vc])
-
-  @@map("tdevaluacion_sm_vc")
-}
-
-// ==========================================
-// PROYECTO DEPLOY (Habilitado al completar
-// la Materia 3 — Trabajo de Grado I)
-// ==========================================
-model ProyectoDeploy {
-  id_sm_vc                       Int      @id @default(autoincrement())
-  estudiante_id_sm_vc            Int      @unique
-  url_produccion_sm_vc           String   @db.Text
-  archivo_codigo_id_sm_vc        Int      @unique
-  documentacion_tecnica_id_sm_vc Int      @unique
-  fecha_deploy_sm_vc             DateTime @default(now())
-
-  estudiante           Estudiante @relation(fields: [estudiante_id_sm_vc],            references: [id_sm_vc])
-  archivoCodigo        Documento  @relation("DeployCodigoZIP",        fields: [archivo_codigo_id_sm_vc],        references: [id_sm_vc])
-  documentacionTecnica Documento  @relation("DeployDocumentacion",   fields: [documentacion_tecnica_id_sm_vc], references: [id_sm_vc])
-
-  @@map("tdproyectodeploy_sm_vc")
-}
-
-// ==========================================
-// CONVERSACIÓN (Trazabilidad interactiva)
-// ==========================================
-model Conversacion {
-  id_sm_vc            Int      @id @default(autoincrement())
-  estudiante_id_sm_vc Int      @unique
-  fecha_creacion_sm_vc DateTime @default(now())
-
-  estudiante Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
-  mensajes   Mensaje[]
-
-  @@map("tdconversacion_sm_vc")
-}
-
-model Mensaje {
-  id_sm_vc              Int      @id @default(autoincrement())
-  conversacion_id_sm_vc Int
-  contenido_sm_vc       String   @db.Text
-  es_sistema_sm_vc      Boolean  @default(true)
-  fecha_creacion_sm_vc  DateTime @default(now())
-
-  conversacion Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
-
-  @@map("tdmensaje_sm_vc")
-}
-
-// ==========================================
-// NOTIFICACION
-// ==========================================
-model Notificacion {
-  id_sm_vc             Int              @id @default(autoincrement())
-  emisor_id_sm_vc      Int
-  receptor_id_sm_vc    Int
-  tipo_sm_vc           TipoNotificacion
-  titulo_sm_vc         String           @db.VarChar(150)
-  contenido_sm_vc      String           @db.Text
-  leida_sm_vc          Boolean          @default(false)
-  fecha_creacion_sm_vc DateTime         @default(now())
-
-  emisor   Usuario @relation("NotificacionesEnviadas",  fields: [emisor_id_sm_vc],    references: [id_sm_vc])
-  receptor Usuario @relation("NotificacionesRecibidas", fields: [receptor_id_sm_vc],  references: [id_sm_vc])
-
-  @@map("tdnotificacion_sm_vc")
 }

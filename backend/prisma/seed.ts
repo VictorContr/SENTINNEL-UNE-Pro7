@@ -45,7 +45,6 @@ async function main() {
   });
 
   // ── 3. Materias secuenciales (Basado en la UNE) ──
-  // Helper para crear materias con sus requisitos de forma estructurada
   const crearMateria_sm_vc = async (nombre: string, posicion: number, requisitos: { nombre: string, desc: string }[]) => {
     return await prisma.materia.create({
       data: {
@@ -147,7 +146,7 @@ async function main() {
     { nombre: 'Andrés',    apellido: 'Martínez',  cedula: 'V-30000005', correo: 'test5@estudiante.une.edu.ve', empresa: 'BioMed Venezuela',   tutor: 'Dr. Rafael Castillo',        titulo: 'Plataforma de Gestión de Historiales Médicos',   profId: prof1.id_sm_vc },
   ];
 
-  const perfiles: Array<{ usuario: any; perfil: any }> = [];
+  const perfiles: Array<{ usuario: any; perfil: any; conversacion: any }> = [];
 
   for (const d of estudiantesData) {
     const usuario = await prisma.usuario.create({
@@ -182,7 +181,7 @@ async function main() {
       }
     });
 
-    perfiles.push({ usuario, perfil });
+    perfiles.push({ usuario, perfil, conversacion });
   }
 
   // ── 7. CASO DE PRUEBA CRÍTICO: Estudiante Casi Graduado ──
@@ -211,13 +210,13 @@ async function main() {
 
   const convCasiGraduado = await prisma.conversacion.create({ data: { estudiante_id_sm_vc: pCasiGraduado.id_sm_vc } });
 
-  // Simular aprobaciones masivas con fechas lógicas
-  const simularAprobaciones_sm_vc = async (estudianteId: number, usuarioId: number, reqs: any[], mesesAtras: number) => {
+  // Simular aprobaciones masivas con fechas lógicas (REFACTORIZADO PARA INTEGRADIDAD RELACIONAL)
+  const simularAprobaciones_sm_vc = async (estudianteId: number, usuarioId: number, conversacionId: number, reqs: any[], diasAtrasBase: number) => {
     const baseDate = new Date();
-    baseDate.setMonth(baseDate.getMonth() - mesesAtras);
+    baseDate.setDate(baseDate.getDate() - diasAtrasBase);
 
     for (const [index, req] of reqs.entries()) {
-      const fechaReq = new Date(baseDate);
+      const fechaReq = new Date(baseDate.getTime());
       fechaReq.setDate(fechaReq.getDate() + (index * 3)); // 3 días entre requisitos
 
       const entrega = await prisma.entrega.create({
@@ -232,40 +231,43 @@ async function main() {
       await prisma.documento.create({
         data: {
           entrega_id_sm_vc: entrega.id_sm_vc,
-          usuario_subida_id_sm_vc: usuarioId,
+          usuario_subida_id_sm_vc: usuarioId, // Correctamente enlazado al Usuario para subidas
           tipo_sm_vc: TipoDocumento.ENTREGABLE_ESTUDIANTE,
           nombre_archivo_sm_vc: `DOC_${req.nombre_sm_vc.replace(/ /g, '_')}.pdf`,
           ruta_archivo_sm_vc: `uploads/seed/${req.id_sm_vc}.pdf`,
           fecha_subida_sm_vc: fechaReq,
+          mock_sm_vc: true,
         },
       });
 
+      const fechaEval = new Date(fechaReq.getTime() + (86400000 * 2)); // Evalúa 2 días después
       await prisma.evaluacion.create({
         data: {
           entrega_id_sm_vc: entrega.id_sm_vc,
           profesor_id_sm_vc: prof1.id_sm_vc,
           decision_sm_vc: EstadoAprobacion.APROBADO,
           observaciones_sm_vc: 'Requisito validado y aprobado según estándares de la UNE.',
-          fecha_evaluacion_sm_vc: new Date(fechaReq.getTime() + 86400000), // +1 día después
+          fecha_evaluacion_sm_vc: fechaEval,
         },
       });
 
       // Log de trazabilidad
       await prisma.mensaje.create({
         data: {
-          conversacion_id_sm_vc: convCasiGraduado.id_sm_vc,
-          contenido_sm_vc: `Log: El requisito "${req.nombre_sm_vc}" ha sido APROBADO por el sistema.`,
+          conversacion_id_sm_vc: conversacionId,
+          contenido_sm_vc: `Log de Sistema: El requisito "${req.nombre_sm_vc}" ha sido APROBADO por el sistema.`,
           es_sistema_sm_vc: true,
-          fecha_creacion_sm_vc: new Date(fechaReq.getTime() + 86400000),
+          fecha_creacion_sm_vc: fechaEval,
         },
       });
     }
   };
 
-  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, reqs1, 8); // Hace 8 meses
-  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, reqs2, 6); // Hace 6 meses
-  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, reqs3, 4); // Hace 4 meses
-  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, reqs4, 2); // Hace 2 meses
+  // 8 meses (~240 dias), 6 meses (~180), etc.
+  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, convCasiGraduado.id_sm_vc, reqs1, 240);
+  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, convCasiGraduado.id_sm_vc, reqs2, 180);
+  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, convCasiGraduado.id_sm_vc, reqs3, 120);
+  await simularAprobaciones_sm_vc(pCasiGraduado.id_sm_vc, uCasiGraduado.id_sm_vc, convCasiGraduado.id_sm_vc, reqs4, 60);
 
   // Mensaje final para el casi graduado
   await prisma.mensaje.create({
@@ -279,40 +281,169 @@ async function main() {
 
   console.log('✔ Estudiante casi graduado creado con éxito');
 
-  // ── 8. Otros estados de avance (Simplificados para los demás) ──
-  const [luis] = perfiles;
-  const eLuis = await prisma.entrega.create({
-    data: { estudiante_id_sm_vc: luis.perfil.id_sm_vc, requisito_id_sm_vc: reqs1[0].id_sm_vc, estado_sm_vc: EstadoAprobacion.ENTREGADO },
+  // ── 8. Progreso Realista para los Estudiantes Base ──
+  const [luis, maria, carlos, valentina, andres] = perfiles;
+
+  // -- 8.1 LUIS (Materia 1 - En Revisión) --
+  // Ha entregado los primeros 2 requisitos, están en estado ENTREGADO sin Evaluación.
+  for (let i = 0; i < 2; i++) {
+    const req = reqs1[i];
+    const fechaSubida = new Date();
+    fechaSubida.setDate(fechaSubida.getDate() - (4 - i * 2)); // Hace 4 y 2 días respectivamente
+    const eLuis = await prisma.entrega.create({
+      data: { estudiante_id_sm_vc: luis.perfil.id_sm_vc, requisito_id_sm_vc: req.id_sm_vc, estado_sm_vc: EstadoAprobacion.ENTREGADO, fecha_actualizacion_sm_vc: fechaSubida },
+    });
+    await prisma.documento.create({
+      data: {
+        entrega_id_sm_vc: eLuis.id_sm_vc,
+        usuario_subida_id_sm_vc: luis.usuario.id_sm_vc,
+        tipo_sm_vc: TipoDocumento.ENTREGABLE_ESTUDIANTE,
+        nombre_archivo_sm_vc: `DOC_Luis_${req.nombre_sm_vc.replace(/ /g, '_')}.pdf`,
+        ruta_archivo_sm_vc: `uploads/seed/luis_req_${req.id_sm_vc}.pdf`,
+        fecha_subida_sm_vc: fechaSubida,
+        mock_sm_vc: true,
+      },
+    });
+    // Log de subida
+    await prisma.mensaje.create({
+      data: {
+        conversacion_id_sm_vc: luis.conversacion.id_sm_vc,
+        contenido_sm_vc: `Log de Sistema: El estudiante ha subido su documento para el requisito "${req.nombre_sm_vc}" y se encuentra EN REVISIÓN.`,
+        es_sistema_sm_vc: true,
+        fecha_creacion_sm_vc: fechaSubida,
+      }
+    });
+  }
+
+  // -- 8.2 MARÍA (Materia 2 - Aprobada parcial) --
+  // Materia 1 aprobada (reqs1) terminada hace unos ~30 días
+  await simularAprobaciones_sm_vc(maria.perfil.id_sm_vc, maria.usuario.id_sm_vc, maria.conversacion.id_sm_vc, reqs1, 30);
+  
+  // Actualizar materia activa a Materia 2 y registrar LOG riguroso
+  const fechaCambioMat2Maria = new Date();
+  fechaCambioMat2Maria.setDate(fechaCambioMat2Maria.getDate() - 5);
+  await prisma.estudiante.update({ where: { id_sm_vc: maria.perfil.id_sm_vc }, data: { materia_activa_id_sm_vc: mat2_sm_vc.id_sm_vc } });
+  await prisma.mensaje.create({
+    data: {
+      conversacion_id_sm_vc: maria.conversacion.id_sm_vc,
+      contenido_sm_vc: `Log de Sistema: El estudiante ha cumplido todos los requisitos y ha avanzado a la materia: ${mat2_sm_vc.nombre_sm_vc}`,
+      es_sistema_sm_vc: true,
+      fecha_creacion_sm_vc: fechaCambioMat2Maria
+    }
+  });
+
+  // Sube el primer req de Materia 2 (hace 2 días)
+  const fechaSubidaMaria = new Date();
+  fechaSubidaMaria.setDate(fechaSubidaMaria.getDate() - 2);
+  const eMariaReqMat2 = await prisma.entrega.create({
+    data: { estudiante_id_sm_vc: maria.perfil.id_sm_vc, requisito_id_sm_vc: reqs2[0].id_sm_vc, estado_sm_vc: EstadoAprobacion.ENTREGADO, fecha_actualizacion_sm_vc: fechaSubidaMaria }
   });
   await prisma.documento.create({
     data: {
-      entrega_id_sm_vc: eLuis.id_sm_vc,
-      usuario_subida_id_sm_vc: luis.usuario.id_sm_vc,
+      entrega_id_sm_vc: eMariaReqMat2.id_sm_vc,
+      usuario_subida_id_sm_vc: maria.usuario.id_sm_vc,
       tipo_sm_vc: TipoDocumento.ENTREGABLE_ESTUDIANTE,
-      nombre_archivo_sm_vc: 'Capitulo_I_Luis.pdf',
-      ruta_archivo_sm_vc: 'uploads/luis/cap1.pdf',
-    },
+      nombre_archivo_sm_vc: 'DOC_Maria_Refinamiento.pdf',
+      ruta_archivo_sm_vc: 'uploads/seed/maria_mat2_req1.pdf',
+      fecha_subida_sm_vc: fechaSubidaMaria,
+      mock_sm_vc: true,
+    }
+  });
+  await prisma.mensaje.create({
+    data: {
+      conversacion_id_sm_vc: maria.conversacion.id_sm_vc,
+      contenido_sm_vc: `Log de Sistema: El estudiante ha subido su documento para el requisito "${reqs2[0].nombre_sm_vc}" y se encuentra EN REVISIÓN.`,
+      es_sistema_sm_vc: true,
+      fecha_creacion_sm_vc: fechaSubidaMaria
+    }
   });
 
-  const [, maria] = perfiles;
-  for (const r of reqs1) {
-    const e = await prisma.entrega.create({ data: { estudiante_id_sm_vc: maria.perfil.id_sm_vc, requisito_id_sm_vc: r.id_sm_vc, estado_sm_vc: EstadoAprobacion.APROBADO } });
-    await prisma.evaluacion.create({
-      data: { entrega_id_sm_vc: e.id_sm_vc, profesor_id_sm_vc: prof1.id_sm_vc, decision_sm_vc: EstadoAprobacion.APROBADO, observaciones_sm_vc: 'Excelente primer capítulo.' }
-    });
-  }
-  await prisma.estudiante.update({ where: { id_sm_vc: maria.perfil.id_sm_vc }, data: { materia_activa_id_sm_vc: mat2_sm_vc.id_sm_vc } });
+  // -- 8.3 CARLOS (Materia 3 - Avanzado) --
+  // Materia 1 y Materia 2 totalmente aprobadas
+  await simularAprobaciones_sm_vc(carlos.perfil.id_sm_vc, carlos.usuario.id_sm_vc, carlos.conversacion.id_sm_vc, reqs1, 60);
+  const fechaCambioMat2Carlos = new Date();
+  fechaCambioMat2Carlos.setDate(fechaCambioMat2Carlos.getDate() - 40);
+  await prisma.mensaje.create({
+    data: {
+      conversacion_id_sm_vc: carlos.conversacion.id_sm_vc,
+      contenido_sm_vc: `Log de Sistema: El estudiante ha cumplido todos los requisitos y ha avanzado a la materia: ${mat2_sm_vc.nombre_sm_vc}`,
+      es_sistema_sm_vc: true,
+      fecha_creacion_sm_vc: fechaCambioMat2Carlos
+    }
+  });
 
-  const [,, carlos] = perfiles;
-  for (const r of [...reqs1, ...reqs2]) {
-    const e = await prisma.entrega.create({ data: { estudiante_id_sm_vc: carlos.perfil.id_sm_vc, requisito_id_sm_vc: r.id_sm_vc, estado_sm_vc: EstadoAprobacion.APROBADO } });
-    await prisma.evaluacion.create({
-      data: { entrega_id_sm_vc: e.id_sm_vc, profesor_id_sm_vc: prof2.id_sm_vc, decision_sm_vc: EstadoAprobacion.APROBADO, observaciones_sm_vc: 'Validado satisfactoriamente.' }
-    });
-  }
+  await simularAprobaciones_sm_vc(carlos.perfil.id_sm_vc, carlos.usuario.id_sm_vc, carlos.conversacion.id_sm_vc, reqs2, 30);
+  
   await prisma.estudiante.update({ where: { id_sm_vc: carlos.perfil.id_sm_vc }, data: { materia_activa_id_sm_vc: mat3_sm_vc.id_sm_vc } });
+  const fechaCambioMat3Carlos = new Date();
+  fechaCambioMat3Carlos.setDate(fechaCambioMat3Carlos.getDate() - 10);
+  await prisma.mensaje.create({
+    data: {
+      conversacion_id_sm_vc: carlos.conversacion.id_sm_vc,
+      contenido_sm_vc: `Log de Sistema: El estudiante ha cumplido todos los requisitos y ha avanzado a la materia: ${mat3_sm_vc.nombre_sm_vc}`,
+      es_sistema_sm_vc: true,
+      fecha_creacion_sm_vc: fechaCambioMat3Carlos
+    }
+  });
 
-  console.log('✔ Progresos de otros estudiantes actualizados');
+  // -- 8.4 VALENTINA (Materia 1 - Reprobada) --
+  const reqVal = reqs1[0];
+  const fechaSubidaVal = new Date();
+  fechaSubidaVal.setDate(fechaSubidaVal.getDate() - 3); // Documento subido hace 3 días
+  
+  // OBLIGATORIO: La Entrega asume el estado de REPROBADO como semáforo para el frontend
+  const eVal = await prisma.entrega.create({
+    data: { 
+      estudiante_id_sm_vc: valentina.perfil.id_sm_vc, 
+      requisito_id_sm_vc: reqVal.id_sm_vc, 
+      estado_sm_vc: EstadoAprobacion.REPROBADO, 
+      fecha_actualizacion_sm_vc: fechaSubidaVal 
+    },
+  });
+  await prisma.documento.create({
+    data: {
+      entrega_id_sm_vc: eVal.id_sm_vc,
+      usuario_subida_id_sm_vc: valentina.usuario.id_sm_vc,
+      tipo_sm_vc: TipoDocumento.ENTREGABLE_ESTUDIANTE,
+      nombre_archivo_sm_vc: `DOC_Val_${reqVal.nombre_sm_vc.replace(/ /g, '_')}.pdf`,
+      ruta_archivo_sm_vc: `uploads/seed/val_req_${reqVal.id_sm_vc}.pdf`,
+      fecha_subida_sm_vc: fechaSubidaVal,
+      mock_sm_vc: true,
+    },
+  });
+  await prisma.mensaje.create({
+    data: {
+      conversacion_id_sm_vc: valentina.conversacion.id_sm_vc,
+      contenido_sm_vc: `Log de Sistema: El estudiante ha subido su documento para el requisito "${reqVal.nombre_sm_vc}" y se encuentra EN REVISIÓN.`,
+      es_sistema_sm_vc: true,
+      fecha_creacion_sm_vc: fechaSubidaVal,
+    }
+  });
+  
+  const fechaEvalVal = new Date();
+  fechaEvalVal.setDate(fechaEvalVal.getDate() - 1); // El profesor la reprobó ayer
+  await prisma.evaluacion.create({
+    data: {
+      entrega_id_sm_vc: eVal.id_sm_vc,
+      profesor_id_sm_vc: prof2.id_sm_vc, // Su tutor es prof2
+      decision_sm_vc: EstadoAprobacion.REPROBADO,
+      observaciones_sm_vc: 'Corregir el planteamiento del problema. Falta claridad en la justificación y delimitación.',
+      fecha_evaluacion_sm_vc: fechaEvalVal,
+    },
+  });
+  await prisma.mensaje.create({
+    data: {
+      conversacion_id_sm_vc: valentina.conversacion.id_sm_vc,
+      contenido_sm_vc: `Log de Sistema: El requisito "${reqVal.nombre_sm_vc}" ha sido REPROBADO. Ver observaciones en la boleta para proceder a corrección.`,
+      es_sistema_sm_vc: true,
+      fecha_creacion_sm_vc: fechaEvalVal,
+    }
+  });
+
+  // -- 8.5 ANDRÉS (Nuevo Ingreso) --
+  // Andrés se mantiene en blanco/cero entregas, solo tiene la trazabilidad inicial creada en la sección 6.
+
+  console.log('✔ Progresos estandarizados de estudiantes actualizados');
 
   // ── 9. Notificaciones ──
   await prisma.notificacion.createMany({
@@ -323,7 +454,6 @@ async function main() {
   });
 
   // ── 10. Sincronización de Flags de Deploy ──
-  // Buscamos a todos los estudiantes para verificar si ya deben tener habilitado el deploy
   const estudiantes_sm_vc = await prisma.estudiante.findMany({
     include: {
       entregas: {
@@ -335,11 +465,11 @@ async function main() {
   const totalRequisitos_sm_vc = await prisma.requisito.count();
 
   for (const est_sm_vc of estudiantes_sm_vc) {
-    // Si el número de entregas aprobadas es igual al total de requisitos del sistema
     if (est_sm_vc.entregas.length === totalRequisitos_sm_vc) {
       await prisma.estudiante.update({
         where: { id_sm_vc: est_sm_vc.id_sm_vc },
         data: { puede_hacer_deploy_sm_vc: true },
+        // La actualización de deploy requiere ser detectada correctamente en seed
       });
       console.log(`📡 Estudiante ${est_sm_vc.id_sm_vc} detectado como APTO para Deploy.`);
     }

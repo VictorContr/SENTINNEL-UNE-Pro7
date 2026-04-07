@@ -142,7 +142,8 @@ export class PasantiasService_sm_vc {
     });
 
     const entregas = await this.prisma.entrega.findMany({
-      where: { estudiante_id_sm_vc: estudianteBase.id_sm_vc }
+      where: { estudiante_id_sm_vc: estudianteBase.id_sm_vc },
+      include: { documentos: true, evaluacion: true }
     });
 
     const resultado = materias.map(materia => {
@@ -193,7 +194,14 @@ export class PasantiasService_sm_vc {
         progreso: {
           requisitos_aprobados_detalle_sm_vc: entregasMateria
             .filter(e => e.estado_sm_vc === EstadoAprobacion.APROBADO)
-            .map(e => ({ requisito_id_sm_vc: e.requisito_id_sm_vc }))
+            .map(e => ({ requisito_id_sm_vc: e.requisito_id_sm_vc })),
+          entregas_detalle_sm_vc: entregasMateria.map(e => ({
+            entrega_id_sm_vc: e.id_sm_vc,
+            requisito_id_sm_vc: e.requisito_id_sm_vc,
+            estado_sm_vc: e.estado_sm_vc,
+            fecha_actualizacion_sm_vc: e.fecha_actualizacion_sm_vc,
+            documentos_sm_vc: e.documentos
+          }))
         }
       };
     });

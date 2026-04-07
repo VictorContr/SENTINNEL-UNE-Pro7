@@ -14,164 +14,223 @@ export class PeriodosAcademicosService {
   }
 
   async findActivo_sm_vc() {
-    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+    const periodoActivo_sm_vc = await this.prisma.periodoAcademico.findFirst({
       where: { estado_activo_sm_vc: true },
     });
 
-    if (!periodoActivo) {
+    if (!periodoActivo_sm_vc) {
       throw new NotFoundException('No hay un período académico activo');
     }
 
-    return periodoActivo;
+    return periodoActivo_sm_vc;
   }
 
   async findOne_sm_vc(id: number) {
-    const periodo = await this.prisma.periodoAcademico.findUnique({
+    const periodo_sm_vc = await this.prisma.periodoAcademico.findUnique({
       where: { id_sm_vc: id },
     });
 
-    if (!periodo) {
+    if (!periodo_sm_vc) {
       throw new NotFoundException(`Período académico ${id} no encontrado`);
     }
 
-    return periodo;
+    return periodo_sm_vc;
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // POST /periodos
+  // Crea un nuevo período académico con nombre auto-generado y lo
+  // activa automáticamente, desactivando todos los anteriores.
+  // ─────────────────────────────────────────────────────────────────
   async create_sm_vc(createPeriodoDto: CreatePeriodoDto_sm_vc) {
-    // Validar que no exista un período con el mismo nombre
-    const periodoExistente = await this.prisma.periodoAcademico.findFirst({
-      where: { nombre_sm_vc: createPeriodoDto.nombre_sm_vc },
-    });
+    const fechaInicio_sm_vc = new Date(createPeriodoDto.fecha_inicio_sm_vc);
+    const fechaFin_sm_vc    = new Date(createPeriodoDto.fecha_fin_sm_vc);
 
-    if (periodoExistente) {
-      throw new BadRequestException(`Ya existe un período con el nombre "${createPeriodoDto.nombre_sm_vc}"`);
-    }
-
-    // Validar que las fechas sean válidas
-    const fechaInicio = new Date(createPeriodoDto.fecha_inicio_sm_vc);
-    const fechaFin = new Date(createPeriodoDto.fecha_fin_sm_vc);
-
-    if (fechaInicio >= fechaFin) {
+    // Validación de rango de fechas
+    if (fechaInicio_sm_vc >= fechaFin_sm_vc) {
       throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
     }
 
-    return this.prisma.periodoAcademico.create({
+    // Generar nombre dinámicamente desde las fechas del período.
+    // Resultado esperado: "Enero 2026 - Julio 2026"
+    const nombre_sm_vc = this.generarNombrePeriodo_sm_vc(fechaInicio_sm_vc, fechaFin_sm_vc);
+
+    // Verificar que no exista ya un período con el mismo nombre generado
+    const periodoExistente_sm_vc = await this.prisma.periodoAcademico.findFirst({
+      where: { nombre_sm_vc },
+    });
+
+    if (periodoExistente_sm_vc) {
+      throw new BadRequestException(
+        `Ya existe un período con el rango de fechas equivalente: "${nombre_sm_vc}"`,
+      );
+    }
+
+    // Desactivar todos los períodos anteriores antes de crear el nuevo.
+    // La regla de negocio es: solo puede haber UN período activo.
+    await this.prisma.periodoAcademico.updateMany({
+      where: { estado_activo_sm_vc: true },
+      data:  { estado_activo_sm_vc: false },
+    });
+
+    // Crear el nuevo período como ACTIVO directamente
+    const nuevoPeriodo_sm_vc = await this.prisma.periodoAcademico.create({
       data: {
-        nombre_sm_vc: createPeriodoDto.nombre_sm_vc,
-        fecha_inicio_sm_vc: fechaInicio,
-        fecha_fin_sm_vc: fechaFin,
-        estado_activo_sm_vc: false, // Por defecto, los nuevos períodos no están activos
+        nombre_sm_vc,
+        fecha_inicio_sm_vc: fechaInicio_sm_vc,
+        fecha_fin_sm_vc:    fechaFin_sm_vc,
+        estado_activo_sm_vc: true,
       },
     });
+
+    // Sincronizar la tabla de configuración del sistema con el nuevo período activo
+    try {
+      await this.prisma.configuracionSistema.update({
+        where: { id_sm_vc: 1 },
+        data:  { periodo_actual_sm_vc: nombre_sm_vc },
+      });
+    } catch {
+      // No bloqueante: si la tabla de configuración no existe, continuamos.
+      console.warn('[PeriodosService] No se pudo actualizar configuracionSistema.');
+    }
+
+    return nuevoPeriodo_sm_vc;
   }
 
   async update_sm_vc(id: number, updatePeriodoDto: UpdatePeriodoDto_sm_vc) {
-    const periodo = await this.findOne_sm_vc(id);
+    await this.findOne_sm_vc(id);
 
-    // Validar que no exista otro período con el mismo nombre (si se está actualizando el nombre)
-    if (updatePeriodoDto.nombre_sm_vc) {
-      const periodoExistente = await this.prisma.periodoAcademico.findFirst({
-        where: {
-          nombre_sm_vc: updatePeriodoDto.nombre_sm_vc,
-          id_sm_vc: { not: id }, // Excluir el período actual
-        },
-      });
+    // Si se están actualizando ambas fechas, regenerar el nombre automáticamente
+    const data_sm_vc: Record<string, unknown> = {};
 
-      if (periodoExistente) {
-        throw new BadRequestException(`Ya existe otro período con el nombre "${updatePeriodoDto.nombre_sm_vc}"`);
-      }
+    if (updatePeriodoDto.fecha_inicio_sm_vc) {
+      data_sm_vc.fecha_inicio_sm_vc = new Date(updatePeriodoDto.fecha_inicio_sm_vc);
+    }
+    if (updatePeriodoDto.fecha_fin_sm_vc) {
+      data_sm_vc.fecha_fin_sm_vc = new Date(updatePeriodoDto.fecha_fin_sm_vc);
     }
 
-    // Validar fechas si se están actualizando
-    if (updatePeriodoDto.fecha_inicio_sm_vc && updatePeriodoDto.fecha_fin_sm_vc) {
-      const fechaInicio = new Date(updatePeriodoDto.fecha_inicio_sm_vc);
-      const fechaFin = new Date(updatePeriodoDto.fecha_fin_sm_vc);
+    // Si viene explícitamente un nombre, lo respetamos; si no, lo regeneramos
+    // cuando se actualizan las dos fechas a la vez.
+    if (updatePeriodoDto.nombre_sm_vc) {
+      data_sm_vc.nombre_sm_vc = updatePeriodoDto.nombre_sm_vc;
+    } else if (updatePeriodoDto.fecha_inicio_sm_vc && updatePeriodoDto.fecha_fin_sm_vc) {
+      data_sm_vc.nombre_sm_vc = this.generarNombrePeriodo_sm_vc(
+        new Date(updatePeriodoDto.fecha_inicio_sm_vc),
+        new Date(updatePeriodoDto.fecha_fin_sm_vc),
+      );
+    }
 
-      if (fechaInicio >= fechaFin) {
+    if (updatePeriodoDto.estado_activo_sm_vc !== undefined) {
+      data_sm_vc.estado_activo_sm_vc = updatePeriodoDto.estado_activo_sm_vc;
+    }
+    if (updatePeriodoDto.descripcion_sm_vc) {
+      data_sm_vc.descripcion_sm_vc = updatePeriodoDto.descripcion_sm_vc;
+    }
+
+    // Validar rango si vienen ambas fechas
+    if (data_sm_vc.fecha_inicio_sm_vc && data_sm_vc.fecha_fin_sm_vc) {
+      if ((data_sm_vc.fecha_inicio_sm_vc as Date) >= (data_sm_vc.fecha_fin_sm_vc as Date)) {
         throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
       }
     }
 
     return this.prisma.periodoAcademico.update({
       where: { id_sm_vc: id },
-      data: {
-        ...(updatePeriodoDto.nombre_sm_vc && { nombre_sm_vc: updatePeriodoDto.nombre_sm_vc }),
-        ...(updatePeriodoDto.fecha_inicio_sm_vc && { fecha_inicio_sm_vc: new Date(updatePeriodoDto.fecha_inicio_sm_vc) }),
-        ...(updatePeriodoDto.fecha_fin_sm_vc && { fecha_fin_sm_vc: new Date(updatePeriodoDto.fecha_fin_sm_vc) }),
-        ...(updatePeriodoDto.estado_activo_sm_vc !== undefined && { estado_activo_sm_vc: updatePeriodoDto.estado_activo_sm_vc }),
-        ...(updatePeriodoDto.descripcion_sm_vc && { descripcion_sm_vc: updatePeriodoDto.descripcion_sm_vc }),
-      },
+      data:  data_sm_vc,
     });
   }
 
   async activar_sm_vc(id: number) {
-    // Desactivar todos los períodos primero
+    // Desactivar todos los períodos activos primero
     await this.prisma.periodoAcademico.updateMany({
       where: { estado_activo_sm_vc: true },
-      data: { estado_activo_sm_vc: false },
+      data:  { estado_activo_sm_vc: false },
     });
 
-    // Activar el período solicitado
-    const periodo = await this.findOne_sm_vc(id);
-    
+    const periodo_sm_vc = await this.findOne_sm_vc(id);
+
     // Actualizar configuración del sistema con el nuevo período activo
-    await this.prisma.configuracionSistema.update({
-      where: { id_sm_vc: 1 },
-      data: { periodo_actual_sm_vc: periodo.nombre_sm_vc },
-    });
+    try {
+      await this.prisma.configuracionSistema.update({
+        where: { id_sm_vc: 1 },
+        data:  { periodo_actual_sm_vc: periodo_sm_vc.nombre_sm_vc },
+      });
+    } catch {
+      console.warn('[PeriodosService] No se pudo actualizar configuracionSistema.');
+    }
 
     return this.prisma.periodoAcademico.update({
       where: { id_sm_vc: id },
-      data: { estado_activo_sm_vc: true },
+      data:  { estado_activo_sm_vc: true },
     });
   }
 
   async desactivar_sm_vc(id: number) {
-    const periodo = await this.findOne_sm_vc(id);
+    const periodo_sm_vc = await this.findOne_sm_vc(id);
 
-    if (!periodo.estado_activo_sm_vc) {
+    if (!periodo_sm_vc.estado_activo_sm_vc) {
       throw new BadRequestException('El período ya está inactivo');
     }
 
-    // Si el período a desactivar es el activo, activar el más reciente
-    if (periodo.estado_activo_sm_vc) {
-      // Buscar el período más reciente (que no sea el actual)
-      const periodoMasReciente = await this.prisma.periodoAcademico.findFirst({
-        where: {
-          id_sm_vc: { not: id },
-          estado_activo_sm_vc: false,
-        },
-        orderBy: { fecha_inicio_sm_vc: 'desc' },
-      });
+    // Buscar el período más reciente para activarlo como sucesor
+    const periodoSucesor_sm_vc = await this.prisma.periodoAcademico.findFirst({
+      where: {
+        id_sm_vc:            { not: id },
+        estado_activo_sm_vc: false,
+      },
+      orderBy: { fecha_inicio_sm_vc: 'desc' },
+    });
 
-      if (periodoMasReciente) {
+    if (periodoSucesor_sm_vc) {
+      try {
         await this.prisma.configuracionSistema.update({
           where: { id_sm_vc: 1 },
-          data: { periodo_actual_sm_vc: periodoMasReciente.nombre_sm_vc },
+          data:  { periodo_actual_sm_vc: periodoSucesor_sm_vc.nombre_sm_vc },
         });
-
-        await this.prisma.periodoAcademico.update({
-          where: { id_sm_vc: periodoMasReciente.id_sm_vc },
-          data: { estado_activo_sm_vc: true },
-        });
+      } catch {
+        console.warn('[PeriodosService] No se pudo actualizar configuracionSistema.');
       }
+
+      await this.prisma.periodoAcademico.update({
+        where: { id_sm_vc: periodoSucesor_sm_vc.id_sm_vc },
+        data:  { estado_activo_sm_vc: true },
+      });
     }
 
     return this.prisma.periodoAcademico.update({
       where: { id_sm_vc: id },
-      data: { estado_activo_sm_vc: false },
+      data:  { estado_activo_sm_vc: false },
     });
   }
 
   async remove_sm_vc(id: number) {
-    const periodo = await this.findOne_sm_vc(id);
+    const periodo_sm_vc = await this.findOne_sm_vc(id);
 
-    if (periodo.estado_activo_sm_vc) {
+    if (periodo_sm_vc.estado_activo_sm_vc) {
       throw new BadRequestException('No se puede eliminar un período académico activo');
     }
 
     await this.prisma.periodoAcademico.delete({
       where: { id_sm_vc: id },
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Método privado: genera el nombre del período a partir de las fechas.
+  // Ejemplo de salida: "Enero 2026 - Julio 2026"
+  // ─────────────────────────────────────────────────────────────────
+  private generarNombrePeriodo_sm_vc(inicio_sm_vc: Date, fin_sm_vc: Date): string {
+    const formatMesAnio_sm_vc = (fecha_sm_vc: Date): string => {
+      const mes_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', {
+        month: 'long',
+        timeZone: 'UTC',
+      });
+      const anio_sm_vc = fecha_sm_vc.getUTCFullYear();
+      // Capitalizar primera letra del mes
+      return `${mes_sm_vc.charAt(0).toUpperCase()}${mes_sm_vc.slice(1)} ${anio_sm_vc}`;
+    };
+
+    return `${formatMesAnio_sm_vc(inicio_sm_vc)} - ${formatMesAnio_sm_vc(fin_sm_vc)}`;
   }
 }

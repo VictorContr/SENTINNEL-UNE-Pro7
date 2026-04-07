@@ -2,27 +2,32 @@ import { Injectable, InternalServerErrorException, BadRequestException } from '@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ConfiguracionSistema } from '@prisma/client';
 import { ActualizarPeriodoDto } from './dto/actualizar-periodo.dto';
+import { PeriodosAcademicosService } from 'src/periodos/periodos.service';
 
 /**
- * Servicio de Administración - Manejo de configuración global del sistema
- * Gestiona el periodo académico actual y otras configuraciones globales
+ * Servicio de Administración - Manejo de configuración global del sistema.
+ * 
+ * Se ha refactorizado para delegar la creación y activación de periodos
+ * al PeriodosAcademicosService, centralizando la lógica de negocio de
+ * periodos históricos y dinámicos.
  */
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly periodosService: PeriodosAcademicosService,
+  ) {}
 
   /**
-   * Obtiene el periodo académico actual desde la configuración del sistema
+   * Obtiene el periodo académico actual desde la configuración del sistema.
    * @returns Promise<ConfiguracionSistema> - Configuración con id_sm_vc = 1
    */
   async obtenerPeriodoActual(): Promise<ConfiguracionSistema> {
     try {
-      // Busca la configuración global (siempre ID 1)
       let config = await this.prisma.configuracionSistema.findUnique({
         where: { id_sm_vc: 1 }
       });
 
-      // Si no existe, la crea con valores por defecto
       if (!config) {
         config = await this.prisma.configuracionSistema.create({
           data: {
@@ -34,35 +39,39 @@ export class AdminService {
 
       return config;
     } catch (error) {
-      throw new InternalServerErrorException('Error al obtener el periodo académico actual');
+      throw new InternalServerErrorException('Error al obtener el periodo académico actual.');
     }
   }
 
   /**
-   * Actualiza el periodo académico actual en la configuración global
-   * @param dto - DTO con el nuevo periodo a establecer
-   * @returns Promise<ConfiguracionSistema> - Configuración actualizada
+   * Actualiza el periodo académico actual creando uno nuevo a partir de fechas.
+   * Delega la lógica de generación de nombre y desactivación masiva al PeriodosAcademicosService.
+   * 
+   * @param dto - DTO con las fechas de inicio y cierre.
+   * @returns Promise<ConfiguracionSistema> - Configuración actualizada.
    */
   async actualizarPeriodo(dto: ActualizarPeriodoDto): Promise<ConfiguracionSistema> {
     try {
-      // Usa upsert para actualizar o crear el registro si no existe
-      const config = await this.prisma.configuracionSistema.upsert({
-        where: { id_sm_vc: 1 },
-        update: {
-          periodo_actual_sm_vc: dto.periodo_actual_sm_vc
-        },
-        create: {
-          id_sm_vc: 1,
-          periodo_actual_sm_vc: dto.periodo_actual_sm_vc
-        }
-      });
+      // Mapeamos el DTO de administración al DTO de creación de periodos
+      // (En este caso, CreatePeriodoDto_sm_vc espera {fecha_inicio_sm_vc, fecha_fin_sm_vc})
+      // NOTA: El frontend envía fecha_cierre_sm_vc, así que lo mapeamos correctamente.
+      const createDto = {
+        fecha_inicio_sm_vc: dto.fecha_inicio_sm_vc,
+        fecha_fin_sm_vc:    dto.fecha_cierre_sm_vc,
+      };
 
-      return config;
+      // Delegamos al servicio especializado para crear y activar el periodo
+      const nuevoPeriodo_sm_vc = await this.periodosService.create_sm_vc(createDto);
+
+      // El PeriodosAcademicosService ya actualiza la ConfiguracionSistema internamente,
+      // pero por seguridad y contrato de este método, devolvemos la configuración final.
+      return await this.obtenerPeriodoActual();
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('Error de duplicidad en la configuración del sistema');
+      if (error instanceof BadRequestException) {
+        throw error;
       }
-      throw new InternalServerErrorException('Error al actualizar el periodo académico');
+      console.error('[AdminService] Error en actualizarPeriodo:', error);
+      throw new InternalServerErrorException('Error al actualizar el periodo académico mediante el servicio especializado.');
     }
   }
 }

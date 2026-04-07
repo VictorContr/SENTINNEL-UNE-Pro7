@@ -1,7 +1,8 @@
 import {
   Controller, Post, Get, Param, Body, UploadedFile,
-  UseInterceptors, UseGuards, Request, ParseIntPipe,
+  UseInterceptors, UseGuards, Request, ParseIntPipe, Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentosService } from './documentos.service';
 import { CrearDocumentoDto } from './dto/crear-documento.dto';
@@ -47,5 +48,24 @@ export class DocumentosController {
     @Param('entregaId', ParseIntPipe) entregaId: number,
   ) {
     return this.documentosService.obtenerDocumentosDeEntrega_sm_vc(entregaId);
+  }
+
+  /**
+   * GET /api/documentos/:documentoId/descargar
+   * Descarga un documento físico.
+   */
+  @Get(':documentoId/descargar')
+  async descargarDocumento(
+    @Param('documentoId', ParseIntPipe) documentoId: number,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { stream, meta } = await this.documentosService.descargarDocumento_sm_vc(documentoId);
+    
+    res.set({
+      'Content-Type': meta.mime,
+      'Content-Disposition': `attachment; filename="${meta.nombre}"`,
+    });
+
+    return stream;
   }
 }

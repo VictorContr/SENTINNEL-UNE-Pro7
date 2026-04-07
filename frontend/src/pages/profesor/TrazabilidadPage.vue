@@ -103,44 +103,50 @@
         </q-step>
       </q-stepper>
 
-      <!-- Panel de Deploy (sólo lectura si ya lo registró) -->
-      <div v-if="deployEstudiante_sm_vc" class="deploy-readonly-panel_sm_vc q-mt-xl">
+      <!-- Panel de Deploy: resumen con botón para ver el detalle completo -->
+      <div class="deploy-summary-panel_sm_vc q-mt-xl">
         <div class="section-title_sm_vc q-mb-md">
           <q-icon name="rocket_launch" size="16px" color="teal-3" />
           <span>Proyecto Final de Deploy</span>
         </div>
-        <div class="deploy-field-grid_sm_vc">
-          <div class="deploy-field-item_sm_vc">
-            <label class="deploy-field-label_sm_vc">URL de Producción</label>
-            <a :href="deployEstudiante_sm_vc.url_produccion_sm_vc"
-              target="_blank" class="deploy-url_sm_vc">
-              <q-icon name="open_in_new" size="13px" />
-              {{ deployEstudiante_sm_vc.url_produccion_sm_vc }}
-            </a>
-          </div>
-          <div class="deploy-field-item_sm_vc">
-            <label class="deploy-field-label_sm_vc">Código Fuente (.zip)</label>
-            <div class="deploy-file-chip_sm_vc">
-              <q-icon name="folder_zip" size="14px" color="teal-3" />
-              <span>{{ deployEstudiante_sm_vc.archivo_codigo_id_sm_vc }}</span>
-              <q-btn flat dense no-caps label="Descargar" color="teal-3" size="xs" />
+
+        <!-- Deploy registrado: muestra URL + botón de detalle -->
+        <div v-if="deployStore_sm_vc.datosDeploy_sm_vc" class="deploy-exists-card_sm_vc">
+          <div class="deploy-exists-info_sm_vc">
+            <q-icon name="check_circle" color="teal-3" size="18px" />
+            <div>
+              <p class="deploy-exists-title_sm_vc">Deploy registrado</p>
+              <a
+                :href="deployStore_sm_vc.datosDeploy_sm_vc.url_produccion_sm_vc"
+                target="_blank"
+                class="deploy-url_sm_vc">
+                <q-icon name="open_in_new" size="12px" />
+                {{ deployStore_sm_vc.datosDeploy_sm_vc.url_produccion_sm_vc }}
+              </a>
+              <!-- Registro de fecha (Uso de formatDate_sm_vc para fix de ESLint) -->
+              <p class="deploy-date_sm_vc">
+                Registrado el {{ formatDate_sm_vc(deployStore_sm_vc.datosDeploy_sm_vc.fecha_deploy_sm_vc) }}
+              </p>
             </div>
           </div>
-          <div class="deploy-field-item_sm_vc">
-            <label class="deploy-field-label_sm_vc">Documentación (.pdf)</label>
-            <div class="deploy-file-chip_sm_vc">
-              <q-icon name="picture_as_pdf" size="14px" color="amber-4" />
-              <span>{{ deployEstudiante_sm_vc.documentacion_tecnica_id_sm_vc }}</span>
-              <q-btn flat dense no-caps label="Ver PDF" color="amber-4" size="xs" />
-            </div>
-          </div>
-          <div class="deploy-field-item_sm_vc">
-            <label class="deploy-field-label_sm_vc">Fecha de Registro</label>
-            <span class="deploy-value_sm_vc">
-              {{ formatDate_sm_vc(deployEstudiante_sm_vc.fecha_registro_sm_vc) }}
-            </span>
-          </div>
+          <q-btn
+            unelevated no-caps
+            color="teal-3" text-color="dark"
+            icon-right="arrow_forward"
+            label="Ver Detalle"
+            size="sm"
+            class="deploy-nav-btn_sm_vc"
+            @click="verDeploy_sm_vc" />
         </div>
+
+        <!-- Sin deploy: estado vacío informativo -->
+        <div v-else-if="!deployStore_sm_vc.loading_sm_vc" class="deploy-empty-card_sm_vc">
+          <q-icon name="pending" color="blue-grey-7" size="20px" />
+          <p>El estudiante aún no ha registrado su deploy final.</p>
+        </div>
+
+        <!-- Cargando -->
+        <q-skeleton v-else type="rect" height="60px" />
       </div>
     </div>
 
@@ -158,6 +164,7 @@
         <DocumentConversacion
           :materia-id="materiaSeleccionada_sm_vc.id_sm_vc"
           :estudiante-id="estudianteId_sm_vc"
+          :es-trazabilidad_sm_vc="true"
           :readonly="materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
           :estado-progreso="materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc" />
       </div>
@@ -172,6 +179,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
 import { useUsersStore } from 'src/stores/usersStore'
+import { useDeployStore } from 'src/stores/deployStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
@@ -180,6 +188,7 @@ const router_sm_vc  = useRouter()
 const store_sm_vc   = usePasantiasStore()
 const progressBar_sm_vc = useProgressBarStore()
 const usersStore_sm_vc = useUsersStore()
+const deployStore_sm_vc = useDeployStore()
 
 /* ── Computed principales ── */
 const estudianteId_sm_vc = computed(() => route_sm_vc.params.id_sm_vc)
@@ -199,9 +208,7 @@ const progresoGlobal_sm_vc = computed(() => {
   return Math.round((suma_sm_vc / items_sm_vc.length) * 100)
 })
 
-const deployEstudiante_sm_vc = computed(() =>
-  store_sm_vc.getDeployEstudiante(estudianteId_sm_vc.value)
-)
+
 
 /* ── Estado local del Stepper ── */
 const stepActivo_sm_vc = ref(null)
@@ -215,7 +222,9 @@ onMounted(async () => {
   if (estudianteId_sm_vc.value) {
     await Promise.all([
       store_sm_vc.fetch_progreso_estudiante_sm_vc(estudianteId_sm_vc.value),
-      usersStore_sm_vc.fetch_usuario_sm_vc(estudianteId_sm_vc.value)
+      usersStore_sm_vc.fetch_usuario_sm_vc(estudianteId_sm_vc.value),
+      // Cargar el estado del deploy del estudiante (accesible para PROFESOR y ADMIN)
+      deployStore_sm_vc.verificarEstadoDeploy_sm_vc(Number(estudianteId_sm_vc.value))
     ])
   }
 })
@@ -263,6 +272,11 @@ const avanzarStep_sm_vc = (idActual_sm_vc) => {
 /* ── Handlers ── */
 const seleccionarMateria_sm_vc = (materia_sm_vc) => {
   materiaSeleccionada_sm_vc.value = materia_sm_vc
+}
+
+// Navegar al DeployPage dedicado del profesor
+const verDeploy_sm_vc = () => {
+  router_sm_vc.push(`/profesor/estudiantes/${estudianteId_sm_vc.value}/deploy`)
 }
 
 /* ── Utils ── */
@@ -352,22 +366,51 @@ const formatDate_sm_vc = (iso_sm_vc) =>
 .step-nav_sm_vc { display: flex; align-items: center; gap: .75rem; padding-top: .875rem; }
 .step-nav-btn_sm_vc { font-size: .7rem !important; font-weight: 700 !important; border-radius: 6px !important; }
 
-/* ── Panel Deploy (Lectura) ── */
-.deploy-readonly-panel_sm_vc {
+/* ── Panel Deploy (Resumen para Profesor) ── */
+.deploy-summary-panel_sm_vc {
   padding: 1.5rem;
   background: rgba(255,255,255,.02);
   border: 1px solid rgba(111,255,233,.08);
   border-radius: 12px;
   max-width: 860px;
 }
-.deploy-field-grid_sm_vc { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
-.deploy-field-item_sm_vc { display: flex; flex-direction: column; gap: .4rem; }
-.deploy-field-label_sm_vc { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sn-texto-apagado); }
-.deploy-url_sm_vc { display: flex; align-items: center; gap: .35rem; font-size: .78rem; color: var(--sn-primario); text-decoration: none; word-break: break-all; }
+.deploy-exists-card_sm_vc {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: rgba(111,255,233,.04);
+  border: 1px solid rgba(111,255,233,.15);
+  border-radius: 10px;
+}
+.deploy-exists-info_sm_vc {
+  display: flex; align-items: flex-start; gap: .75rem;
+}
+.deploy-exists-title_sm_vc {
+  font-size: .78rem; font-weight: 600;
+  color: var(--sn-primario); margin: 0 0 3px;
+}
+.deploy-url_sm_vc {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .72rem; color: var(--sn-acento-sec);
+  text-decoration: none; word-break: break-all;
+}
 .deploy-url_sm_vc:hover { text-decoration: underline; }
-.deploy-file-chip_sm_vc { display: flex; align-items: center; gap: .4rem; padding: .4rem .75rem; background: rgba(255,255,255,.03); border: 1px solid var(--sn-borde); border-radius: 6px; }
-.deploy-file-chip_sm_vc span { font-size: .72rem; color: var(--sn-texto-secundario); flex: 1; }
-.deploy-value_sm_vc { font-size: .78rem; color: var(--sn-texto-secundario); }
+.deploy-date_sm_vc {
+  font-size: .6rem;
+  color: var(--sn-texto-apagado);
+  margin: 4px 0 0;
+  letter-spacing: .02em;
+}
+.deploy-nav-btn_sm_vc { font-size: .7rem !important; border-radius: 6px !important; }
+.deploy-empty-card_sm_vc {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,.02);
+  border: 1px dashed rgba(255,255,255,.07);
+  border-radius: 10px;
+  color: var(--sn-texto-apagado); font-size: .78rem;
+}
+.deploy-empty-card_sm_vc p { margin: 0; }
 
 /* ── Panel de conversación activa ── */
 .materia-activa-panel_sm_vc {
