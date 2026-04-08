@@ -45,7 +45,7 @@ export class BulkUploadController {
   @Post('bulk')
   @Roles_sm_vc(RolUsuario.ADMIN)
   @UseInterceptors(
-    FileInterceptor('file', {
+    FileInterceptor('archivo_bulk_sm_vc', {
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB límite
       },

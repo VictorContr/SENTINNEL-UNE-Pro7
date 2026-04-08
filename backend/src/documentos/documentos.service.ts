@@ -155,9 +155,25 @@ export class DocumentosService {
       tipo_sm_vc:           documento.tipo_sm_vc,
       nombre_archivo_sm_vc: documento.nombre_archivo_sm_vc,
       tamanio_bytes_sm_vc:  documento.tamanio_bytes_sm_vc,
+      tamanio_formateado_sm_vc: DocumentosService.formatearTamanioArchivo_sm_vc(documento.tamanio_bytes_sm_vc),
       mime_type_sm_vc:      documento.mime_type_sm_vc,
       fecha_subida_sm_vc:   documento.fecha_subida_sm_vc,
       mock_sm_vc:           documento.mock_sm_vc,
     };
+  }
+
+  /**
+   * Formatea el tamaño en bytes a una cadena legible (KB, MB).
+   */
+  static formatearTamanioArchivo_sm_vc(bytes?: number): string {
+    if (!bytes) return '0 B';
+    const unidades = ['B', 'KB', 'MB', 'GB'];
+    let index = 0;
+    let size = bytes;
+    while (size >= 1024 && index < unidades.length - 1) {
+      size /= 1024;
+      index++;
+    }
+    return `${size.toFixed(1)} ${unidades[index]}`;
   }
 }

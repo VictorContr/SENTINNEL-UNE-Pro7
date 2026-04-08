@@ -1,11 +1,14 @@
 import {
   Controller, Post, Get, Param, Body,
   UseGuards, Request, ParseIntPipe,
+  UseInterceptors, UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { EvaluacionesService } from './evaluaciones.service';
 import { CrearEvaluacionDto } from './dto/crear-evaluacion.dto';
 import { JwtAuthGuard_sm_vc, RolesGuard_sm_vc, Roles_sm_vc } from 'src/auth/guards';
 import { RolUsuario } from '@prisma/client';
+import { multerDocumentosConfig } from 'src/config/multer.config';
 
 interface RequestWithUser extends Request {
   user: { id_sm_vc: number; rol_sm_vc: RolUsuario };
@@ -24,11 +27,13 @@ export class EvaluacionesController {
    */
   @Post()
   @Roles_sm_vc(RolUsuario.PROFESOR)
+  @UseInterceptors(FileInterceptor('archivo_correccion_sm_vc', multerDocumentosConfig))
   async evaluarEntrega(
     @Body() dto: CrearEvaluacionDto,
     @Request() req: RequestWithUser,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.evaluacionesService.evaluarEntrega_sm_vc(dto, req.user.id_sm_vc);
+    return this.evaluacionesService.evaluarEntrega_sm_vc(dto, req.user.id_sm_vc, file);
   }
 
   /**

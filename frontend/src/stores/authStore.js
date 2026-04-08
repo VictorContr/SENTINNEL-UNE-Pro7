@@ -5,6 +5,7 @@ import {
   login_sm_vc,
   cambiarClaveInicial_sm_vc as cambiarClaveService_sm_vc,
 } from 'src/services/authService'
+import { purgarContextoRequisitos_sm_vc } from 'src/composables/useRequisitoContexto'
 
 /**
  * SENTINNEL – authStore
@@ -154,6 +155,11 @@ export const useAuthStore = defineStore('auth', () => {
     token_sm_vc.value = null
     LocalStorage.remove('sentinnel_session')
     LocalStorage.remove('token_sm_vc')
+
+    // Purga todas las claves de contexto de requisito (prefijo 'requisito_seleccionado_materia_').
+    // Garantiza que no queden rastros en localStorage al cerrar sesión o expirar JWT.
+    purgarContextoRequisitos_sm_vc()
+
     Notify.create({
       message: 'Sesión finalizada correctamente',
       color:   'info',

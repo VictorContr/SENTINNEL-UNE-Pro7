@@ -1,10 +1,16 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EstadoAprobacion } from '@prisma/client';
+import { EstadoAprobacion, TipoDocumento } from '@prisma/client';
+import { ConversacionesService } from '../conversaciones/conversaciones.service';
+import { DocumentosService } from '../documentos/documentos.service';
 
 @Injectable()
 export class PasantiasService_sm_vc {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly conversacionesService: ConversacionesService,
+    private readonly documentosService: DocumentosService,
+  ) {}
 
   async getMaterias_sm_vc() {
     return this.prisma.materia.findMany({
@@ -83,9 +89,19 @@ export class PasantiasService_sm_vc {
   }
 
   /**
-   * Crear una entrega solo si el estudiante tiene permiso
+   * Crear una entrega física con archivo binario y trazabilidad
    */
-  async crearEntrega_sm_vc(usuarioId: number, requisitoId: number) {
+  /**
+   * Crear o actualizar una entrega física con archivo binario y trazabilidad
+   * Implementa lógica de versiones: un requisito puede tener múltiples documentos (historial)
+   * pero solo un registro de Entrega (estado actual).
+   */
+  async crearEntrega_sm_vc(
+    usuarioId: number,
+    requisitoId: number,
+    file: Express.Multer.File,
+    comentario?: string
+  ) {
     const requisito = await this.prisma.requisito.findUnique({
       where: { id_sm_vc: requisitoId },
       include: { materia: true }
@@ -104,23 +120,81 @@ export class PasantiasService_sm_vc {
       throw new NotFoundException('Estudiante no encontrado');
     }
 
-    // Validar que el estudiante pueda avanzar a esta materia
+    // Validar progreso académico
     await this.validarProgresoEstudiante_sm_vc(usuarioId, requisito.materia.id_sm_vc);
 
-    // Crear la entrega
-    return this.prisma.entrega.create({
-      data: {
-        estudiante_id_sm_vc: estudiante.id_sm_vc,
-        requisito_id_sm_vc: requisitoId,
-        estado_sm_vc: EstadoAprobacion.PENDIENTE
+    // ── Validación de Máquina de Estados ──
+    const entregaExistente_sm_vc = await this.prisma.entrega.findUnique({
+      where: {
+        estudiante_id_sm_vc_requisito_id_sm_vc: {
+          estudiante_id_sm_vc: estudiante.id_sm_vc,
+          requisito_id_sm_vc: requisitoId,
+        },
       },
-      include: {
-        estudiante: true,
-        requisito: {
-          include: { materia: true }
-        }
-      }
     });
+
+    if (entregaExistente_sm_vc?.estado_sm_vc === EstadoAprobacion.APROBADO) {
+      throw new BadRequestException('No se pueden modificar requisitos que ya han sido aprobados');
+    }
+
+    const esNuevaVersion_sm_vc = !!entregaExistente_sm_vc;
+
+    // ── Transacción Atómica ──
+    const entrega = await this.prisma.$transaction(async (tx) => {
+      // 1. Upsert de la entrega (Crear si no existe, actualizar estado si existe)
+      const entP_sm_vc = await tx.entrega.upsert({
+        where: {
+          estudiante_id_sm_vc_requisito_id_sm_vc: {
+            estudiante_id_sm_vc: estudiante.id_sm_vc,
+            requisito_id_sm_vc: requisitoId,
+          },
+        },
+        create: {
+          estudiante_id_sm_vc: estudiante.id_sm_vc,
+          requisito_id_sm_vc: requisitoId,
+          estado_sm_vc: EstadoAprobacion.ENTREGADO,
+        },
+        update: {
+          // Si se vuelve a subir, el estado pasa obligatoriamente a ENTREGADO (especialmente si estaba REPROBADO)
+          estado_sm_vc: EstadoAprobacion.ENTREGADO,
+          fecha_actualizacion_sm_vc: new Date(),
+        },
+      });
+
+      // 2. Registrar el nuevo documento físico (Siempre se crea una nueva fila para el historial)
+      await tx.documento.create({
+        data: {
+          entrega_id_sm_vc: entP_sm_vc.id_sm_vc,
+          usuario_subida_id_sm_vc: usuarioId,
+          tipo_sm_vc: TipoDocumento.ENTREGABLE_ESTUDIANTE,
+          nombre_archivo_sm_vc: file.originalname,
+          ruta_archivo_sm_vc: file.path,
+          tamanio_bytes_sm_vc: file.size,
+          mime_type_sm_vc: file.mimetype,
+        }
+      });
+
+      return entP_sm_vc;
+    });
+
+    // ── Trazabilidad en Conversaciones ──
+    const pesoFormateado_sm_vc = DocumentosService.formatearTamanioArchivo_sm_vc(file.size);
+    const prefijoMensaje_sm_vc = esNuevaVersion_sm_vc 
+      ? `Nueva versión del informe subida` 
+      : `Nueva entrega subida`;
+
+    const mensajeBase_sm_vc = `${prefijoMensaje_sm_vc}: **${file.originalname}** (${pesoFormateado_sm_vc}).`;
+    const contenidoFinal_sm_vc = comentario 
+      ? `${mensajeBase_sm_vc}\n\n**Comentario Estudiante:** ${comentario}`
+      : mensajeBase_sm_vc;
+
+    await this.conversacionesService.registrarMensajeManual_sm_vc({
+      estudianteId: estudiante.id_sm_vc,
+      contenido_sm_vc: contenidoFinal_sm_vc,
+      materiaId: requisito.materia.id_sm_vc
+    });
+
+    return entrega;
   }
 
   /**

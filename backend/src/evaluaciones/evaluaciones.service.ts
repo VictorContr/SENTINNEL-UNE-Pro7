@@ -6,15 +6,17 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EstadoAprobacion, RolUsuario, TipoNotificacion } from '@prisma/client';
+import { EstadoAprobacion, RolUsuario, TipoNotificacion, TipoDocumento } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CrearEvaluacionDto } from './dto/crear-evaluacion.dto';
+import { DocumentosService } from '../documentos/documentos.service';
 
 @Injectable()
 export class EvaluacionesService {
   constructor(
     private readonly prisma:            PrismaService,
     private readonly eventEmitter_sm_vc: EventEmitter2,
+    private readonly documentosService: DocumentosService,
   ) {}
 
   // ─────────────────────────────────────────────────────────────────
@@ -24,7 +26,11 @@ export class EvaluacionesService {
   //      dentro de $transaction. Las notificaciones y eventos se
   //      emiten después, fuera de la transacción.
   // ─────────────────────────────────────────────────────────────────
-  async evaluarEntrega_sm_vc(dto: CrearEvaluacionDto, profesorId: number) {
+  async evaluarEntrega_sm_vc(
+    dto: CrearEvaluacionDto,
+    profesorId: number,
+    file?: Express.Multer.File
+  ) {
     try {
       // 1. Cargar la entrega con su contexto completo (fuera de tx: solo lectura)
       const entrega = await this.prisma.entrega.findUnique({
@@ -48,7 +54,7 @@ export class EvaluacionesService {
 
       if (entrega.estado_sm_vc === EstadoAprobacion.APROBADO) {
         throw new ForbiddenException(
-          'Esta entrega ya fue aprobada y no puede ser re-evaluada.',
+          'Esta entrega ya fue aprobada and no puede ser re-evaluada.',
         );
       }
 
@@ -57,9 +63,9 @@ export class EvaluacionesService {
       const materiaNombre  = entrega.requisito.materia.nombre_sm_vc;
       const requisitoNombre = entrega.requisito.nombre_sm_vc;
 
-      // ── FIX: Transacción atómica para las dos escrituras críticas ──
-      // Si el update de entrega falla, el upsert de evaluación se revierte.
+      // ── Transacción atómica ──
       const evaluacion = await this.prisma.$transaction(async (tx_sm_vc) => {
+        // 1. Upsert de evaluación
         const eval_sm_vc = await tx_sm_vc.evaluacion.upsert({
           where:  { entrega_id_sm_vc: dto.entrega_id_sm_vc },
           create: {
@@ -76,22 +82,46 @@ export class EvaluacionesService {
           },
         });
 
+        // 2. Actualizar estado de entrega
         await tx_sm_vc.entrega.update({
           where: { id_sm_vc: dto.entrega_id_sm_vc },
           data:  { estado_sm_vc: dto.decision_sm_vc },
         });
 
+        // 3. Registrar documento de corrección (si existe)
+        if (file) {
+          await tx_sm_vc.documento.create({
+            data: {
+              entrega_id_sm_vc:        dto.entrega_id_sm_vc,
+              usuario_subida_id_sm_vc: profesorId,
+              tipo_sm_vc:              TipoDocumento.CORRECCION_PROFESOR,
+              nombre_archivo_sm_vc:    file.originalname,
+              ruta_archivo_sm_vc:      file.path,
+              tamanio_bytes_sm_vc:     file.size,
+              mime_type_sm_vc:         file.mimetype,
+            }
+          });
+        }
+
         return eval_sm_vc;
       });
 
-      // ── Post-transacción: efectos secundarios (no críticos para la consistencia) ──
+      // ── Post-transacción: Trazabilidad ──
+      let descripcionTrazabilidad_sm_vc = `Requisito "${requisitoNombre}" evaluado como **${dto.decision_sm_vc}**.`;
+      
+      if (file) {
+        const peso_sm_vc = DocumentosService.formatearTamanioArchivo_sm_vc(file.size);
+        descripcionTrazabilidad_sm_vc += ` Adjunto correction: **${file.originalname}** (${peso_sm_vc}).`;
+      }
 
-      // Evento de trazabilidad (incluye materiaId para segmentación)
+      if (dto.observaciones_sm_vc) {
+        descripcionTrazabilidad_sm_vc += `\n\n**Observaciones:** ${dto.observaciones_sm_vc}`;
+      }
+
       this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
         estudianteId:     estudianteId,
         materiaId:        materiaId,
-        descripcion_sm_vc: `Requisito "${requisitoNombre}" evaluado como ${dto.decision_sm_vc}.` +
-          (dto.observaciones_sm_vc ? ` Obs: ${dto.observaciones_sm_vc}` : ''),
+        descripcion_sm_vc: descripcionTrazabilidad_sm_vc,
       });
 
       // Notificación al estudiante
@@ -104,9 +134,8 @@ export class EvaluacionesService {
         dto.observaciones_sm_vc,
       );
 
-      // Verificar si la materia quedó completa (solo si se aprobó)
+      // Verificar desbloqueo de materia
       let materiaDesbloqueada: string | null = null;
-
       if (dto.decision_sm_vc === EstadoAprobacion.APROBADO) {
         materiaDesbloqueada = await this.verificarYDesbloquearMateria_sm_vc(
           estudianteId,
@@ -127,6 +156,7 @@ export class EvaluacionesService {
         error instanceof BadRequestException
       ) throw error;
 
+      console.error('[EvaluacionesService] Error:', error);
       throw new InternalServerErrorException('Error al registrar la evaluación.');
     }
   }

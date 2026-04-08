@@ -131,11 +131,18 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { getRequisitoSeleccionado_sm_vc } from 'src/composables/useRequisitoContexto'
 
 const props = defineProps({
   requisitos: { type: Array, default: () => [] },
-  requisitosAprobadosIniciales: { type: Array, default: () => [] }
+  requisitosAprobadosIniciales: { type: Array, default: () => [] },
+  /**
+   * materiaId: clave de indexación en el localStorage.
+   * Necesario para recuperar el requisito contextual pre-seleccionado
+   * cuando el profesor navega desde la tabla de trazabilidad.
+   */
+  materiaId: { type: [String, Number], default: null }
 })
 
 const emit = defineEmits(['responder', 'guardarRequisitos'])
@@ -165,15 +172,25 @@ watch(mostrarModal_sm_vc, (val_sm_vc) => {
 })
 
 const handleFileProf_sm_vc = (e_sm_vc) => {
-  form_sm_vc.value.archivo_nombre_sm_vc = e_sm_vc.target.files[0]?.name ?? ''
+  const file = e_sm_vc.target.files[0]
+  if (file) {
+    form_sm_vc.value.archivo_raw_sm_vc = file
+    form_sm_vc.value.archivo_nombre_sm_vc = file.name
+  }
 }
 
 const emitirRespuesta_sm_vc = () => {
-  emit('responder', { ...form_sm_vc.value })
+  // Mapeo para el store: se espera archivo_correccion
+  emit('responder', { 
+    ...form_sm_vc.value,
+    archivo_correccion_sm_vc: form_sm_vc.value.archivo_raw_sm_vc
+  })
+  
   form_sm_vc.value = {
     estado_evaluacion_sm_vc: null,
     nota_sm_dec: null,
     archivo_nombre_sm_vc: '',
+    archivo_raw_sm_vc: null,
     comentario_sm_vc: ''
   }
 }
@@ -182,6 +199,38 @@ const emitirRequisitos_sm_vc = () => {
   emit('guardarRequisitos', [...requisitosSeleccionados_sm_vc.value])
   mostrarModal_sm_vc.value = false
 }
+
+/**
+ * FEATURE: Pre-marcado de requisito desde contexto persistido en localStorage.
+ *
+ * Decisión técnica DT-003: el modal NO se abre automáticamente.
+ * Solo pre-marcamos el checkbox del requisito contextual dentro del modal
+ * para que cuando el profesor lo abra encuentre el trabajo pre-listo.
+ *
+ * Validación defensiva: si el ID no matchea ningún requisito en la lista
+ * actual, no ocurre nada (el array queda intacto).
+ */
+onMounted(() => {
+  const idContexto_sm_vc = getRequisitoSeleccionado_sm_vc(props.materiaId)
+  if (idContexto_sm_vc === null) return
+
+  const idStr_sm_vc = String(idContexto_sm_vc)
+  const existe_sm_vc = props.requisitos.some(
+    (r_sm_vc) => String(r_sm_vc.id_sm_vc) === idStr_sm_vc
+  )
+  if (!existe_sm_vc) return
+
+  // Preservamos el tipo original del ID tal como viene del store (number vs string)
+  const requisito_sm_vc = props.requisitos.find(
+    (r_sm_vc) => String(r_sm_vc.id_sm_vc) === idStr_sm_vc
+  )
+  const idOriginal_sm_vc = requisito_sm_vc?.id_sm_vc ?? idContexto_sm_vc
+
+  // Solo añadimos si no está ya en la lista (evita duplicados)
+  if (!requisitosSeleccionados_sm_vc.value.includes(idOriginal_sm_vc)) {
+    requisitosSeleccionados_sm_vc.value = [...requisitosSeleccionados_sm_vc.value, idOriginal_sm_vc]
+  }
+})
 </script>
 
 <style scoped>

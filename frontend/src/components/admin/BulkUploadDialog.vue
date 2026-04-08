@@ -75,6 +75,7 @@
                   v-model="selectedFile"
                   url="/api/users/bulk"
                   method="POST"
+                  field-name="archivo_bulk_sm_vc"
                   label="Seleccionar archivo Excel (.xlsx, .xls)"
                   accept=".xlsx,.xls"
                   :filter="checkFileType"

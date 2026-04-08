@@ -71,6 +71,51 @@ export class ConversacionesService {
     }
   }
 
+  /**
+   * Persiste un mensaje enviado manualmente por el estudiante o profesor.
+   * DT-004: es_sistema_sm_vc = false por definición.
+   */
+  async registrarMensajeManual_sm_vc(payload: {
+    estudianteId:      number;
+    contenido_sm_vc:   string;
+    materiaId?:        number;
+  }) {
+    try {
+      // Resolvemos el ID real del estudiante (por si viene el usuario_id_sm_vc)
+      const estudianteVinculado = await this.prisma_sm_vc.estudiante.findFirst({
+        where: {
+          OR: [
+            { id_sm_vc:          payload.estudianteId },
+            { usuario_id_sm_vc:  payload.estudianteId },
+          ],
+        },
+      });
+
+      if (!estudianteVinculado) {
+        console.error(`[ConversacionesService] Estudiante no encontrado para ID: ${payload.estudianteId}`);
+        return;
+      }
+
+      const conversacion = await this.prisma_sm_vc.conversacion.upsert({
+        where:  { estudiante_id_sm_vc: estudianteVinculado.id_sm_vc },
+        update: {},
+        create: { estudiante_id_sm_vc: estudianteVinculado.id_sm_vc },
+      });
+
+      return await this.prisma_sm_vc.mensaje.create({
+        data: {
+          conversacion_id_sm_vc: conversacion.id_sm_vc,
+          contenido_sm_vc:       payload.contenido_sm_vc,
+          es_sistema_sm_vc:      false, // Mensaje MANUAL
+          materia_id_sm_vc:      payload.materiaId ?? null,
+        },
+      });
+    } catch (error) {
+      console.error('[ConversacionesService] Error en registrarMensajeManual_sm_vc:', error);
+      throw error;
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────
   // ENDPOINTS DE LOGICA DE NEGOCIO
   // ─────────────────────────────────────────────────────────────────

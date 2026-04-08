@@ -1,11 +1,13 @@
 import {
   IsInt, IsNotEmpty, IsEnum, IsOptional, IsString, MaxLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { EstadoAprobacion } from '@prisma/client';
 
 export class CrearEvaluacionDto {
   @IsInt()
   @IsNotEmpty()
+  @Type(() => Number)
   entrega_id_sm_vc: number;
 
   @IsEnum(EstadoAprobacion, {

@@ -35,6 +35,7 @@
         dense outlined color="teal-3"
         label="Periodo" clearable
         class="sntnl-select_sm_vc filter-select_sm_vc"
+        behavior="menu"
         emit-value map-options />
 
       <q-select
@@ -43,6 +44,7 @@
         dense outlined color="teal-3"
         label="Materia Activa" clearable
         class="sntnl-select_sm_vc filter-select_sm_vc"
+        behavior="menu"
         emit-value map-options />
     </div>
 

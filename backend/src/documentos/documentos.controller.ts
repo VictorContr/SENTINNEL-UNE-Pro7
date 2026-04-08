@@ -26,7 +26,7 @@ export class DocumentosController {
    */
   @Post()
   @Roles_sm_vc(RolUsuario.ESTUDIANTE, RolUsuario.PROFESOR)
-  @UseInterceptors(FileInterceptor('archivo', multerDocumentosConfig))
+  @UseInterceptors(FileInterceptor('archivo_sm_vc', multerDocumentosConfig))
   async subirDocumento(
     @Body() dto: CrearDocumentoDto,
     @UploadedFile() file: Express.Multer.File,
