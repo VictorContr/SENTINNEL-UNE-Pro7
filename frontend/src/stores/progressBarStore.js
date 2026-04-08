@@ -5,12 +5,32 @@
 // ══════════════════════════════════════════════════════════════════
 
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { Notify } from 'quasar'
 import { usePasantiasStore } from './pasantiasStore'
+import { getMisEstudiantes_sm_vc } from 'src/services/estudiantesService'
 
 export const useProgressBarStore = defineStore('progressBar', () => {
   const pasantiasStore_sm_vc = usePasantiasStore()
   const loading_sm_vc = ref(false)
+  const estudiantesAsignados_sm_vc = ref([])
+
+  const fetchEstudiantesProfesor_sm_vc = async () => {
+    loading_sm_vc.value = true
+    try {
+      const resp_sm_vc = await getMisEstudiantes_sm_vc()
+      estudiantesAsignados_sm_vc.value = resp_sm_vc
+    } catch (error) {
+      console.error('[progressBarStore] fetchEstudiantesProfesor_sm_vc error:', error)
+      Notify.create({
+        color: 'negative',
+        icon: 'error',
+        message: 'Error al cargar los estudiantes asignados.'
+      })
+    } finally {
+      loading_sm_vc.value = false
+    }
+  }
 
   const FASES_META_sm_vc = {
     'MAT-001': {
@@ -58,17 +78,25 @@ export const useProgressBarStore = defineStore('progressBar', () => {
     }))
   }
 
-  const getProgresoEstudiantesProfesor = (profesorId_sm_vc) => {
-    if (!profesorId_sm_vc) return []
-    return pasantiasStore_sm_vc.getEstudiantesDelProfesor(profesorId_sm_vc).map((est_sm_vc) => ({
-      id: est_sm_vc.id_sm_vc,
-      nombre: est_sm_vc.nombre_sm_vc,
-      cohorte: est_sm_vc.cohorte_sm_vc,
-      empresa: est_sm_vc.empresa_sm_vc,
-      estado_actual: est_sm_vc.estado_actual_sm_vc,
-      materias: getProgresoSimplificado(est_sm_vc.id_sm_vc)
-    }))
-  }
+  const progresoEstudiantesProfesor_sm_vc = computed(() => {
+    return estudiantesAsignados_sm_vc.value.map((est_sm_vc) => {
+      return {
+        id: est_sm_vc.id_sm_vc,
+        nombre: `${est_sm_vc.nombre_sm_vc || ''} ${est_sm_vc.apellido_sm_vc || ''}`.trim(),
+        cohorte: est_sm_vc.periodo_sm_vc || 'N/A',
+        empresa: est_sm_vc.empresa_sm_vc,
+        estado_actual: est_sm_vc.materias_sm_vc?.find(m => m.materia_id_sm_vc === est_sm_vc.materia_activa_id_sm_vc)?.estado_sm_vc || 'PENDIENTE',
+        materias: (est_sm_vc.materias_sm_vc || []).map((mat_sm_vc) => ({
+          materia_id: mat_sm_vc.materia_id_sm_vc,
+          materia_nombre: mat_sm_vc.nombre_sm_vc,
+          estado: mat_sm_vc.estado_sm_vc,
+          progreso: mat_sm_vc.progreso_decimal_sm_vc || 0,
+          progreso_porcentaje: Math.round((mat_sm_vc.progreso_decimal_sm_vc || 0) * 100),
+          bloqueada: mat_sm_vc.bloqueada_sm_vc
+        }))
+      }
+    })
+  })
 
   const getProgresoGeneral = (estudianteId_sm_vc) => {
     const materias_sm_vc = getProgresoSimplificado(estudianteId_sm_vc)
@@ -106,8 +134,10 @@ export const useProgressBarStore = defineStore('progressBar', () => {
 
   return {
     loading_sm_vc,
+    estudiantesAsignados_sm_vc,
+    fetchEstudiantesProfesor_sm_vc,
+    progresoEstudiantesProfesor_sm_vc,
     getProgresoSimplificado,
-    getProgresoEstudiantesProfesor,
     getProgresoGeneral,
     getEstadoColor,
     actualizarProgreso,

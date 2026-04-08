@@ -4,9 +4,9 @@
      y delega a componentes Dumb (ConvMessages o ConvTimeline).
 
      Modo Chat (esTrazabilidad_sm_vc = false):
-       → DocumentCards + Formularios de acción (Estudiante/Profesor)
+       → Burbujas de chat + Formularios de acción (Estudiante/Profesor)
      Modo Trazabilidad (esTrazabilidad_sm_vc = true):
-       → Timeline cronológico interactivo con cards de documento embebidas
+       → Misma vista de chat (burbujas) en modo solo lectura sin inputs
 
      ESTRATEGIA DE RESOLUCIÓN DE IDENTIDAD (Directiva del 2026-04-07):
      ─────────────────────────────────────────────────────────────────
@@ -49,43 +49,41 @@
         :estado-progreso="estadoProgreso"
         :total-mensajes="mensajesOrdenados_sm_vc.length" />
 
-      <!-- ══ MODO TRAZABILIDAD: Timeline Cronológico ══ -->
-      <ConvTimeline
-        v-if="esTrazabilidad_sm_vc"
-        :eventos="mensajesOrdenados_sm_vc"
-        :cargando="conversacionStore_sm_vc.cargando_sm_vc" />
+      <!-- ══ MODO CONVERSACIÓN (Unificado para Trazabilidad y Chat) ══ -->
+      <ConvMessages
+        :mensajes="mensajesOrdenados_sm_vc"
+        :requisitos="requisitos_sm_vc"
+        :readonly="readonly || esTrazabilidad_sm_vc" />
 
-      <!-- ══ MODO CHAT / DOCUMENTAL: Burbuja de mensajes ══ -->
-      <template v-else>
-        <ConvMessages
-          :mensajes="mensajesOrdenados_sm_vc"
+      <!-- Panel de acción según rol (solo si es conversacion interactiva) -->
+      <template v-if="!readonly && !esTrazabilidad_sm_vc">
+        <ConvFormEstudiante
+          v-if="userRol_sm_vc === 'ESTUDIANTE'"
           :requisitos="requisitos_sm_vc"
-          :readonly="readonly" />
+          :materia-id="props.materiaId"
+          @enviar="handleEnviarInforme_sm_vc" />
 
-        <!-- Panel de acción según rol (solo si no es readonly) -->
-        <template v-if="!readonly">
-          <ConvFormEstudiante
-            v-if="userRol_sm_vc === 'ESTUDIANTE'"
-            :requisitos="requisitos_sm_vc"
-            :materia-id="props.materiaId"
-            @enviar="handleEnviarInforme_sm_vc" />
-
-          <!-- PROF y ADMIN comparten vista de acción: pueden responder y aprobar -->
-          <ConvFormProfesor
-            v-if="userRol_sm_vc === 'PROFESOR' || userRol_sm_vc === 'ADMINISTRADOR' || userRol_sm_vc === 'ADMIN'"
-            :requisitos="requisitos_sm_vc"
-            :materia-id="props.materiaId"
-            :requisitos-aprobados-iniciales="requisitosAprobadosIniciales_sm_vc"
-            @responder="handleResponderCorreccion_sm_vc"
-            @guardar-requisitos="handleGuardarRequisitos_sm_vc" />
-        </template>
-
-        <!-- Banner de solo lectura -->
-        <div v-if="readonly" class="readonly-banner_sm_vc">
-          <q-icon name="lock" size="14px" color="grey-5" />
-          <span>Historial de solo lectura — Materia aprobada.</span>
-        </div>
+        <!-- PROF y ADMIN comparten vista de acción: pueden responder y aprobar -->
+        <ConvFormProfesor
+          v-if="userRol_sm_vc === 'PROFESOR' || userRol_sm_vc === 'ADMINISTRADOR' || userRol_sm_vc === 'ADMIN'"
+          :requisitos="requisitos_sm_vc"
+          :materia-id="props.materiaId"
+          :requisitos-aprobados-iniciales="requisitosAprobadosIniciales_sm_vc"
+          @responder="handleResponderCorreccion_sm_vc"
+          @guardar-requisitos="handleGuardarRequisitos_sm_vc" />
       </template>
+
+      <!-- Banner de solo lectura -->
+      <div v-else-if="readonly" class="readonly-banner_sm_vc">
+        <q-icon name="lock" size="14px" color="grey-5" />
+        <span>Historial de solo lectura — Materia aprobada.</span>
+      </div>
+
+      <!-- Banner de trazabilidad -->
+      <div v-else-if="esTrazabilidad_sm_vc" class="readonly-banner_sm_vc">
+        <q-icon name="history" size="14px" color="grey-5" />
+        <span>Modo Trazabilidad — Vista de solo lectura.</span>
+      </div>
 
     </template>
   </div>
@@ -100,7 +98,6 @@ import { useConversacionStore_sm_vc } from 'src/stores/conversacionStore'
 /* Componentes Atómicos */
 import ConvHeader from './conv/ConvHeader.vue'
 import ConvMessages from './conv/ConvMessages.vue'
-import ConvTimeline from './conv/ConvTimeline.vue'
 import ConvFormEstudiante from './conv/ConvFormEstudiante.vue'
 import ConvFormProfesor from './conv/ConvFormProfesor.vue'
 
@@ -111,8 +108,8 @@ const props = defineProps({
   readonly:            { type: Boolean, default: false },
   estadoProgreso:      { type: String, default: null },
   /**
-   * esTrazabilidad_sm_vc: true  → renderiza ConvTimeline (log cronológico)
-   *                        false → renderiza ConvMessages (chat documental)
+   * esTrazabilidad_sm_vc: true  → renderiza ConvMessages como Log en solo-lectura
+   *                        false → renderiza ConvMessages + Inputs activos
    */
   esTrazabilidad_sm_vc: { type: Boolean, default: false }
 })

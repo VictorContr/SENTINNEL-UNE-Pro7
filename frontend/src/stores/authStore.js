@@ -150,21 +150,54 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const logout_sm_vc = () => {
+  const verificarExpiracion_sm_vc = () => {
+    if (!token_sm_vc.value) return false
+
+    try {
+      // Usamos atob para decodificar la segunda parte (payload) del JWT
+      const payloadBase64_sm_vc = token_sm_vc.value.split('.')[1]
+      const payload_sm_vc = JSON.parse(atob(payloadBase64_sm_vc))
+      
+      // Multiplicamos por 1000 porque exp viene en segundos; Date.now() es ms
+      const tiempoExpiracion_sm_vc = payload_sm_vc.exp * 1000
+
+      if (Date.now() >= tiempoExpiracion_sm_vc) {
+        return true
+      }
+      return false
+    } catch (e_sm_vc) {
+      console.error('Error al decodificar el token:', e_sm_vc)
+      // Si el token es inválido o no se puede decodificar, lo consideramos expirado por seguridad
+      return true
+    }
+  }
+
+  const logout_sm_vc = (motivo_sm_vc = 'manual') => {
     user_sm_vc.value  = null
     token_sm_vc.value = null
-    LocalStorage.remove('sentinnel_session')
-    LocalStorage.remove('token_sm_vc')
-
-    // Purga todas las claves de contexto de requisito (prefijo 'requisito_seleccionado_materia_').
-    // Garantiza que no queden rastros en localStorage al cerrar sesión o expirar JWT.
+    
+    // Purga TODA la información del localStorage (sesión, tokens previos, caché de materias, etc.)
+    LocalStorage.clear()
+    
+    // Purga todas las claves de contexto de requisito de forma explícita por seguridad (en caso de que localStorage.clear falle en algun SSR)
     purgarContextoRequisitos_sm_vc()
 
-    Notify.create({
-      message: 'Sesión finalizada correctamente',
-      color:   'info',
-      icon:    'info',
-    })
+    if (motivo_sm_vc === 'expirado') {
+      Notify.create({
+        type:     'negative',
+        message:  'Su sesión ha expirado por seguridad.',
+        caption:  'Por favor, inicie sesión nuevamente.',
+        icon:     'lock_clock',
+        position: 'top',
+        timeout:  4500,
+      })
+    } else {
+      Notify.create({
+        message: 'Sesión finalizada correctamente',
+        color:   'info',
+        icon:    'info',
+      })
+    }
   }
 
   return {
@@ -190,5 +223,6 @@ export const useAuthStore = defineStore('auth', () => {
     login_sm_vc:                action_login_sm_vc,
     logout_sm_vc,
     cambiar_clave_inicial_sm_vc,
+    verificarExpiracion_sm_vc,
   }
 })

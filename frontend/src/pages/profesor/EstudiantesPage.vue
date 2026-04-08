@@ -80,23 +80,31 @@
             color="teal-3" size="sm" class="card-arrow_sm_vc" />
         </q-card-section>
 
-        <!-- Barras de progreso por materia -->
+        <!-- Barras de progreso por materia (Muestra el ciclo completo) -->
         <q-card-section class="card-progress_sm_vc">
           <div
             v-for="mat in est.materias"
             :key="mat.materia_id"
-            class="progress-bar-wrap_sm_vc">
+            class="progress-bar-wrap_sm_vc"
+            :class="{ 'materia-bloqueada_sm_vc': mat.bloqueada }">
             <div class="progress-bar-label_sm_vc">
               <span>{{ mat.materia_nombre }}</span>
-              <span :class="`prog-status--${mat.estado.toLowerCase()}_sm_vc`">
+              <span 
+                v-if="!mat.bloqueada" 
+                :class="`prog-status--${mat.estado.toLowerCase()}_sm_vc`">
                 {{ mat.progreso_porcentaje }}%
+              </span>
+              <span v-else class="text-grey-7">
+                <q-icon name="lock" size="10px" />
+                Bloqueada
               </span>
             </div>
             <q-linear-progress
               :value="mat.progreso"
-              :color="colorEstado_sm_vc(mat.estado)"
+              :color="mat.bloqueada ? 'grey-8' : colorEstado_sm_vc(mat.estado)"
               track-color="blue-grey-10"
-              rounded size="4px" />
+              rounded size="3px"
+              :style="mat.bloqueada ? 'opacity: 0.3' : ''" />
           </div>
         </q-card-section>
       </q-card>
@@ -111,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/authStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
@@ -139,10 +147,13 @@ const materiasOpc_sm_vc = [
 ]
 
 /* ── Estudiantes filtrados (toda la lógica en computed) ── */
+onMounted(() => {
+  progressBarStore_sm_vc.fetchEstudiantesProfesor_sm_vc()
+})
+
+/* ── Estudiantes filtrados (toda la lógica en computed) ── */
 const estudiantesFiltrados_sm_vc = computed(() => {
-  const todos_sm_vc = progressBarStore_sm_vc.getProgresoEstudiantesProfesor(
-    auth_sm_vc.user?.id_sm_vc
-  )
+  const todos_sm_vc = progressBarStore_sm_vc.progresoEstudiantesProfesor_sm_vc || []
   const q_sm_vc = busqueda_sm_vc.value.toLowerCase()
 
   return todos_sm_vc.filter((e) => {
@@ -195,9 +206,10 @@ const verTrazabilidad_sm_vc = (est_sm_vc) =>
 .status--pendiente_sm_vc { color: var(--sn-texto-secundario) !important; }
 .status--reprobado_sm_vc { color: var(--sn-error-claro) !important; }
 .card-arrow_sm_vc { opacity: .5; }
-.card-progress_sm_vc { padding: 0 1rem .875rem !important; display: flex; flex-direction: column; gap: .5rem; border-top: 1px solid var(--sn-borde); }
-.progress-bar-wrap_sm_vc { display: flex; flex-direction: column; gap: 3px; }
-.progress-bar-label_sm_vc { display: flex; justify-content: space-between; font-size: .6rem; color: var(--sn-texto-terciario); font-family: var(--sn-font-mono); }
+.card-progress_sm_vc { padding: 0.75rem 1rem .875rem !important; display: flex; flex-direction: column; gap: .6rem; border-top: 1px solid var(--sn-borde); }
+.progress-bar-wrap_sm_vc { display: flex; flex-direction: column; gap: 2px; }
+.progress-bar-label_sm_vc { display: flex; justify-content: space-between; font-size: .58rem; color: var(--sn-texto-terciario); font-family: var(--sn-font-mono); }
+.materia-bloqueada_sm_vc { opacity: 0.55; filter: grayscale(0.8); }
 .prog-status--aprobado_sm_vc { color: var(--sn-primario); }
 .prog-status--entregado_sm_vc { color: var(--sn-estudiante); }
 .prog-status--pendiente_sm_vc { color: var(--sn-texto-secundario); }
