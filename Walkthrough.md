@@ -102,3 +102,20 @@ Backend y Frontend en línea con el flujo de datos correcto.
 - Implementado el diseño de "Barras de Ciclo Completo".
 - Aplicada jerarquía visual mediante **gris desaturado (opacity 0.6 + grayscale)** y etiquetas de "Bloqueada" con icono de candado para materias futuras.
 - Compactación del diseño (reducción de GAP y tamaño de barras) para mantener la legibilidad con 4 indicadores por tarjeta.
+
+---
+
+## 🛠️ Acciones Realizadas (Módulo Profesor: Motor de Evaluación)
+
+### 1. Persistencia — Esquema de Notas Académicas (`prisma/schema.prisma`)
+- Modificado el modelo `Evaluacion` para incluir el campo `nota_sm_dec` del tipo Decimal (5,2).
+- Sincronización exitosa con la base de datos PostgreSQL mediante `npx prisma db push`.
+
+### 2. Backend — Lógica de Aprobación Masiva y Granular (`pasantias.service.ts`)
+- Implementado el endpoint `evaluarRequisitosBulk_sm_vc` que permite aprobar múltiples requisitos de forma atómica.
+- El sistema detecta automáticamente si se está aprobando la materia completa y genera un **Mensaje de Trazabilidad Consolidado** con la Nota Global y el comentario del acta.
+
+### 3. Frontend — Store y Formulario Avanzado (`ConvFormProfesor.vue`)
+- **Aprobar Toda la Materia:** Implementado botón destacado que dispara un modal de confirmación obligatorio para el ingreso de la **Nota Global (0-20)**.
+- **Evaluación Granular:** Refinado el modal de requisitos con soporte para pre-marcado de ítems ya aprobados en sesiones anteriores.
+- **Sincronización:** Actualizado `pasantiasStore.js` para consumir los nuevos endpoints y refrescar el progreso académico instantáneamente tras cada evaluación.

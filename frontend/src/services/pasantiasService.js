@@ -32,9 +32,18 @@ export const crearEntrega_sm_vc = async (formData_sm_vc) => {
  * @param {FormData} formData_sm_vc
  */
 export const evaluarEntrega_sm_vc = async (formData_sm_vc) => {
-  const respuesta_sm_vc = await api.post('/evaluaciones', formData_sm_vc, {
+  const respuesta_sm_vc = await api.post('/pasantias/evaluar-entrega', formData_sm_vc, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
+  return respuesta_sm_vc.data
+}
+
+/**
+ * Aprobación masiva o granular de requisitos (Profesor)
+ * @param {Object} payload_sm_vc - { estudiante_id, materia_id, requisitos_ids, nota_global, comentario }
+ */
+export const aprobarRequisitosBulk_sm_vc = async (payload_sm_vc) => {
+  const respuesta_sm_vc = await api.post('/pasantias/aprobar-requisitos-bulk', payload_sm_vc)
   return respuesta_sm_vc.data
 }
 

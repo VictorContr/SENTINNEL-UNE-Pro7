@@ -59,4 +59,51 @@ export class PasantiasController_sm_vc {
     const estudianteId = req.user.id_sm_vc;
     return this.pasantiasService.getProgresoEstudiante_sm_vc(estudianteId);
   }
+
+  @Post('evaluar-entrega')
+  @Roles_sm_vc('PROFESOR', 'ADMIN')
+  @UseInterceptors(FileInterceptor('archivo_correccion_sm_vc', multerDocumentosConfig))
+  async evaluarEntrega_sm_vc(
+    @Request() req: RequestWithUser,
+    @Body() body: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const profesorId = req.user.id_sm_vc;
+    const entregaId = parseInt(body.entrega_id_sm_vc);
+    const decision = body.decision_sm_vc;
+    const nota = body.nota_sm_dec ? parseFloat(body.nota_sm_dec) : undefined;
+    const observaciones = body.observaciones_sm_vc;
+
+    return this.pasantiasService.evaluarEntrega_sm_vc(
+      profesorId,
+      entregaId,
+      decision,
+      nota,
+      observaciones,
+      file,
+    );
+  }
+
+  @Post('aprobar-requisitos-bulk')
+  @Roles_sm_vc('PROFESOR', 'ADMIN')
+  async evaluarRequisitosBulk_sm_vc(
+    @Request() req: RequestWithUser,
+    @Body() body: {
+      estudiante_id_sm_vc: number;
+      materia_id_sm_vc: number;
+      requisitos_ids: number[];
+      nota_global_sm_dec?: number;
+      comentario_sm_vc?: string;
+    },
+  ) {
+    const profesorId = req.user.id_sm_vc;
+    return this.pasantiasService.evaluarRequisitosBulk_sm_vc(
+      profesorId,
+      body.estudiante_id_sm_vc,
+      body.materia_id_sm_vc,
+      body.requisitos_ids,
+      body.nota_global_sm_dec,
+      body.comentario_sm_vc,
+    );
+  }
 }

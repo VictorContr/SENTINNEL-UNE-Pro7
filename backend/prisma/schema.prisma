@@ -131,6 +131,7 @@ model Evaluacion {
   entrega_id_sm_vc       Int              @unique
   profesor_id_sm_vc      Int
   decision_sm_vc         EstadoAprobacion
+  nota_sm_dec            Decimal?         @db.Decimal(5, 2)
   observaciones_sm_vc    String?
   fecha_evaluacion_sm_vc DateTime         @default(now())
   entrega                Entrega          @relation(fields: [entrega_id_sm_vc], references: [id_sm_vc])

@@ -242,11 +242,13 @@ const handleResponderCorreccion_sm_vc = (payload_sm_vc) => {
   emit('mensajeEnviado', msg_sm_vc)
 }
 
-const handleGuardarRequisitos_sm_vc = (ids_sm_vc) => {
+const handleGuardarRequisitos_sm_vc = (payload_sm_vc) => {
   const msg_sm_vc = pasantiasStore_sm_vc.aprobarRequisitosGranular({
     estudiante_id_sm_vc: idEstudianteFinal_sm_vc.value,
     materia_id_sm_vc: props.materiaId,
-    requisitos_seleccionados_ids: ids_sm_vc
+    requisitos_seleccionados_ids: payload_sm_vc.ids,
+    nota_global_sm_dec: payload_sm_vc.nota_global,
+    comentario_sm_vc: payload_sm_vc.comentario
   })
   if (msg_sm_vc) emit('mensajeEnviado', msg_sm_vc)
 }

@@ -219,19 +219,17 @@ export const usePasantiasStore = defineStore('pasantias', () => {
   }
 
   /**
-   * Registra la evaluación del profesor.
-   * @param {Object} payload_sm_vc - { entrega_id_sm_vc, decision_sm_vc, observaciones_sm_vc, archivo_correccion }
+   * Registra la evaluación del profesor para una entrega/mensaje específico.
+   * DT-006: Maneja FormData para permitir archivos de corrección.
    */
   const responderCorreccion = async (payload_sm_vc) => {
     cargando_sm_vc.value = true
     try {
       const formData = new FormData()
       formData.append('entrega_id_sm_vc',    payload_sm_vc.entrega_id_sm_vc)
-      formData.append('decision_sm_vc',      payload_sm_vc.decision_sm_vc)
-      
-      if (payload_sm_vc.observaciones_sm_vc) {
-        formData.append('observaciones_sm_vc', payload_sm_vc.observaciones_sm_vc)
-      }
+      formData.append('decision_sm_vc',      payload_sm_vc.estado_evaluacion_sm_vc)
+      formData.append('nota_sm_dec',         payload_sm_vc.nota_sm_dec || '')
+      formData.append('observaciones_sm_vc', payload_sm_vc.comentario_sm_vc || '')
       
       if (payload_sm_vc.archivo_correccion_sm_vc) {
         formData.append('archivo_correccion_sm_vc', payload_sm_vc.archivo_correccion_sm_vc)
@@ -246,12 +244,17 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         icon: 'how_to_reg'
       })
 
+      // Refrescamos progreso del estudiante
+      if (payload_sm_vc.estudiante_id_sm_vc) {
+        await fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudiante_id_sm_vc)
+      }
+
       return resp_sm_vc
     } catch (err_sm_vc) {
+      console.error('[pasantiasStore] Error evaluando:', err_sm_vc)
       Notify.create({
-        message: err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al evaluar entrega.',
-        color: 'negative',
-        icon: 'error'
+        message: err_sm_vc.response?.data?.message || 'Error al evaluar entrega.',
+        color: 'negative'
       })
       return null
     } finally {
@@ -259,8 +262,44 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     }
   }
 
-  // Stubs para acciones del Profesor (pendientes de conectar al backend)
-  const aprobarRequisitosGranular  = () => {}
+  /**
+   * Acción de aprobación por lote (granular o materia completa).
+   * DT-007: Si se pasan todos los IDs de la materia, el backend lo trata como aprobación total.
+   */
+  const aprobarRequisitosGranular = async (payload_sm_vc) => {
+    cargando_sm_vc.value = true
+    try {
+      const { aprobarRequisitosBulk_sm_vc } = await import('src/services/pasantiasService')
+      
+      const res_sm_vc = await aprobarRequisitosBulk_sm_vc({
+        estudiante_id_sm_vc: payload_sm_vc.estudiante_id_sm_vc,
+        materia_id_sm_vc:    payload_sm_vc.materia_id_sm_vc,
+        requisitos_ids:      payload_sm_vc.requisitos_seleccionados_ids,
+        nota_global_sm_dec:  payload_sm_vc.nota_global_sm_dec,
+        comentario_sm_vc:    payload_sm_vc.comentario_sm_vc
+      })
+
+      Notify.create({
+        message: `Se han aprobado ${payload_sm_vc.requisitos_seleccionados_ids.length} requisitos exitosamente.`,
+        color: 'positive',
+        icon: 'done_all'
+      })
+
+      // Refrescamos progreso para actualizar la UI del profesor
+      await fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudiante_id_sm_vc)
+      
+      return res_sm_vc
+    } catch (err_sm_vc) {
+      console.error('[pasantiasStore] Error en aprobación masiva:', err_sm_vc)
+      Notify.create({
+        message: err_sm_vc.response?.data?.message || 'Error en la aprobación masiva.',
+        color: 'negative'
+      })
+      return null
+    } finally {
+      cargando_sm_vc.value = false
+    }
+  }
   const registrarDeploy            = () => {}
   const procesarCambioPeriodo_sm_vc = () => {}
 
