@@ -1,13 +1,23 @@
 import {
-  Controller, Post, UseInterceptors,
-  UploadedFile, BadRequestException,
-  ParseIntPipe, Body, Res, UseGuards
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+  ParseIntPipe,
+  Body,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService_sm_vc } from './users.service';
-import { JwtAuthGuard_sm_vc, RolesGuard_sm_vc, Roles_sm_vc } from '../auth/guards';
+import {
+  JwtAuthGuard_sm_vc,
+  RolesGuard_sm_vc,
+  Roles_sm_vc,
+} from '../auth/guards';
 import { RolUsuario } from '@prisma/client';
-import * as xlsx from 'xlsx';
+import * as ExcelJS from 'exceljs';
 
 interface RequestWithUser {
   user: { id_sm_vc: number; rol_sm_vc: RolUsuario };
@@ -52,16 +62,16 @@ export class BulkUploadController {
       fileFilter: (req, file, callback) => {
         // Solo permitir archivos Excel
         if (!file.originalname.match(/\.(xlsx|xls)$/)) {
-          return callback(new Error('Solo se permiten archivos Excel (.xlsx, .xls)'), false);
+          return callback(
+            new Error('Solo se permiten archivos Excel (.xlsx, .xls)'),
+            false,
+          );
         }
         callback(null, true);
       },
     }),
   )
-  async bulkUpload(
-    @UploadedFile() file: MulterFile,
-    @Body() body: any,
-  ) {
+  async bulkUpload(@UploadedFile() file: MulterFile, @Body() body: any) {
     if (!file) {
       throw new BadRequestException('Se requiere un archivo Excel');
     }
@@ -69,15 +79,24 @@ export class BulkUploadController {
     try {
       // Validar tamaño del archivo
       if (file.size > 5 * 1024 * 1024) {
-        throw new BadRequestException('El archivo excede el tamaño máximo de 5MB');
+        throw new BadRequestException(
+          'El archivo excede el tamaño máximo de 5MB',
+        );
       }
 
       // Procesar el buffer del archivo
-      const workbook = xlsx.read(file.buffer, { type: 'buffer' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(Buffer.from(file.buffer) as any);
+      const worksheet = workbook.getWorksheet(1);
 
-      const resultado = await this.usersService.processBulkUpload_sm_vc(jsonData);
+      // Convertir a array de arrays (igual que xlsx con header: 1)
+      const jsonData: any[][] = [];
+      worksheet?.eachRow((row) => {
+        jsonData.push(row.values as any[]);
+      });
+
+      const resultado =
+        await this.usersService.processBulkUpload_sm_vc(jsonData);
 
       return {
         message: 'Procesamiento completado',
@@ -98,32 +117,41 @@ export class BulkUploadController {
     // Generar plantilla Excel para carga masiva
     const templateData = [
       {
-        'Nombre': 'Juan',
-        'Apellido': 'Pérez',
-        'Cédula': '12345678',
-        'Correo': 'juan.perez@ejemplo.com',
-        'Teléfono': '04141234567',
-        'Rol': 'ESTUDIANTE',
+        Nombre: 'Juan',
+        Apellido: 'Pérez',
+        Cédula: '12345678',
+        Correo: 'juan.perez@ejemplo.com',
+        Teléfono: '04141234567',
+        Rol: 'ESTUDIANTE',
       },
       {
-        'Nombre': 'María',
-        'Apellido': 'González',
-        'Cédula': '87654321',
-        'Correo': 'maria.gonzalez@ejemplo.com',
-        'Teléfono': '04142345678',
-        'Rol': 'PROFESOR',
+        Nombre: 'María',
+        Apellido: 'González',
+        Cédula: '87654321',
+        Correo: 'maria.gonzalez@ejemplo.com',
+        Teléfono: '04142345678',
+        Rol: 'PROFESOR',
       },
     ];
 
-    const worksheet = xlsx.utils.json_to_sheet(templateData);
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, 'Plantilla Usuarios');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Plantilla Usuarios');
 
-    const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    // Agregar encabezados
+    worksheet.columns = Object.keys(templateData[0]).map((key) => ({
+      header: key,
+      key,
+    }));
+
+    // Agregar datos
+    templateData.forEach((row) => worksheet.addRow(row));
+
+    const excelBuffer = Buffer.from(await workbook.xlsx.writeBuffer());
 
     return {
       headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename=plantilla_usuarios.xlsx',
         'Content-Length': excelBuffer.length.toString(),
       },
