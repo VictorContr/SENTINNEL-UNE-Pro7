@@ -44,6 +44,20 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+<<<<<<< HEAD
+=======
+## 💾 Base de Datos y Seeds
+
+Para inicializar la base de datos con los datos maestros de la UNE (Materias, Requisitos, Usuarios de prueba):
+
+```bash
+# Sincronizar esquema y ejecutar el seed
+$ npx prisma db seed
+```
+
+Esto ejecutará `prisma/seed.ts` y poblará el sistema con los estados de avance académico necesarios para las pruebas.
+
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
 ## Run tests
 
 ```bash

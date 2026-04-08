@@ -77,10 +77,16 @@ export class EstudiantesService {
               documentacionTecnica: true,
             },
           },
+<<<<<<< HEAD
           historial: {
             orderBy: { fecha_sm_vc: 'desc' },
             take: 20,
           },
+=======
+          conversacion: {
+            include: { mensajes: { take: 5, orderBy: { fecha_creacion_sm_vc: 'desc' } } }
+          }
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
         },
       });
 
@@ -237,7 +243,14 @@ export class EstudiantesService {
       materia_activa:          e.materiaActiva,
       entregas:                e.entregas,
       proyecto_deploy:         e.proyectoDeploy,
+<<<<<<< HEAD
       historial:               e.historial,
+=======
+      conversacion_sm_vc: {
+        id_sm_vc: e.conversacion?.id_sm_vc,
+        ultimos_mensajes_sm_vc: e.conversacion?.mensajes ?? [],
+      },
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
     };
   }
 }

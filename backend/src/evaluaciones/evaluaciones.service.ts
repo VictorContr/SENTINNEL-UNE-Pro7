@@ -7,11 +7,22 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EstadoAprobacion, RolUsuario, TipoNotificacion } from '@prisma/client';
+<<<<<<< HEAD
+=======
+import { EventEmitter2 } from '@nestjs/event-emitter';
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
 import { CrearEvaluacionDto } from './dto/crear-evaluacion.dto';
 
 @Injectable()
 export class EvaluacionesService {
+<<<<<<< HEAD
   constructor(private readonly prisma: PrismaService) {}
+=======
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter_sm_vc: EventEmitter2,
+  ) {}
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
 
   // ─────────────────────────────────────────────────────────────────
   // POST /api/evaluaciones
@@ -79,6 +90,7 @@ export class EvaluacionesService {
       const materiaNombre  = entrega.requisito.materia.nombre_sm_vc;
       const requisitoNombre = entrega.requisito.nombre_sm_vc;
 
+<<<<<<< HEAD
       // 6. Registrar en historial
       await this.prisma.historialTrazabilidad.create({
         data: {
@@ -90,6 +102,13 @@ export class EvaluacionesService {
           detalles_sm_vc: `Profesor evaluó "${requisitoNombre}" como ${dto.decision_sm_vc}.` +
             (dto.observaciones_sm_vc ? ` Observaciones: ${dto.observaciones_sm_vc}` : ''),
         },
+=======
+      // 6. Emitir evento de trazabilidad (reemplaza historial anterior)
+      this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
+        estudianteId: estudianteId,
+        descripcion_sm_vc: `Requisito "${requisitoNombre}" evaluado como ${dto.decision_sm_vc}.` +
+          (dto.observaciones_sm_vc ? ` Obs: ${dto.observaciones_sm_vc}` : ''),
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
       });
 
       // 7. Notificar al estudiante sobre el resultado
@@ -189,6 +208,7 @@ export class EvaluacionesService {
 
     if (!siguienteMateria) {
       // El estudiante completó la última materia
+<<<<<<< HEAD
       await this.prisma.historialTrazabilidad.create({
         data: {
           estudiante_id_sm_vc: estudianteId,
@@ -196,6 +216,16 @@ export class EvaluacionesService {
           accion_sm_vc:        'TODAS_MATERIAS_COMPLETADAS',
           detalles_sm_vc:      `El estudiante completó todas las materias del periodo ${materiaPeriodo}. Deploy habilitado.`,
         },
+=======
+      await this.prisma.estudiante.update({
+        where: { id_sm_vc: estudianteId },
+        data:  { puede_hacer_deploy_sm_vc: true },
+      });
+
+      this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
+        estudianteId: estudianteId,
+        descripcion_sm_vc: `¡Proceso completado! Todas las materias aprobadas. Deploy habilitado.`,
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
       });
       await this.prisma.notificacion.create({
         data: {
@@ -215,6 +245,7 @@ export class EvaluacionesService {
       data:  { materia_activa_id_sm_vc: siguienteMateria.id_sm_vc },
     });
 
+<<<<<<< HEAD
     // Registrar en historial
     await this.prisma.historialTrazabilidad.create({
       data: {
@@ -223,6 +254,12 @@ export class EvaluacionesService {
         accion_sm_vc:        'MATERIA_COMPLETADA',
         detalles_sm_vc:      `"${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
       },
+=======
+    // Emitir evento de avance de materia
+    this.eventEmitter_sm_vc.emit('materia.aprobada_sm_vc', {
+      estudianteId: estudianteId,
+      descripcion_sm_vc: `Materia "${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
     });
 
     // Notificar al estudiante

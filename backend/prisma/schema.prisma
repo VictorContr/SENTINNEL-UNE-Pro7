@@ -69,11 +69,18 @@ model Usuario {
   requiere_cambio_clave_sm_vc Boolean    @default(true)
   fecha_creacion_sm_vc        DateTime   @default(now())
 
+<<<<<<< HEAD
   estudiantePerfil        Estudiante?             @relation("UsuarioAEstudiante")
   estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")
   documentosSubidos       Documento[]             @relation("UsuarioSubeDocumento")
   evaluacionesRealizadas  Evaluacion[]            @relation("ProfesorEvalua")
   accionesHistorial       HistorialTrazabilidad[] @relation("ActorHistorial")
+=======
+  estudiante_sm_vc        Estudiante?             @relation("UsuarioAEstudiante")
+  estudiantesTutor        Estudiante[]            @relation("TutorAEstudiante")
+  documentosSubidos       Documento[]             @relation("UsuarioSubeDocumento")
+  evaluacionesRealizadas  Evaluacion[]            @relation("ProfesorEvalua")
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
   notificacionesEnviadas  Notificacion[]          @relation("NotificacionesEnviadas")
   notificacionesRecibidas Notificacion[]          @relation("NotificacionesRecibidas")
 
@@ -93,13 +100,21 @@ model Estudiante {
   tutor_empresarial_sm_vc String @db.VarChar(100)
   titulo_proyecto_sm_vc   String @db.VarChar(255)
   materia_activa_id_sm_vc Int
+<<<<<<< HEAD
+=======
+  puede_hacer_deploy_sm_vc Boolean @default(false)
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
 
   usuario       Usuario                 @relation("UsuarioAEstudiante",  fields: [usuario_id_sm_vc],  references: [id_sm_vc])
   profesorTutor Usuario?                @relation("TutorAEstudiante",    fields: [profesor_id_sm_vc], references: [id_sm_vc])
   materiaActiva Materia                 @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc])
   entregas      Entrega[]
   proyectoDeploy ProyectoDeploy?
+<<<<<<< HEAD
   historial     HistorialTrazabilidad[]
+=======
+  conversacion   Conversacion?
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
 
   @@map("tdestudiante_sm_vc")
 }
@@ -218,6 +233,7 @@ model ProyectoDeploy {
 }
 
 // ==========================================
+<<<<<<< HEAD
 // HISTORIAL DE TRAZABILIDAD
 // ==========================================
 model HistorialTrazabilidad {
@@ -232,6 +248,31 @@ model HistorialTrazabilidad {
   actor      Usuario    @relation("ActorHistorial", fields: [actor_id_sm_vc], references: [id_sm_vc])
 
   @@map("tdhistorialtrazabilidad_sm_vc")
+=======
+// CONVERSACIÓN (Trazabilidad interactiva)
+// ==========================================
+model Conversacion {
+  id_sm_vc            Int      @id @default(autoincrement())
+  estudiante_id_sm_vc Int      @unique
+  fecha_creacion_sm_vc DateTime @default(now())
+
+  estudiante Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+  mensajes   Mensaje[]
+
+  @@map("tdconversacion_sm_vc")
+}
+
+model Mensaje {
+  id_sm_vc              Int      @id @default(autoincrement())
+  conversacion_id_sm_vc Int
+  contenido_sm_vc       String   @db.Text
+  es_sistema_sm_vc      Boolean  @default(true)
+  fecha_creacion_sm_vc  DateTime @default(now())
+
+  conversacion Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+
+  @@map("tdmensaje_sm_vc")
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
 }
 
 // ==========================================

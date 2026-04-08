@@ -3,3 +3,10 @@ node_modules
 .env
 
 /generated/prisma
+<<<<<<< HEAD
+=======
+
+dist
+
+uploads
+>>>>>>> 903c4c29d3b62de277bf139cfa3224c4374fb12a
