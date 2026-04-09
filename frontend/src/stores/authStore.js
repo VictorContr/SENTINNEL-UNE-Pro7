@@ -5,8 +5,8 @@ import {
   login_sm_vc,
   cambiarClaveInicial_sm_vc as cambiarClaveService_sm_vc,
 } from "src/services/authService";
-import { purgarContextoRequisitos_sm_vc } from "src/composables/useRequisitoContexto";
-import { decryptSession_sm_vc } from "src/utils/crypto";
+import { purgarContextoRequisitos_sm_vc } from "src/stores/requisitoContextoStore";
+import { decryptSession_sm_vc } from "src/stores/cryptoStore";
 
 /**
  * SENTINNEL – authStore
