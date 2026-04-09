@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { encryptSession_sm_vc } from '../common/utils/encryption';
 
 @Injectable()
 export class AuthService_sm_vc {
@@ -21,10 +22,15 @@ export class AuthService_sm_vc {
     }
 
     if (!usuario_sm_vc.activo_sm_vc) {
-      throw new UnauthorizedException('Tu cuenta ha sido revocada. Contacta al administrador.');
+      throw new UnauthorizedException(
+        'Tu cuenta ha sido revocada. Contacta al administrador.',
+      );
     }
 
-    const clave_valida_sm_vc = await bcrypt.compare(clave_sm_vc, usuario_sm_vc.clave_sm_vc);
+    const clave_valida_sm_vc = await bcrypt.compare(
+      clave_sm_vc,
+      usuario_sm_vc.clave_sm_vc,
+    );
     if (!clave_valida_sm_vc) {
       throw new UnauthorizedException('Credenciales inválidas.');
     }
@@ -45,27 +51,45 @@ export class AuthService_sm_vc {
       };
     }
 
+    const token_sm_vc = this.jwtService.sign(payload_sm_vc);
+    const session_sm_vc = {
+      user: safe_user_sm_vc,
+      token: token_sm_vc,
+    };
+
     return {
-      access_token_sm_vc: this.jwtService.sign(payload_sm_vc),
+      access_token_sm_vc: token_sm_vc,
       user_sm_vc: safe_user_sm_vc,
+      session_encrypted_sm_vc: encryptSession_sm_vc(session_sm_vc),
     };
   }
 
-  async cambiarClaveInicial_sm_vc(correo_sm_vc: string, clave_temporal_sm_vc: string, nueva_clave_sm_vc: string) {
+  async cambiarClaveInicial_sm_vc(
+    correo_sm_vc: string,
+    clave_temporal_sm_vc: string,
+    nueva_clave_sm_vc: string,
+  ) {
     const usuario_sm_vc = await this.prisma.usuario.findUnique({
       where: { correo_sm_vc },
     });
 
     if (!usuario_sm_vc || !usuario_sm_vc.activo_sm_vc) {
-      throw new UnauthorizedException('Credenciales inválidas o cuenta inactiva.');
+      throw new UnauthorizedException(
+        'Credenciales inválidas o cuenta inactiva.',
+      );
     }
 
     // @ts-ignore: Pending Prisma Generation
     if (!usuario_sm_vc.requiere_cambio_clave_sm_vc) {
-      throw new UnauthorizedException('El usuario no requiere cambio de clave inicial.');
+      throw new UnauthorizedException(
+        'El usuario no requiere cambio de clave inicial.',
+      );
     }
 
-    const clave_valida_sm_vc = await bcrypt.compare(clave_temporal_sm_vc, usuario_sm_vc.clave_sm_vc);
+    const clave_valida_sm_vc = await bcrypt.compare(
+      clave_temporal_sm_vc,
+      usuario_sm_vc.clave_sm_vc,
+    );
     if (!clave_valida_sm_vc) {
       throw new UnauthorizedException('La contraseña temporal es inválida.');
     }
@@ -82,7 +106,9 @@ export class AuthService_sm_vc {
       },
     });
 
-    return { message: 'Contraseña actualizada exitosamente. Por favor, inicie sesión.' };
+    return {
+      message: 'Contraseña actualizada exitosamente. Por favor, inicie sesión.',
+    };
   }
 
   async validateUser_sm_vc(userId_sm_vc: number) {
