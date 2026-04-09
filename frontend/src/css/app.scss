@@ -6,6 +6,13 @@
 @import "tailwindcss";
 
 /* ══════════════════════════════════════════════════════════
+   ESCALADO GLOBAL — Reemplaza zoom: 1.25 con rem escalable
+   ══════════════════════════════════════════════════════════ */
+html {
+  font-size: 125% !important; /* Escala toda la interfaz 25% */
+}
+
+/* ══════════════════════════════════════════════════════════
    1. CSS CUSTOM PROPERTIES — LIGHT MODE (predeterminado)
    ══════════════════════════════════════════════════════════ */
 :root {

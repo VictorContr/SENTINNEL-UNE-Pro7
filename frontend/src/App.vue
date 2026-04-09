@@ -30,7 +30,6 @@ body {
   font-family: var(--sn-font-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 20px; /* Compensa el zoom 1.25 removido (~16px * 1.25) */
 }
 
 /* ── Scrollbar global ── */
