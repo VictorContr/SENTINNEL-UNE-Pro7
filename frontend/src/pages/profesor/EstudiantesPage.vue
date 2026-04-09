@@ -43,7 +43,6 @@
         label="Periodo"
         clearable
         class="sntnl-select_sm_vc filter-select_sm_vc"
-        behavior="menu"
         emit-value
         map-options
       />
@@ -57,7 +56,6 @@
         label="Materia Activa"
         clearable
         class="sntnl-select_sm_vc filter-select_sm_vc"
-        behavior="menu"
         emit-value
         map-options
       />
@@ -71,7 +69,6 @@
         label="Estado"
         clearable
         class="sntnl-select_sm_vc filter-select_sm_vc"
-        behavior="menu"
         emit-value
         map-options
       />

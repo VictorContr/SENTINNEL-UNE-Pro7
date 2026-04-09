@@ -30,7 +30,7 @@ body {
   font-family: var(--sn-font-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  zoom: 1.25; /* Aumenta el tamaño global de las vistas y componentes en un 25% */
+  font-size: 20px; /* Compensa el zoom 1.25 removido (~16px * 1.25) */
 }
 
 /* ── Scrollbar global ── */
