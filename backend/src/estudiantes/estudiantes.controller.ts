@@ -15,11 +15,11 @@ export class EstudiantesController {
   constructor(private readonly estudiantesService: EstudiantesService) {}
 
   /**
-   * GET /api/estudiantes
+   * GET /api/estudiantes/mis-estudiantes_sm_vc
    * Lista los estudiantes asignados al profesor autenticado,
    * con el resumen de su materia activa y progreso.
    */
-  @Get()
+  @Get('mis-estudiantes_sm_vc')
   @Roles_sm_vc(RolUsuario.PROFESOR)
   async obtenerMisEstudiantes(@Request() req: RequestWithUser) {
     return this.estudiantesService.obtenerMisEstudiantes_sm_vc(req.user.id_sm_vc);

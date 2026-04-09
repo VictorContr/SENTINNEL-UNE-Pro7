@@ -5,7 +5,7 @@
 // ══════════════════════════════════════════════════════════════════
 
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Notify } from 'quasar'
 import { usePasantiasStore } from './pasantiasStore'
 import { 
@@ -16,22 +16,28 @@ import {
 export const usePeriodoStore = defineStore('periodo', () => {
 
   /* ── Estado ── */
-  const periodoActual_sm_vc = ref('P-165') // Fallback default
-  const fechaInicio_sm_vc   = ref('')   // YYYY/MM
-  const fechaCierre_sm_vc   = ref('')   // YYYY/MM
+  const periodoActual_sm_vc = ref('')
+  const fechaInicio_sm_vc   = ref('')   // ISO: YYYY-MM-DD
+  const fechaCierre_sm_vc   = ref('')   // ISO: YYYY-MM-DD
   const loading_sm_vc       = ref(false)
 
-  /* ── Formatea el periodo actual para visualización ── */
-  const periodoFormateado_sm_vc = () => {
-    const base_sm_vc = periodoActual_sm_vc.value.replace('P-', 'Periodo ')
+  /* ── Formatea el periodo actual para visualización (Computed) ── */
+  const periodoFormateado_sm_vc = computed(() => {
+    if (!periodoActual_sm_vc.value) return 'Cargando periodo...'
+    
+    // Si viene en formato P-XXX, lo traducimos a "Periodo XXX"
+    const base_sm_vc = periodoActual_sm_vc.value.includes('P-') 
+      ? periodoActual_sm_vc.value.replace('P-', 'Periodo ')
+      : periodoActual_sm_vc.value
+
     if (fechaInicio_sm_vc.value && fechaCierre_sm_vc.value) {
-      const anio_sm_vc = fechaInicio_sm_vc.value.split('/')[0]
+      const anio_sm_vc = fechaInicio_sm_vc.value.split('-')[0]
       const mesInicio_sm_vc = formatearMesSolo_sm_vc(fechaInicio_sm_vc.value)
       const mesCierre_sm_vc = formatearMesSolo_sm_vc(fechaCierre_sm_vc.value)
-      return `${base_sm_vc} (de ${mesInicio_sm_vc} a ${mesCierre_sm_vc} ${anio_sm_vc})`
+      return `${base_sm_vc} (${mesInicio_sm_vc} - ${mesCierre_sm_vc} ${anio_sm_vc})`
     }
     return base_sm_vc
-  }
+  })
 
   /* ── GET /admin/configuracion/periodo ── */
   const cargarPeriodoActual_sm_vc = async () => {
@@ -125,11 +131,11 @@ export const usePeriodoStore = defineStore('periodo', () => {
     }
   }
 
-  /* ── Utilidad interna ── */
+  /* ── Utilidad interna: Formatea YYYY-MM-DD → Mes YYYY ── */
   const formatearMes_sm_vc = (valor_sm_vc) => {
     if (!valor_sm_vc) return ''
-    const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
-    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, 1)
+    const [anio_sm_vc, mes_sm_vc, dia_sm_vc] = valor_sm_vc.split('-')
+    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, Number(dia_sm_vc || 1))
     const mes_str_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long' })
     const mesCap_sm_vc = mes_str_sm_vc.charAt(0).toUpperCase() + mes_str_sm_vc.slice(1)
     return `${mesCap_sm_vc} ${anio_sm_vc}`
@@ -137,8 +143,8 @@ export const usePeriodoStore = defineStore('periodo', () => {
 
   const formatearMesSolo_sm_vc = (valor_sm_vc) => {
     if (!valor_sm_vc) return ''
-    const [anio_sm_vc, mes_sm_vc] = valor_sm_vc.split('/')
-    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, 1)
+    const [anio_sm_vc, mes_sm_vc, dia_sm_vc] = valor_sm_vc.split('-')
+    const fecha_sm_vc = new Date(Number(anio_sm_vc), Number(mes_sm_vc) - 1, Number(dia_sm_vc || 1))
     const mes_str_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', { month: 'long' })
     return mes_str_sm_vc.charAt(0).toUpperCase() + mes_str_sm_vc.slice(1)
   }

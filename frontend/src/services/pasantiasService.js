@@ -15,12 +15,35 @@ export const getMaterias_sm_vc = async () => {
 }
 
 /**
- * Crea o actualiza una entrega para un requisito de pasantía
- * @param {Object} datosEntrega_sm_vc - DTO de entrega, ej. { requisito_id_sm_vc }
- * @returns {Promise<Object>} Entrega creada o actualizada
+ * Registra una entrega de requisito (Estudiante)
+ * Soporta FormData para envío de archivos físicos.
+ * @param {FormData} formData_sm_vc
  */
-export const crearEntrega_sm_vc = async (datosEntrega_sm_vc) => {
-  const respuesta_sm_vc = await api.post('/pasantias/entregas', datosEntrega_sm_vc)
+export const crearEntrega_sm_vc = async (formData_sm_vc) => {
+  const respuesta_sm_vc = await api.post('/pasantias/entregas', formData_sm_vc, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return respuesta_sm_vc.data
+}
+
+/**
+ * Registra la evaluación de una entrega (Profesor)
+ * Soporta FormData para archivos de corrección opcionales.
+ * @param {FormData} formData_sm_vc
+ */
+export const evaluarEntrega_sm_vc = async (formData_sm_vc) => {
+  const respuesta_sm_vc = await api.post('/pasantias/evaluar-entrega', formData_sm_vc, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return respuesta_sm_vc.data
+}
+
+/**
+ * Aprobación masiva o granular de requisitos (Profesor)
+ * @param {Object} payload_sm_vc - { estudiante_id, materia_id, requisitos_ids, nota_global, comentario }
+ */
+export const aprobarRequisitosBulk_sm_vc = async (payload_sm_vc) => {
+  const respuesta_sm_vc = await api.post('/pasantias/aprobar-requisitos-bulk', payload_sm_vc)
   return respuesta_sm_vc.data
 }
 

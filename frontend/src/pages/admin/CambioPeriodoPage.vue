@@ -16,45 +16,58 @@
       </p>
     </div>
 
-    <!-- ── Tarjeta de estado actual ── -->
+    <!-- ── Tarjeta de estado actual (Rediseño Hero) ── -->
     <div class="periodo-card_sm_vc">
-      <div class="periodo-actual_sm_vc">
-        <div>
-          <p class="periodo-label_sm_vc">Periodo Actual</p>
-          <p class="periodo-valor_sm_vc">{{ store_sm_vc.periodoFormateado_sm_vc() }}</p>
-        </div>
-        <q-icon name="calendar_today" size="32px" color="teal-3" />
+      <div v-if="store_sm_vc.loading_sm_vc">
+        <q-skeleton type="rect" height="100px" class="skeleton-card_sm_vc" />
       </div>
 
-      <!-- Rango de fechas del periodo actual -->
-      <div v-if="store_sm_vc.fechaInicio_sm_vc || store_sm_vc.fechaCierre_sm_vc" class="fechas-actuales_vc">
-        <div class="fecha-chip_vc">
-          <q-icon name="play_circle" size="14px" color="teal-3" />
-          <span>Inicio: {{ formatearFechaMes_vc(store_sm_vc.fechaInicio_sm_vc) }}</span>
+      <template v-else>
+        <div class="periodo-hero-header_sm_vc">
+          <div class="periodo-info_sm_vc">
+            <div class="status-badge_sm_vc">
+              <span class="pulse-dot_sm_vc"></span>
+              ACTIVO
+            </div>
+            <p class="periodo-label_sm_vc">Periodo Operativo</p>
+            <h2 class="periodo-valor_sm_vc">{{ store_sm_vc.periodoFormateado_sm_vc }}</h2>
+          </div>
+          <div class="periodo-icon-box_sm_vc">
+            <q-icon name="auto_awesome" size="32px" color="teal-3" />
+          </div>
         </div>
-        <q-icon name="arrow_forward" size="12px" color="blue-grey-5" />
-        <div class="fecha-chip_vc">
-          <q-icon name="stop_circle" size="14px" color="amber-4" />
-          <span>Cierre: {{ formatearFechaMes_vc(store_sm_vc.fechaCierre_sm_vc) }}</span>
+
+        <!-- Rango de fechas del periodo actual -->
+        <div v-if="store_sm_vc.fechaInicio_sm_vc" class="fechas-actuales_vc">
+          <div class="fecha-chip_vc">
+            <q-icon name="event" size="14px" color="teal-3" />
+            <span class="fecha-text_sm_vc">Del: {{ formatearFechaMes_vc(store_sm_vc.fechaInicio_sm_vc) }}</span>
+          </div>
+          <div class="fecha-divider_sm_vc"></div>
+          <div class="fecha-chip_vc">
+            <q-icon name="event_busy" size="14px" color="amber-4" />
+            <span class="fecha-text_sm_vc">Al: {{ formatearFechaMes_vc(store_sm_vc.fechaCierre_sm_vc) }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Aviso informativo -->
-      <div class="info-notice_sm_vc">
-        <q-icon name="info" color="teal-3" size="18px" />
-        <p class="info-texto_sm_vc">
-          El cambio de periodo afecta a toda la plataforma.
-          Verifica las fechas antes de confirmar.
-        </p>
-      </div>
-
-      <!-- Botón para abrir el modal -->
-      <q-btn
-        unelevated no-caps
-        label="Cambiar Periodo" icon="edit_calendar"
-        class="btn-cta_sm_vc"
-        :loading="store_sm_vc.loading_sm_vc"
-        @click="abrirModalPeriodo_vc" />
+        <!-- Botón para abrir el modal -->
+        <div class="actions-row_sm_vc">
+          <q-btn
+            unelevated no-caps
+            label="Actualizar Periodo" 
+            icon="edit_calendar"
+            class="btn-cta_sm_vc"
+            @click="abrirModalPeriodo_vc" />
+          
+          <q-btn
+            flat round dense
+            icon="refresh"
+            color="teal-3"
+            class="btn-refresh_sm_vc"
+            :loading="store_sm_vc.loading_sm_vc"
+            @click="store_sm_vc.cargarPeriodoActual_sm_vc" />
+        </div>
+      </template>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════
@@ -95,11 +108,10 @@
                 dark
                 minimal
                 emit-immediately
-                default-view="Months"
-                :navigation-max-year-month="fechaCierre_vc || undefined"
+                :navigation-max-year-month="fechaCierre_vc ? fechaCierre_vc.substring(0, 7).replace('-', '/') : undefined"
                 class="sntnl-date_vc"
                 color="teal-3"
-                mask="YYYY/MM"
+                mask="YYYY-MM-DD"
               />
               <p class="fecha-valor_vc">{{ formatearFechaMes_vc(fechaInicio_vc) || '—' }}</p>
             </div>
@@ -119,11 +131,10 @@
                 dark
                 minimal
                 emit-immediately
-                default-view="Months"
-                :navigation-min-year-month="fechaInicio_vc || undefined"
+                :navigation-min-year-month="fechaInicio_vc ? fechaInicio_vc.substring(0, 7).replace('-', '/') : undefined"
                 class="sntnl-date_vc"
                 color="amber"
-                mask="YYYY/MM"
+                mask="YYYY-MM-DD"
               />
               <p class="fecha-valor_vc">{{ formatearFechaMes_vc(fechaCierre_vc) || '—' }}</p>
             </div>
@@ -167,8 +178,8 @@ const store_sm_vc = usePeriodoStore()
 
 /* ── Estado del Modal ── */
 const modalPeriodo_vc = ref(false)
-const fechaInicio_vc  = ref('')   // formato YYYY/MM (máscara de q-date)
-const fechaCierre_vc  = ref('')   // formato YYYY/MM
+const fechaInicio_vc  = ref('')   // formato YYYY-MM-DD
+const fechaCierre_vc  = ref('')   // formato YYYY-MM-DD
 
 /* ── Validación reactiva: cierre debe ser estrictamente mayor que inicio ── */
 const errorFechas_vc = computed(() =>
@@ -177,12 +188,12 @@ const errorFechas_vc = computed(() =>
   fechaCierre_vc.value <= fechaInicio_vc.value
 )
 
-/* ── Formatea YYYY/MM → "Mes YYYY" en español ── */
+/* ── Formatea YYYY-MM-DD → "DD de Mes, YYYY" en español ── */
 const formatearFechaMes_vc = (valor_vc) => {
   if (!valor_vc) return ''
-  const [anio_vc, mes_vc] = valor_vc.split('/')
-  const fecha_vc = new Date(Number(anio_vc), Number(mes_vc) - 1, 1)
-  return fecha_vc.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+  const [anio_vc, mes_vc, dia_vc] = valor_vc.split('-')
+  const fecha_vc = new Date(Number(anio_vc), Number(mes_vc) - 1, Number(dia_vc))
+  return fecha_vc.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 /* ── Abrir modal pre-llenado con el periodo actual ── */
@@ -220,41 +231,69 @@ onMounted(() => store_sm_vc.cargarPeriodoActual_sm_vc())
 .page-title_sm_vc { font-size: 1.2rem; font-weight: 700; color: var(--sn-texto-principal); letter-spacing: .06em; margin: 0; font-family: var(--sn-font-mono); }
 .page-subtitle_sm_vc { font-size: .72rem; color: var(--sn-texto-terciario); margin: 0; font-family: var(--sn-font-sans); }
 
-/* ── Tarjeta de estado ── */
+/* ── Tarjeta de estado (Hero Design) ── */
 .periodo-card_sm_vc {
-  max-width: 480px;
-  background: var(--sn-fondo-panel);
-  border: 1px solid var(--sn-borde-activo);
-  border-radius: 12px;
-  padding: 1.75rem;
+  max-width: 520px;
+  background: linear-gradient(145deg, var(--sn-fondo-panel, #0f1f3d), #14254a);
+  border: 1px solid rgba(111,255,233,0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
   display: flex; flex-direction: column; gap: 1.25rem;
-  box-shadow: var(--sn-shadow-md);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+  position: relative; overflow: hidden;
 }
-.periodo-actual_sm_vc {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: var(--sn-fondo-elevado);
-  border: 1px solid var(--sn-borde); border-radius: 8px;
+.periodo-card_sm_vc::before {
+  content: ''; position: absolute; top: -50%; right: -20%;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(111,255,233,0.05) 0%, transparent 70%);
+  pointer-events: none;
 }
-.periodo-label_sm_vc { font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sn-texto-apagado); margin: 0 0 4px; font-family: var(--sn-font-mono); }
-.periodo-valor_sm_vc { font-size: 1.6rem; font-weight: 700; color: var(--sn-primario); margin: 0; font-family: var(--sn-font-mono); }
 
-/* ── Chips de fechas actuales ── */
+.periodo-hero-header_sm_vc { display: flex; align-items: flex-start; justify-content: space-between; }
+.periodo-info_sm_vc { flex: 1; }
+
+.status-badge_sm_vc {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(111, 255, 233, 0.1);
+  border: 1px solid rgba(111, 255, 233, 0.2);
+  color: #6fffe9; font-size: 0.6rem; font-weight: 800;
+  padding: 4px 10px; border-radius: 20px;
+  letter-spacing: 0.12em; margin-bottom: 12px;
+}
+.pulse-dot_sm_vc {
+  width: 6px; height: 6px; background: #6fffe9; border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(111, 255, 233, 0.7);
+  animation: sntnl-pulse_sm_vc 2s infinite;
+}
+@keyframes sntnl-pulse_sm_vc {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(111, 255, 233, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(111, 255, 233, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(111, 255, 233, 0); }
+}
+
+.periodo-label_sm_vc { font-size: .65rem; color: var(--sn-texto-terciario); margin: 0 0 6px; font-family: var(--sn-font-mono); text-transform: uppercase; letter-spacing: 0.1rem; }
+.periodo-valor_sm_vc { font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
+.periodo-icon-box_sm_vc { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+
 .fechas-actuales_vc {
-  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
-  padding: .625rem .875rem;
-  background: rgba(111,255,233,.04);
-  border: 1px solid rgba(111,255,233,.1);
-  border-radius: 8px;
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);
 }
-.fecha-chip_vc { display: flex; align-items: center; gap: .4rem; font-size: .7rem; color: var(--sn-texto-secundario); font-family: var(--sn-font-mono); }
+.fecha-chip_vc { display: flex; align-items: center; gap: 8px; flex: 1; }
+.fecha-text_sm_vc { font-size: 0.72rem; color: var(--sn-texto-secundario); font-family: var(--sn-font-mono); }
+.fecha-divider_sm_vc { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
 
-/* ── Info notice ── */
-.info-notice_sm_vc { display: flex; align-items: flex-start; gap: .75rem; padding: .875rem 1rem; background: rgba(111,255,233,.04); border: 1px solid rgba(111,255,233,.1); border-radius: 8px; }
-.info-texto_sm_vc { font-size: .72rem; color: var(--sn-texto-terciario); margin: 0; line-height: 1.6; font-family: var(--sn-font-sans); }
-
-/* ── CTA Button ── */
-.btn-cta_sm_vc { background: #6fffe9 !important; color: #0b132b !important; font-size: .78rem !important; font-weight: 700 !important; border-radius: 8px !important; align-self: flex-start; }
+.actions-row_sm_vc { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.btn-cta_sm_vc { 
+  background: #6fffe9 !important; color: #0b132b !important; 
+  font-size: .75rem !important; font-weight: 800 !important; 
+  border-radius: 10px !important; flex: 1;
+  box-shadow: 0 4px 15px -5px rgba(111, 255, 233, 0.4);
+}
+.btn-refresh_sm_vc { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1); }
+.skeleton-card_sm_vc { background: rgba(255,255,255,0.05) !important; border-radius: 16px; }
 
 /* ══════════════════════════════════════
    MODAL DE ADVERTENCIA

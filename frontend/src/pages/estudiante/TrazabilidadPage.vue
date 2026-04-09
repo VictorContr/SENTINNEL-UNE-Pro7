@@ -17,8 +17,8 @@
         </div>
         <p class="page-subtitle_sm_vc">
           Progreso secuencial de tus 4 materias de grado ·
-          Periodo: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.cohorte_sm_vc }}</span>
-          · Profesor asignado: <span class="code-tag_sm_vc">{{ auth_sm_vc.user?.profesor_id_sm_vc }}</span>
+          Periodo: <span class="code-tag_sm_vc">{{ auth_sm_vc.user_sm_vc?.cohorte_sm_vc }}</span>
+          · Profesor asignado: <span class="code-tag_sm_vc">{{ auth_sm_vc.user_sm_vc?.profesor_id_sm_vc }}</span>
         </p>
       </div>
 
@@ -73,7 +73,7 @@
           -->
           <MateriaProgressCard
             :materia="materia"
-            :estudiante-id="auth_sm_vc.user?.id_sm_vc ?? ''"
+            :estudiante-id="auth_sm_vc.user_sm_vc?.id_sm_vc ?? ''"
             :show-description="true"
             :show-requisitos="true"
             @click="handleMateriaClick_sm_vc"
@@ -154,7 +154,7 @@
       <div class="conv-embed_sm_vc">
         <DocumentConversacion
           :materia-id="materiaActiva_sm_vc.id_sm_vc"
-          :estudiante-id="auth_sm_vc.user?.id_sm_vc ?? ''"
+          :estudiante-id="auth_sm_vc.user_sm_vc?.id_sm_vc ?? ''"
           :readonly="materiaActiva_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
           :estado-progreso="materiaActiva_sm_vc.estado_aprobacion_sm_vc"
           @mensaje-enviado="onMensajeEnviado_sm_vc" />

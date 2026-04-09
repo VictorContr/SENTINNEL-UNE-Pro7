@@ -22,29 +22,38 @@ export class EstudiantesService {
         include: {
           usuario: {
             select: {
-              id_sm_vc:    true,
-              nombre_sm_vc:   true,
+              id_sm_vc: true,
+              nombre_sm_vc: true,
               apellido_sm_vc: true,
-              correo_sm_vc:   true,
-              activo_sm_vc:   true,
+              correo_sm_vc: true,
+              activo_sm_vc: true,
             },
           },
-          materiaActiva: {
-            include: {
-              requisitos: { orderBy: { posicion_sm_vc: 'asc' } },
-            },
-          },
+          materiaActiva: true,
           entregas: {
-            include: { requisito: true, evaluacion: true },
+            include: { requisito: { include: { materia: true } }, evaluacion: true },
           },
         },
         orderBy: { usuario: { apellido_sm_vc: 'asc' } },
       });
 
-      return estudiantes.map((e) =>
-        this.mapearEstudianteConProgreso_sm_vc(e),
-      );
-    } catch {
+      // Obtener todos los periodos únicos de los estudiantes para traer sus materias
+      const periodos_sm_vc = [...new Set(estudiantes.map(e => e.materiaActiva.periodo_sm_vc))];
+      
+      const todasLasMaterias_sm_vc = await this.prisma.materia.findMany({
+        where: { periodo_sm_vc: { in: periodos_sm_vc } },
+        include: { requisitos: true },
+        orderBy: { posicion_sm_vc: 'asc' },
+      });
+
+      return estudiantes.map((e) => {
+        const materiasDelPeriodo_sm_vc = todasLasMaterias_sm_vc.filter(
+          m => m.periodo_sm_vc === e.materiaActiva.periodo_sm_vc
+        );
+        return this.mapearEstudianteConProgresoExtendido_sm_vc(e, materiasDelPeriodo_sm_vc);
+      });
+    } catch (error) {
+      console.error('[obtenerMisEstudiantes_sm_vc] Error:', error);
       throw new InternalServerErrorException('Error al obtener los estudiantes.');
     }
   }
@@ -187,14 +196,37 @@ export class EstudiantesService {
     return EstadoAprobacion.PENDIENTE;
   }
 
-  private mapearEstudianteConProgreso_sm_vc(e: any) {
-    const reqsActivos = e.materiaActiva.requisitos;
-    const entregasActivas = e.entregas.filter((ent: any) =>
-      reqsActivos.some((r: any) => r.id_sm_vc === ent.requisito_id_sm_vc),
-    );
-    const aprobados = entregasActivas.filter(
-      (ent: any) => ent.estado_sm_vc === EstadoAprobacion.APROBADO,
-    ).length;
+  private mapearEstudianteConProgresoExtendido_sm_vc(e: any, materiasDelPeriodo_sm_vc: any[]) {
+    const materias_sm_vc = materiasDelPeriodo_sm_vc.map((materia) => {
+      const reqsMateria_sm_vc = materia.requisitos || [];
+      const entregasMateria_sm_vc = e.entregas.filter((ent: any) =>
+        ent.requisito.materia_id_sm_vc === materia.id_sm_vc
+      );
+      
+      const aprobados_sm_vc = entregasMateria_sm_vc.filter(
+        (ent: any) => ent.estado_sm_vc === EstadoAprobacion.APROBADO,
+      ).length;
+
+      const bloqueada_sm_vc = materia.posicion_sm_vc > e.materiaActiva.posicion_sm_vc;
+
+      return {
+        materia_id_sm_vc: materia.id_sm_vc,
+        nombre_sm_vc: materia.nombre_sm_vc,
+        posicion_sm_vc: materia.posicion_sm_vc,
+        bloqueada_sm_vc,
+        total_requisitos_sm_vc: reqsMateria_sm_vc.length,
+        aprobados_sm_vc,
+        progreso_decimal_sm_vc: reqsMateria_sm_vc.length > 0
+          ? parseFloat((aprobados_sm_vc / reqsMateria_sm_vc.length).toFixed(2))
+          : 0,
+        estado_sm_vc: this.calcularEstadoMateria_sm_vc(
+          entregasMateria_sm_vc,
+          aprobados_sm_vc,
+          reqsMateria_sm_vc.length,
+          bloqueada_sm_vc,
+        ),
+      };
+    });
 
     return {
       id_sm_vc:                e.id_sm_vc,
@@ -206,22 +238,9 @@ export class EstudiantesService {
       empresa_sm_vc:           e.empresa_sm_vc,
       titulo_proyecto_sm_vc:   e.titulo_proyecto_sm_vc,
       tutor_empresarial_sm_vc: e.tutor_empresarial_sm_vc,
-      materia_activa_sm_vc: {
-        id_sm_vc:               e.materiaActiva.id_sm_vc,
-        nombre_sm_vc:           e.materiaActiva.nombre_sm_vc,
-        posicion_sm_vc:         e.materiaActiva.posicion_sm_vc,
-        total_requisitos_sm_vc: reqsActivos.length,
-        aprobados_sm_vc:        aprobados,
-        progreso_decimal_sm_vc: reqsActivos.length > 0
-          ? parseFloat((aprobados / reqsActivos.length).toFixed(2))
-          : 0,
-        estado_sm_vc: this.calcularEstadoMateria_sm_vc(
-          entregasActivas,
-          aprobados,
-          reqsActivos.length,
-          false,
-        ),
-      },
+      materia_activa_id_sm_vc: e.materia_activa_id_sm_vc,
+      periodo_sm_vc:           e.materiaActiva.periodo_sm_vc,
+      materias_sm_vc,
     };
   }
 

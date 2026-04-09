@@ -53,6 +53,12 @@ export default route(function () {
       return { name: 'login', query: { redirect: to_sm_vc.fullPath } }
     }
 
+    // ── Paso 2.5: Verificación Proactiva de Expiración de JWT ──
+    if (auth_sm_vc.verificarExpiracion_sm_vc()) {
+      auth_sm_vc.logout_sm_vc('expirado')
+      return { name: 'login' }
+    }
+
     // ── Paso 3: Verificar roles requeridos ────────────────────
     const rolesRequeridos_sm_vc = to_sm_vc.meta.roles ?? []
 

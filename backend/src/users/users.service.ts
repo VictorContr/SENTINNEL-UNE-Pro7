@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService_sm_vc {
@@ -7,28 +8,30 @@ export class UsersService_sm_vc {
 
   async findAllPaged_sm_vc(page: number, limit: number, search_sm_vc?: string) {
     const skip = (page - 1) * limit;
-    
-    // Construir filtro de búsqueda
-    const where_sm_vc = search_sm_vc ? {
-      OR: [
-        { nombre_sm_vc: { contains: search_sm_vc, mode: 'insensitive' as const } },
-        { cedula_sm_vc: { contains: search_sm_vc, mode: 'insensitive' as const } },
-        { correo_sm_vc: { contains: search_sm_vc, mode: 'insensitive' as const } },
-      ],
-    } : {};
 
-    // Usar $transaction para obtener total y data en una sola consulta
+    const where_sm_vc = search_sm_vc
+      ? {
+          OR: [
+            { nombre_sm_vc:   { contains: search_sm_vc, mode: 'insensitive' as const } },
+            { apellido_sm_vc: { contains: search_sm_vc, mode: 'insensitive' as const } },
+            { cedula_sm_vc:   { contains: search_sm_vc, mode: 'insensitive' as const } },
+            { correo_sm_vc:   { contains: search_sm_vc, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
     const [total_sm_vc, usuarios_sm_vc] = await this.prisma.$transaction([
       this.prisma.usuario.count({ where: where_sm_vc }),
       this.prisma.usuario.findMany({
         where: where_sm_vc,
         select: {
-          id_sm_vc: true,
-          nombre_sm_vc: true,
-          cedula_sm_vc: true,
-          correo_sm_vc: true,
-          rol_sm_vc: true,
-          activo_sm_vc: true,
+          id_sm_vc:             true,
+          nombre_sm_vc:         true,
+          apellido_sm_vc:       true,
+          cedula_sm_vc:         true,
+          correo_sm_vc:         true,
+          rol_sm_vc:            true,
+          activo_sm_vc:         true,
           fecha_creacion_sm_vc: true,
         },
         orderBy: { fecha_creacion_sm_vc: 'desc' },
@@ -56,11 +59,13 @@ export class UsersService_sm_vc {
     const usuario_sm_vc = await this.prisma.usuario.findUnique({
       where: { id_sm_vc: parseInt(id_sm_vc) },
       select: {
-        id_sm_vc: true,
-        nombre_sm_vc: true,
-        correo_sm_vc: true,
-        rol_sm_vc: true,
-        activo_sm_vc: true,
+        id_sm_vc:             true,
+        nombre_sm_vc:         true,
+        apellido_sm_vc:       true,
+        correo_sm_vc:         true,
+        cedula_sm_vc:         true,
+        rol_sm_vc:            true,
+        activo_sm_vc:         true,
         fecha_creacion_sm_vc: true,
       },
     });
@@ -74,20 +79,19 @@ export class UsersService_sm_vc {
 
   async create_sm_vc(dto_sm_vc: any) {
     const { clave_sm_vc, ...rest_sm_vc } = dto_sm_vc;
-    const bcrypt = require('bcryptjs');
     const hashed_clave_sm_vc = await bcrypt.hash(clave_sm_vc, 10);
 
     return this.prisma.usuario.create({
       data: {
         ...rest_sm_vc,
-        clave_sm_vc: hashed_clave_sm_vc,
+        clave_sm_vc:                hashed_clave_sm_vc,
         requiere_cambio_clave_sm_vc: true,
       },
       select: {
-        id_sm_vc: true,
+        id_sm_vc:    true,
         nombre_sm_vc: true,
         correo_sm_vc: true,
-        rol_sm_vc: true,
+        rol_sm_vc:    true,
         activo_sm_vc: true,
       },
     });
@@ -98,18 +102,17 @@ export class UsersService_sm_vc {
     const data_update_sm_vc: any = { ...rest_sm_vc };
 
     if (clave_sm_vc) {
-      const bcrypt = require('bcryptjs');
       data_update_sm_vc.clave_sm_vc = await bcrypt.hash(clave_sm_vc, 10);
     }
 
     return this.prisma.usuario.update({
       where: { id_sm_vc: parseInt(id_sm_vc) },
-      data: data_update_sm_vc,
+      data:  data_update_sm_vc,
       select: {
-        id_sm_vc: true,
+        id_sm_vc:    true,
         nombre_sm_vc: true,
         correo_sm_vc: true,
-        rol_sm_vc: true,
+        rol_sm_vc:    true,
         activo_sm_vc: true,
       },
     });
@@ -126,12 +129,8 @@ export class UsersService_sm_vc {
 
     return this.prisma.usuario.update({
       where: { id_sm_vc: parseInt(id_sm_vc) },
-      data: { activo_sm_vc: !usuario_sm_vc.activo_sm_vc },
-      select: {
-        id_sm_vc: true,
-        nombre_sm_vc: true,
-        activo_sm_vc: true,
-      },
+      data:  { activo_sm_vc: !usuario_sm_vc.activo_sm_vc },
+      select: { id_sm_vc: true, nombre_sm_vc: true, activo_sm_vc: true },
     });
   }
 
@@ -144,138 +143,147 @@ export class UsersService_sm_vc {
       throw new NotFoundException(`Usuario ${id_sm_vc} no encontrado.`);
     }
 
-    // Borrado lógico: desactivar el usuario
+    // Borrado lógico: activo_sm_vc = false (auditoría total)
     return this.prisma.usuario.update({
       where: { id_sm_vc: parseInt(id_sm_vc) },
-      data: { activo_sm_vc: false },
-      select: {
-        id_sm_vc: true,
-        nombre_sm_vc: true,
-        correo_sm_vc: true,
-        activo_sm_vc: true,
-      },
+      data:  { activo_sm_vc: false },
+      select: { id_sm_vc: true, nombre_sm_vc: true, correo_sm_vc: true, activo_sm_vc: true },
     });
   }
 
+  /**
+   * Carga masiva de usuarios desde una hoja Excel parseada.
+   *
+   * FIX #1 — Reemplaza createMany (prohibido por claude.md) con iteración
+   *           segura fila a fila usando Promise.allSettled para tolerancia a fallos.
+   * FIX #2 — El payload de respuesta ahora cumple el contrato obligatorio:
+   *           { filas_exitosas_sm_vc, filas_con_error_sm_vc, detalles_sm_vc }
+   */
   async processBulkUpload_sm_vc(data: any[]) {
-    const resultados = {
-      total_filas: data.length,
-      exitosos: 0,
-      errores: 0,
-      detalles: [] as Array<{
-        fila: number;
-        cedula_sm_vc: string;
-        correo_sm_vc: string;
-        error: string;
+    const resultados_sm_vc = {
+      filas_exitosas_sm_vc:  0,
+      filas_con_error_sm_vc: 0,
+      detalles_sm_vc: [] as Array<{
+        fila_sm_vc:    number;
+        cedula_sm_vc:  string;
+        correo_sm_vc:  string;
+        error_sm_vc:   string;
       }>,
     };
 
-    const usuariosParaCrear = [];
-    const erroresDetalle = [];
+    // Pre-validar cada fila antes de intentar la inserción
+    const tareasValidadas_sm_vc: Array<{
+      fila_sm_vc: number;
+      payload_sm_vc: any;
+      error_sm_vc: string | null;
+    }> = [];
 
-    // Procesar cada fila del Excel
     for (let i = 0; i < data.length; i++) {
-      const fila = i + 2; // +2 porque Excel usa headers en fila 1
-      const filaData = data[i];
+      const fila_sm_vc  = i + 2; // Excel empieza en fila 2 (fila 1 = headers)
+      const filaData_sm_vc = data[i];
+      let error_sm_vc: string | null = null;
 
       try {
         // Validar campos requeridos
-        if (!filaData.Nombre || !filaData.Apellido || !filaData.Cédula || !filaData.Correo || !filaData.Rol) {
-          throw new Error('Faltan campos requeridos');
+        if (
+          !filaData_sm_vc.Nombre    ||
+          !filaData_sm_vc.Apellido  ||
+          !filaData_sm_vc.Cédula    ||
+          !filaData_sm_vc.Correo    ||
+          !filaData_sm_vc.Rol
+        ) {
+          error_sm_vc = 'Faltan campos requeridos (Nombre, Apellido, Cédula, Correo, Rol).';
+        } else if (!/^\d+$/.test(filaData_sm_vc.Cédula)) {
+          error_sm_vc = 'La cédula debe contener solo números.';
+        } else if (!/.+@.+\..+/.test(filaData_sm_vc.Correo)) {
+          error_sm_vc = 'El correo no tiene un formato válido.';
+        } else if (!['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(filaData_sm_vc.Rol)) {
+          error_sm_vc = 'Rol no válido. Debe ser: ADMIN, PROFESOR o ESTUDIANTE.';
+        } else {
+          // Verificar duplicados en BD antes de encolar la inserción
+          const [dupCedula_sm_vc, dupCorreo_sm_vc] = await Promise.all([
+            this.prisma.usuario.findUnique({ where: { cedula_sm_vc: filaData_sm_vc.Cédula } }),
+            this.prisma.usuario.findUnique({ where: { correo_sm_vc: filaData_sm_vc.Correo.toLowerCase() } }),
+          ]);
+
+          if (dupCedula_sm_vc) {
+            error_sm_vc = `La cédula ${filaData_sm_vc.Cédula} ya está registrada.`;
+          } else if (dupCorreo_sm_vc) {
+            error_sm_vc = `El correo ${filaData_sm_vc.Correo} ya está registrado.`;
+          }
         }
-
-        // Validar formato de cédula
-        if (!/^\d+$/.test(filaData.Cédula)) {
-          throw new Error('La cédula debe contener solo números');
-        }
-
-        // Validar formato de correo
-        if (!/.+@.+\..+/.test(filaData.Correo)) {
-          throw new Error('El correo no es válido');
-        }
-
-        // Validar rol
-        const rolesValidos = ['ADMIN', 'PROFESOR', 'ESTUDIANTE'];
-        if (!rolesValidos.includes(filaData.Rol)) {
-          throw new Error('Rol no válido. Debe ser: ADMIN, PROFESOR o ESTUDIANTE');
-        }
-
-        // Validar duplicados contra la base de datos
-        const duplicadoCedula = await this.prisma.usuario.findUnique({
-          where: { cedula_sm_vc: filaData.Cédula },
-        });
-
-        const duplicadoCorreo = await this.prisma.usuario.findUnique({
-          where: { correo_sm_vc: filaData.Correo },
-        });
-
-        if (duplicadoCedula) {
-          throw new Error(`La cédula ${filaData.Cédula} ya está registrada`);
-        }
-
-        if (duplicadoCorreo) {
-          throw new Error(`El correo ${filaData.Correo} ya está registrado`);
-        }
-
-        // Si pasa todas las validaciones, agregar a la lista de creación
-        usuariosParaCrear.push({
-          nombre_sm_vc: filaData.Nombre?.trim(),
-          apellido_sm_vc: filaData.Apellido?.trim(),
-          cedula_sm_vc: filaData.Cédula?.trim(),
-          correo_sm_vc: filaData.Correo?.trim().toLowerCase(),
-          telefono_sm_vc: filaData.Teléfono?.trim() || null,
-          rol_sm_vc: filaData.Rol as any,
-          clave_sm_vc: 'Temp123!', // Contraseña temporal que debe ser cambiada
-          activo_sm_vc: true,
-        });
-
-      } catch (error) {
-        resultados.errores++;
-        erroresDetalle.push({
-          fila,
-          cedula_sm_vc: filaData.Cédula || 'N/A',
-          correo_sm_vc: filaData.Correo || 'N/A',
-          error: error.message,
-        });
+      } catch (err_sm_vc: any) {
+        error_sm_vc = `Error interno al validar la fila: ${err_sm_vc?.message ?? 'desconocido'}.`;
       }
+
+      tareasValidadas_sm_vc.push({
+        fila_sm_vc,
+        payload_sm_vc: filaData_sm_vc,
+        error_sm_vc,
+      });
     }
 
-    // Crear usuarios válidos en lote usando createMany
-    if (usuariosParaCrear.length > 0) {
+    // Intentar la inserción fila a fila con Promise.allSettled
+    // FIX: nunca se usa createMany — cumple el mandato de claude.md
+    const promesas_sm_vc = tareasValidadas_sm_vc.map(async (tarea_sm_vc) => {
+      const { fila_sm_vc, payload_sm_vc, error_sm_vc } = tarea_sm_vc;
+
+      if (error_sm_vc) {
+        return { fila_sm_vc, cedula_sm_vc: payload_sm_vc.Cédula ?? 'N/A', correo_sm_vc: payload_sm_vc.Correo ?? 'N/A', error_sm_vc };
+      }
+
       try {
-        const bcrypt = require('bcryptjs');
-        
-        // Hashear contraseñas para todos los usuarios
-        const usuariosConHash = await Promise.all(
-          usuariosParaCrear.map(async (usuario) => ({
-            ...usuario,
-            clave_sm_vc: await bcrypt.hash(usuario.clave_sm_vc, 10),
-          }))
-        );
+        const claveHash_sm_vc = await bcrypt.hash('Temp123!', 10);
 
-        await this.prisma.usuario.createMany({
-          data: usuariosConHash,
+        await this.prisma.usuario.create({
+          data: {
+            nombre_sm_vc:               payload_sm_vc.Nombre?.trim(),
+            apellido_sm_vc:             payload_sm_vc.Apellido?.trim(),
+            cedula_sm_vc:               payload_sm_vc.Cédula?.trim(),
+            correo_sm_vc:               payload_sm_vc.Correo?.trim().toLowerCase(),
+            telefono_sm_vc:             payload_sm_vc.Teléfono?.trim() || null,
+            rol_sm_vc:                  payload_sm_vc.Rol as any,
+            clave_sm_vc:                claveHash_sm_vc,
+            activo_sm_vc:               true,
+            requiere_cambio_clave_sm_vc: true,
+          },
         });
 
-        resultados.exitosos = usuariosParaCrear.length;
-      } catch (error) {
-        console.error('Error creando usuarios en lote:', error);
-        
-        // Si falla la creación masiva, registrar como errores
-        usuariosParaCrear.forEach((usuario, index) => {
-          resultados.errores++;
-          erroresDetalle.push({
-            fila: index + 2,
-            cedula_sm_vc: usuario.cedula_sm_vc,
-            correo_sm_vc: usuario.correo_sm_vc,
-            error: 'Error al crear usuario en base de datos',
-          });
+        return null; // null === éxito
+      } catch (err_sm_vc: any) {
+        return {
+          fila_sm_vc,
+          cedula_sm_vc: payload_sm_vc.Cédula ?? 'N/A',
+          correo_sm_vc: payload_sm_vc.Correo ?? 'N/A',
+          error_sm_vc: `Error al crear usuario: ${err_sm_vc?.message ?? 'desconocido'}.`,
+        };
+      }
+    });
+
+    const resultadosRaw_sm_vc = await Promise.allSettled(promesas_sm_vc);
+
+    for (const res_sm_vc of resultadosRaw_sm_vc) {
+      if (res_sm_vc.status === 'fulfilled') {
+        if (res_sm_vc.value === null) {
+          // Inserción exitosa
+          resultados_sm_vc.filas_exitosas_sm_vc++;
+        } else {
+          // Fila con error conocido
+          resultados_sm_vc.filas_con_error_sm_vc++;
+          resultados_sm_vc.detalles_sm_vc.push(res_sm_vc.value);
+        }
+      } else {
+        // Rechazo inesperado de la promesa
+        resultados_sm_vc.filas_con_error_sm_vc++;
+        resultados_sm_vc.detalles_sm_vc.push({
+          fila_sm_vc:   0,
+          cedula_sm_vc: 'N/A',
+          correo_sm_vc: 'N/A',
+          error_sm_vc:  `Error inesperado: ${res_sm_vc.reason?.message ?? 'desconocido'}.`,
         });
       }
     }
 
-    resultados.detalles = erroresDetalle;
-
-    return resultados;
+    return resultados_sm_vc;
   }
 }
