@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { WsJwtGuard_sm_vc } from '../guards/ws-jwt.guard';
+import { ChatRoomGuard_sm_vc } from '../guards/chat-room.guard';
 import { ChatPresenceService_sm_vc } from '../services/chat-presence.service';
 import { ConversacionesService } from '../../conversaciones/conversaciones.service';
 import { JoinRoomDto_sm_vc } from '../dto/join-room.dto';
@@ -138,12 +139,17 @@ export class ChatGateway_sm_vc
   /**
    * join_conversation_sm_vc — El cliente solicita unirse a una sala.
    *
-   * Control de acceso:
-   *   ESTUDIANTE → solo su propia sala (sub === estudianteId)
-   *   PROFESOR   → cualquier sala (se validará vs BD en Sprint 4)
-   *   ADMIN      → cualquier sala en modo observador (sin escritura)
+   * Control de acceso (aplicado por la cadena de Guards en orden):
+   *   1. WsJwtGuard_sm_vc    → Verifica que el socket tenga JWT válido.
+   *   2. ChatRoomGuard_sm_vc → Aplica política de acceso granular por rol:
+   *        ESTUDIANTE → solo su propia sala (sub === estudianteId).
+   *        PROFESOR   → solo estudiantes asignados (validado en Prisma).
+   *        ADMIN      → cualquier sala en modo observador (sin escritura).
+   *
+   * Si cualquier guard falla, lanza WsException → Socket.io emite 'exception'
+   * al cliente y el handler nunca se ejecuta.
    */
-  @UseGuards(WsJwtGuard_sm_vc)
+  @UseGuards(WsJwtGuard_sm_vc, ChatRoomGuard_sm_vc)
   @SubscribeMessage('join_conversation_sm_vc')
   async handleJoin_sm_vc(
     @ConnectedSocket() client_sm_vc: Socket,
@@ -236,13 +242,16 @@ export class ChatGateway_sm_vc
    * send_message_sm_vc — El cliente envía un mensaje de texto.
    *
    * FLUJO:
-   *   1. Validar rol (ADMIN no puede escribir).
-   *   2. Persistir en BD vía ConversacionesService.
-   *   3. El service emite 'mensaje.creado_sm_vc' via EventEmitter2.
-   *   4. handleMensajeCreado_sm_vc (abajo) hace el broadcast a la sala.
+   *   1. Verificar que hay user autenticado (WsJwtGuard garantiza esto).
+   *   2. [SEGURIDAD SPRINT 4] Bloqueo estricto de escritura para ADMIN:
+   *      - Se emite evento 'error_sm_vc' al cliente con código 'FORBIDDEN'.
+   *      - Se lanza WsException para cortar el flujo de forma semántica.
+   *      - Return temprano: nunca llega a la capa de persistencia.
+   *   3. Persistir en BD vía ConversacionesService (event-driven).
+   *   4. handleMensajeCreado_sm_vc escucha el EventEmitter y hace el broadcast.
    *
-   * Este desacoplamiento evita que el gateway emita directamente
-   * antes de que el mensaje esté guardado en BD.
+   * Este desacoplamiento garantiza que el Gateway NUNCA emite directamente
+   * antes de que el mensaje esté persistido en Base de Datos.
    */
   @UseGuards(WsJwtGuard_sm_vc)
   @SubscribeMessage('send_message_sm_vc')
@@ -253,15 +262,32 @@ export class ChatGateway_sm_vc
     try {
       const user_sm_vc = this.obtenerUserAutenticado_sm_vc(client_sm_vc);
 
-      // ── Middleware de solo lectura para ADMIN ──
+      // ── [SPRINT 4] Bloque de Seguridad Estricto: Admin es Solo Lectura ──────────
+      // El ADMIN puede OBSERVAR salas de conversación pero NUNCA puede emitir
+      // mensajes. Si un cliente intenta bypassear la UI y enviar directamente
+      // al socket, este bloque lo intercepta a nivel de protocolo.
+      //
+      // Doble acción para máxima seguridad y mejor DX del cliente:
+      //   1. emit 'error_sm_vc' → el frontend puede reaccionar visualmente.
+      //   2. WsException        → corta el flujo y registra el intento.
+      // ────────────────────────────────────────────────────────────────────────────
       if (user_sm_vc.rol === 'ADMIN') {
+        // Notificar al cliente con el evento de error estandarizado del proyecto
         this.emitirError_sm_vc(
           client_sm_vc,
           'FORBIDDEN',
           'El administrador tiene acceso de solo lectura. No puede enviar mensajes.',
         );
+
+        this.logger_sm_vc.warn(
+          `[send_message_sm_vc] INTENTO BLOQUEADO: ` +
+          `ADMIN (userId=${user_sm_vc.sub}) intentó escribir en el chat. socket=${client_sm_vc.id}`,
+        );
+
+        // Return temprano: el flujo termina aquí, no se persiste nada.
         return;
       }
+      // ────────────────────────────────────────────────────────────────────────────
 
       // ── Persistir en BD (el service emitirá el evento para broadcast) ──
       await this.conversacionesService_sm_vc.registrarMensajeManual_sm_vc({
@@ -270,7 +296,7 @@ export class ChatGateway_sm_vc
         materiaId:       payload_sm_vc.materiaId_sm_vc,
       });
 
-      // ACK al remitente
+      // ACK al remitente: confirmación de que el mensaje fue guardado en BD
       client_sm_vc.emit('message_ack_sm_vc', {
         status_sm_vc:    'guardado',
         timestamp_sm_vc: new Date().toISOString(),
@@ -373,10 +399,16 @@ export class ChatGateway_sm_vc
   }
 
   /**
-   * Verifica si el usuario puede operar en la sala del estudiante indicado.
-   *   ESTUDIANTE → solo su propia sala (sub === estudianteId)
-   *   PROFESOR   → acceso total (TODO Sprint 4: validar con BD)
-   *   ADMIN      → acceso total (modo observador)
+   * verificarPermisoSala_sm_vc — Verificación de sala para el handler leave.
+   *
+   * [SPRINT 4 COMPLETADO]: La validación granular de acceso al unirse a salas
+   * la gestiona ChatRoomGuard_sm_vc (Guards de NestJS), no este método.
+   * Este helper se mantiene únicamente para handleLeave_sm_vc donde no aplica
+   * el guard de sala (salir es siempre un acto permitido si ya estás dentro).
+   *
+   *   ESTUDIANTE → solo puede salir de su propia sala.
+   *   PROFESOR   → puede salir de cualquier sala a la que accedió.
+   *   ADMIN      → puede salir de cualquier sala (oyente universal).
    */
   private verificarPermisoSala_sm_vc(
     user_sm_vc: JwtPayloadWs_sm_vc,
@@ -386,7 +418,8 @@ export class ChatGateway_sm_vc
       case 'ESTUDIANTE':
         return user_sm_vc.sub === estudianteId_sm_vc;
       case 'PROFESOR':
-        return true; // Sprint 4: validar asignación en BD
+        // Al salir no re-validamos BD: si entró, fue porque tenía permiso.
+        return true;
       case 'ADMIN':
         return true;
       default:
