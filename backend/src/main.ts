@@ -16,31 +16,35 @@ async function bootstrap() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+        styleSrc:   ["'self'", "'unsafe-inline'"],
+        scriptSrc:  ["'self'"],
+        imgSrc:     ["'self'", 'data:', 'https:'],
       },
     },
     crossOriginEmbedderPolicy: false,
   }));
 
-  // Enable CORS for frontend dev server
+  // ── CORS actualizado: exponer Content-Disposition para descargas ──
   app.enableCors({
-    origin: config.get('FRONTEND_URL') || 'http://localhost:9000',
-    credentials: true,
+    origin:       config.get('FRONTEND_URL') || 'http://localhost:9000',
+    credentials:  true,
+    // CRÍTICO: sin este header Axios no puede leer el filename del archivo
+    // al hacer responseType: 'blob' en las descargas de documentos y deploy.
+    exposedHeaders: ['Content-Disposition'],
   });
 
-  // Global validation pipe (class-validator)
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist:            true,
       forbidNonWhitelisted: true,
-      transform: true,
+      transform:            true,
     }),
   );
 
   const port = config.get<number>('PORT') || 3000;
   await app.listen(port);
   console.log(`🚀 SENTINNEL Backend running on http://localhost:${port}/api`);
+  console.log(`🔌 WebSocket namespace: ws://localhost:${port}/chat_sm_vc`);
 }
 bootstrap();
