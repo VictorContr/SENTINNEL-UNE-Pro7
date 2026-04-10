@@ -126,18 +126,24 @@
 
             <!-- Real: descarga + previsualización -->
             <template v-else>
+              <!-- Descargar: spinner mientras el blob está en tránsito -->
               <q-btn
                 flat round dense
-                icon="download"
+                :icon="loadingAccion_sm_vc[msg.documento_id_sm_vc ?? msg.id_sm_vc] === 'descargar' ? '' : 'download'"
+                :loading="loadingAccion_sm_vc[msg.documento_id_sm_vc ?? msg.id_sm_vc] === 'descargar'"
+                :disable="!!loadingAccion_sm_vc[msg.documento_id_sm_vc ?? msg.id_sm_vc]"
                 color="teal-3"
                 size="sm"
                 @click="handleAccionArchivo_sm_vc(msg, 'descargar')"
               >
                 <q-tooltip class="bg-dark text-caption">Descargar</q-tooltip>
               </q-btn>
+              <!-- Visualizar: spinner mientras abre el blob en pestaña -->
               <q-btn
                 flat round dense
-                icon="open_in_new"
+                :icon="loadingAccion_sm_vc[msg.documento_id_sm_vc ?? msg.id_sm_vc] === 'visualizar' ? '' : 'open_in_new'"
+                :loading="loadingAccion_sm_vc[msg.documento_id_sm_vc ?? msg.id_sm_vc] === 'visualizar'"
+                :disable="!!loadingAccion_sm_vc[msg.documento_id_sm_vc ?? msg.id_sm_vc]"
                 color="grey-5"
                 size="sm"
                 @click="handleAccionArchivo_sm_vc(msg, 'visualizar')"
@@ -156,18 +162,28 @@
 <script setup>
 import { ref, watch, nextTick } from 'vue'
 import { useQuasar } from 'quasar'
+import {
+  descargarDocumento_sm_vc as svcDescargar_sm_vc,
+  visualizarDocumento_sm_vc as svcVisualizar_sm_vc,
+} from 'src/services/documentosService'
 
 const $q = useQuasar()
 
 /* ── Props ── */
 const props = defineProps({
-  mensajes:  { type: Array,   default: () => [] },
-  requisitos: { type: Array,  default: () => [] },
-  readonly:  { type: Boolean, default: false }
+  mensajes:   { type: Array,   default: () => [] },
+  requisitos: { type: Array,   default: () => [] },
+  readonly:   { type: Boolean, default: false    },
 })
 
 /* ── Ref de scroll ── */
 const containerRef_sm_vc = ref(null)
+
+/**
+ * Map de loading por mensaje: { [msgId]: 'descargar' | 'visualizar' | null }
+ * Evita que el usuario dispare doble clic durante una petición en curso.
+ */
+const loadingAccion_sm_vc = ref({})
 
 /* ── Auto-scroll al llegar un nuevo mensaje ── */
 watch(
@@ -177,17 +193,14 @@ watch(
     if (containerRef_sm_vc.value) {
       containerRef_sm_vc.value.scrollTop = containerRef_sm_vc.value.scrollHeight
     }
-  }
+  },
 )
 
 /* ═══════════════════════════════
    HELPERS DE RENDERIZADO DE CHAT
    ═══════════════════════════════ */
 
-/**
- * Color de fondo del q-chat-message.
- * Sistema → azul-gris | Estudiante → teal
- */
+/** Color de fondo del q-chat-message. Sistema → azul-gris | Estudiante → teal */
 const bgColor_sm_vc = (msg_sm_vc) => {
   if (msg_sm_vc.es_sistema_sm_vc) {
     return $q.dark.isActive ? 'blue-grey-9' : 'blue-grey-8'
@@ -195,29 +208,21 @@ const bgColor_sm_vc = (msg_sm_vc) => {
   return $q.dark.isActive ? 'teal-10' : 'teal-8'
 }
 
-/**
- * Color del avatar según origen del mensaje.
- */
+/** Color del avatar según origen del mensaje. */
 const avatarColor_sm_vc = (msg_sm_vc) =>
   msg_sm_vc.es_sistema_sm_vc ? 'blue-grey-8' : 'teal-4'
 
-/**
- * Icono del avatar según tipo de mensaje.
- */
+/** Icono del avatar según tipo de mensaje. */
 const avatarIcono_sm_vc = (msg_sm_vc) => {
   if (msg_sm_vc.tipo_nodo_sm_vc === 'DOCUMENTO') return 'description'
   return msg_sm_vc.es_sistema_sm_vc ? 'smart_toy' : 'person'
 }
 
-/**
- * Nombre del remitente legible.
- */
+/** Nombre del remitente legible. */
 const nombreRemitente_sm_vc = (msg_sm_vc) =>
   msg_sm_vc.es_sistema_sm_vc ? 'Sistema SENTINNEL' : 'Estudiante'
 
-/**
- * Clase CSS del label de nombre para colorearlo.
- */
+/** Clase CSS del label de nombre para colorearlo. */
 const rolClass_sm_vc = (msg_sm_vc) =>
   msg_sm_vc.es_sistema_sm_vc ? 'role-sistema_sm_vc' : 'role-estudiante_sm_vc'
 
@@ -225,62 +230,54 @@ const rolClass_sm_vc = (msg_sm_vc) =>
    HELPERS DE DOCUMENTO
    ═══════════════════════════════ */
 
-/**
- * Clase CSS de la tarjeta según el estado de aprobación.
- */
+/** Clase CSS de la tarjeta según el estado de aprobación. */
 const estadoCardClass_sm_vc = (estado_sm_vc) => {
   const mapa_sm_vc = {
-    APROBADO:          'file-card--aprobado_sm_vc',
-    REPROBADO:         'file-card--reprobado_sm_vc',
-    OBSERVACIONES:     'file-card--observado_sm_vc',
-    EVALUACION_PARCIAL:'file-card--parcial_sm_vc',
-    ENTREGADO:         'file-card--entregado_sm_vc',
-    PENDIENTE:         'file-card--pendiente_sm_vc',
+    APROBADO:           'file-card--aprobado_sm_vc',
+    REPROBADO:          'file-card--reprobado_sm_vc',
+    OBSERVACIONES:      'file-card--observado_sm_vc',
+    EVALUACION_PARCIAL: 'file-card--parcial_sm_vc',
+    ENTREGADO:          'file-card--entregado_sm_vc',
+    PENDIENTE:          'file-card--pendiente_sm_vc',
   }
   return mapa_sm_vc[estado_sm_vc] ?? 'file-card--pendiente_sm_vc'
 }
 
-/**
- * Icono principal de la tarjeta de documento segun el estado.
- */
+/** Icono principal de la tarjeta de documento segun el estado. */
 const evalIcon_sm_vc = (estado_sm_vc) => {
   const mapa_sm_vc = {
-    APROBADO:          'check_circle',
-    REPROBADO:         'cancel',
-    OBSERVACIONES:     'warning',
-    EVALUACION_PARCIAL:'fact_check',
-    ENTREGADO:         'upload_file',
-    PENDIENTE:         'schedule',
+    APROBADO:           'check_circle',
+    REPROBADO:          'cancel',
+    OBSERVACIONES:      'warning',
+    EVALUACION_PARCIAL: 'fact_check',
+    ENTREGADO:          'upload_file',
+    PENDIENTE:          'schedule',
   }
   return mapa_sm_vc[estado_sm_vc] ?? 'description'
 }
 
-/**
- * Color del icono del documento.
- */
+/** Color del icono del documento. */
 const colorIconoEstado_sm_vc = (estado_sm_vc) => {
   const mapa_sm_vc = {
-    APROBADO:          'positive',
-    REPROBADO:         'negative',
-    OBSERVACIONES:     'warning',
-    EVALUACION_PARCIAL:'info',
-    ENTREGADO:         'light-blue-4',
-    PENDIENTE:         'blue-grey-5',
+    APROBADO:           'positive',
+    REPROBADO:          'negative',
+    OBSERVACIONES:      'warning',
+    EVALUACION_PARCIAL: 'info',
+    ENTREGADO:          'light-blue-4',
+    PENDIENTE:          'blue-grey-5',
   }
   return mapa_sm_vc[estado_sm_vc] ?? 'light-blue-4'
 }
 
-/**
- * Color del q-badge de estado.
- */
+/** Color del q-badge de estado. */
 const colorBadge_sm_vc = (estado_sm_vc) => {
   const mapa_sm_vc = {
-    APROBADO:          'positive',
-    REPROBADO:         'negative',
-    OBSERVACIONES:     'warning',
-    EVALUACION_PARCIAL:'info',
-    ENTREGADO:         'blue-5',
-    PENDIENTE:         'blue-grey-7',
+    APROBADO:           'positive',
+    REPROBADO:          'negative',
+    OBSERVACIONES:      'warning',
+    EVALUACION_PARCIAL: 'info',
+    ENTREGADO:          'blue-5',
+    PENDIENTE:          'blue-grey-7',
   }
   return mapa_sm_vc[estado_sm_vc] ?? 'grey-7'
 }
@@ -292,41 +289,107 @@ const colorBadge_sm_vc = (estado_sm_vc) => {
 const getRequisitoNombre_sm_vc = (id_sm_vc) =>
   props.requisitos.find((r) => r.id_sm_vc === id_sm_vc)?.nombre_sm_vc ?? `Requisito #${id_sm_vc}`
 
-/**
- * Formatea una fecha ISO a la localización venezolana.
- */
+/** Formatea una fecha ISO a la localización venezolana. */
 const formatDateTime_sm_vc = (iso_sm_vc) => {
   if (!iso_sm_vc) return ''
   return new Date(iso_sm_vc).toLocaleString('es-VE', {
     day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+    hour: '2-digit', minute: '2-digit',
   })
 }
 
+/* ═══════════════════════════════
+   ACCIONES DE ARCHIVOS (SPRINT 3)
+   ═══════════════════════════════ */
+
 /**
- * Manejador de acciones sobre archivos.
- * Si mock → notify informativo (early return).
- * Si real → dispara acción correspondiente.
+ * Manejador unificado de acciones sobre tarjetas de archivo.
+ *
+ * MOCK:       Muestra notificación informativa y hace early return.
+ *             No se llama al backend para archivos de simulación.
+ *
+ * 'descargar': Llama a documentosService.descargarDocumento_sm_vc
+ *              que hace el GET con responseType:'blob' y usa
+ *              createObjectURL para forzar el guardado en disco.
+ *
+ * 'visualizar': Llama a documentosService.visualizarDocumento_sm_vc
+ *              que abre el Blob en una pestaña nueva (inline PDF).
+ *
+ * En ambos casos se gestiona estado de `loadingAccion_sm_vc[msgId]`
+ * para deshabilitar el botón durante la petición y evitar doble clic.
+ *
+ * @param {Object} msg_sm_vc    — Objeto de mensaje de ConvMessages
+ * @param {'info'|'descargar'|'visualizar'} accion_sm_vc
  */
-const handleAccionArchivo_sm_vc = (msg_sm_vc, accion_sm_vc) => {
+const handleAccionArchivo_sm_vc = async (msg_sm_vc, accion_sm_vc) => {
+  // ── Mock: solo informativo, sin backend ──
   if (msg_sm_vc.mock_sm_vc || accion_sm_vc === 'info') {
     $q.notify({
-      type: 'info',
-      message: 'Este es un documento de simulación para la demostración académica.',
+      type:     'info',
+      message:  'Este es un documento de simulación para la demostración académica.',
       position: 'top',
-      icon: 'info',
-      timeout: 3000
+      icon:     'info',
+      timeout:  3000,
     })
     return
   }
 
-  // Archivo real: conectar con el backend en una iteración futura
-  $q.notify({
-    type: 'warning',
-    message: `Acción "${accion_sm_vc}" para "${msg_sm_vc.archivo_nombre_sm_vc}" en construcción.`,
-    position: 'top',
-    timeout: 2500
-  })
+  // ── Guard: necesitamos el documentoId para llamar al backend ──
+  const documentoId_sm_vc = msg_sm_vc.documento_id_sm_vc ?? msg_sm_vc.id_sm_vc
+  if (!documentoId_sm_vc) {
+    $q.notify({
+      type:    'warning',
+      message: 'No se puede identificar el archivo. Recarga la conversación.',
+      icon:    'warning',
+      timeout: 3000,
+    })
+    return
+  }
+
+  // ── Guard: evitar doble clic ──
+  if (loadingAccion_sm_vc.value[documentoId_sm_vc]) return
+
+  loadingAccion_sm_vc.value = {
+    ...loadingAccion_sm_vc.value,
+    [documentoId_sm_vc]: accion_sm_vc,
+  }
+
+  try {
+    if (accion_sm_vc === 'descargar') {
+      await svcDescargar_sm_vc(
+        documentoId_sm_vc,
+        msg_sm_vc.archivo_nombre_sm_vc ?? 'documento_sentinnel.pdf',
+      )
+      $q.notify({
+        type:     'positive',
+        message:  `"${msg_sm_vc.archivo_nombre_sm_vc}" descargado correctamente.`,
+        icon:     'download_done',
+        position: 'top-right',
+        timeout:  2500,
+      })
+    } else if (accion_sm_vc === 'visualizar') {
+      await svcVisualizar_sm_vc(documentoId_sm_vc)
+      // Sin notificación: la pestaña nueva es feedback suficiente
+    }
+  } catch (err_sm_vc) {
+    // El servidor devuelve un mensaje de error para MOCK y archivos faltantes
+    const mensajeError_sm_vc =
+      err_sm_vc?.response?.data?.message ||
+      'Error al obtener el archivo. Contacta al administrador.'
+
+    $q.notify({
+      type:     'negative',
+      message:  mensajeError_sm_vc,
+      icon:     'error_outline',
+      position: 'top',
+      timeout:  4000,
+    })
+  } finally {
+    // Limpiar el estado de loading para este documento específico
+    const nuevo_sm_vc = { ...loadingAccion_sm_vc.value }
+    delete nuevo_sm_vc[documentoId_sm_vc]
+    loadingAccion_sm_vc.value = nuevo_sm_vc
+  }
 }
 </script>
 
