@@ -26,6 +26,32 @@
 <template>
   <div class="doc-chat-root_sm_vc">
 
+    <!-- ── [Sprint 5] BANNER DE CONEXIÓN: Alerta cuando hay pérdida de red ── -->
+    <!-- Se muestra SOLO cuando el estado es 'offline' o 'reconnecting' -->
+    <!-- Posicionado fuera del bloque de carga para ser siempre visible -->
+    <q-banner
+      v-if="chatStore_sm_vc.estadoConexion_sm_vc === 'offline' || chatStore_sm_vc.estadoConexion_sm_vc === 'reconnecting'"
+      class="banner-conexion_sm_vc"
+      dense
+      inline-actions
+    >
+      <template #avatar>
+        <q-icon
+          :name="chatStore_sm_vc.estadoConexion_sm_vc === 'reconnecting' ? 'sync' : 'wifi_off'"
+          :class="chatStore_sm_vc.estadoConexion_sm_vc === 'reconnecting' ? 'icon-spin_sm_vc' : ''"
+          size="18px"
+        />
+      </template>
+      <span class="banner-conexion-texto_sm_vc">
+        <template v-if="chatStore_sm_vc.estadoConexion_sm_vc === 'reconnecting'">
+          Intentando reconectar al chat en tiempo real...
+        </template>
+        <template v-else>
+          Conexión perdida. Los mensajes nuevos no se reciben en tiempo real.
+        </template>
+      </span>
+    </q-banner>
+
     <!-- ── ESTADO: Cargando ── -->
     <div v-if="conversacionStore_sm_vc.cargando_sm_vc" class="loading-state_sm_vc">
       <q-spinner-dots color="teal-3" size="36px" />
@@ -75,6 +101,26 @@
         :mensajes="mensajesOrdenados_sm_vc"
         :requisitos="requisitos_sm_vc"
         :readonly="!puedeEscribir_sm_vc" />
+
+      <!-- ── [Sprint 5] INDICADOR DE ESCRITURA: "Alguien está escribiendo..." ── -->
+      <!-- Solo visible en modo CHAT cuando hay otro usuario activo en la sala -->
+      <!-- La animación de puntos se logra via CSS sin dependencias externas -->
+      <transition name="typing-fade_sm_vc">
+        <div
+          v-if="chatStore_sm_vc.alguienEscribiendo_sm_vc && props.modoVista_sm_vc === 'CHAT'"
+          class="typing-indicator_sm_vc"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span class="typing-dots_sm_vc">
+            <span class="typing-dot_sm_vc" />
+            <span class="typing-dot_sm_vc" />
+            <span class="typing-dot_sm_vc" />
+          </span>
+          <span class="typing-label_sm_vc">Alguien está escribiendo</span>
+        </div>
+      </transition>
 
       <!-- ── PANEL DE ENTRADA: Solo si el usuario puede escribir ── -->
       <template v-if="puedeEscribir_sm_vc">
@@ -133,6 +179,7 @@ import { computed, onMounted, watch } from 'vue'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
 import { useConversacionStore_sm_vc } from 'src/stores/conversacionStore'
+import { useChatStore_sm_vc } from 'src/stores/chatStore_sm_vc'
 
 /* Componentes Atómicos */
 import ConvHeader from './conv/ConvHeader.vue'
@@ -186,6 +233,7 @@ const emit = defineEmits(['mensajeEnviado'])
 const pasantiasStore_sm_vc    = usePasantiasStore()
 const auth_sm_vc              = useAuthStore()
 const conversacionStore_sm_vc = useConversacionStore_sm_vc()
+const chatStore_sm_vc         = useChatStore_sm_vc()
 
 /* ══════════════════════════════════════════════════════════════
  *  COMPUTED: Identidad del usuario
@@ -379,6 +427,70 @@ const handleGuardarRequisitos_sm_vc = (payload_sm_vc) => {
   font-family: var(--sn-font-mono);
   width: 100%;
 }
+
+/* ── [Sprint 5] Banner de conexión: perdida de red / reconectando ── */
+.banner-conexion_sm_vc {
+  background: rgba(245, 158, 11, .10);
+  border-bottom: 1px solid rgba(245, 158, 11, .30);
+  color: #b45309;
+  font-family: var(--sn-font-sans);
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .01em;
+  padding: .45rem 1.25rem;
+  min-height: 0;
+}
+.banner-conexion-texto_sm_vc {
+  line-height: 1.4;
+}
+/* Ícono girando cuando está en estado 'reconnecting' */
+.icon-spin_sm_vc {
+  animation: sn-spin_sm_vc 1.2s linear infinite;
+}
+@keyframes sn-spin_sm_vc {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── [Sprint 5] Indicador de escritura (typing indicator) ── */
+.typing-indicator_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem 1.25rem .45rem;
+  font-family: var(--sn-font-sans);
+}
+.typing-label_sm_vc {
+  font-size: .68rem;
+  color: var(--sn-texto-apagado, #9e9e9e);
+  font-style: italic;
+  letter-spacing: .02em;
+  user-select: none;
+}
+/* Tres puntos animados con delay escalonado */
+.typing-dots_sm_vc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.typing-dot_sm_vc {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sn-texto-apagado, #9e9e9e);
+  animation: sn-typing-bounce_sm_vc 1.2s ease-in-out infinite;
+}
+.typing-dot_sm_vc:nth-child(2) { animation-delay: .2s; }
+.typing-dot_sm_vc:nth-child(3) { animation-delay: .4s; }
+@keyframes sn-typing-bounce_sm_vc {
+  0%, 60%, 100% { transform: translateY(0);    opacity: .4; }
+  30%           { transform: translateY(-4px); opacity: 1;  }
+}
+/* Transición suave de entrada/salida del indicador */
+.typing-fade_sm_vc-enter-active,
+.typing-fade_sm_vc-leave-active { transition: opacity .25s ease, transform .25s ease; }
+.typing-fade_sm_vc-enter-from,
+.typing-fade_sm_vc-leave-to    { opacity: 0; transform: translateY(4px); }
 
 /* ── Estado de carga ── */
 .loading-state_sm_vc {

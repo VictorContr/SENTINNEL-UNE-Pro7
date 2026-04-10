@@ -315,8 +315,25 @@ export class ChatGateway_sm_vc
   }
 
   /**
-   * typing_sm_vc — Indicador "escribiendo..." en tiempo real.
-   * No persiste en BD; broadcast efímero a la sala.
+   * typing_sm_vc — Indicador "escribiendo..." en tiempo real. [Sprint 5]
+   *
+   * Recibe el estado de escritura del cliente (true/false) y lo retransmite
+   * a los DEMÁS miembros de la sala mediante broadcast (excluye al emisor).
+   *
+   * CONTRATO DE EVENTOS:
+   *   Cliente → Servidor : 'typing_sm_vc'        { isTyping_sm_vc, estudianteId_sm_vc, materiaId_sm_vc? }
+   *   Servidor → Sala    : 'typing_status_sm_vc'  { userId_sm_vc, rol_sm_vc, isTyping_sm_vc, timestamp_sm_vc }
+   *
+   * El frontend escucha 'typing_status_sm_vc' en el chatStore_sm_vc para actualizar
+   * el mapa reactivo `escribiendo_sm_vc` y mostrar el indicador visual.
+   *
+   * RESTRICCIONES:
+   *   - ADMIN no puede emitir señales de escritura (es solo lectura).
+   *   - Si el payload es inválido (sin estudianteId) se descarta silenciosamente.
+   *   - No persiste en BD: el broadcast es efímero y no tiene efecto en el historial.
+   *
+   * @param client_sm_vc  Socket del emisor (excluido del broadcast via .broadcast.to).
+   * @param payload_sm_vc DTO con el estado de escritura y contexto de sala.
    */
   @UseGuards(WsJwtGuard_sm_vc)
   @SubscribeMessage('typing_sm_vc')
@@ -327,23 +344,37 @@ export class ChatGateway_sm_vc
     try {
       const user_sm_vc = this.obtenerUserAutenticado_sm_vc(client_sm_vc);
 
-      // ADMIN no interactúa como escritor
+      // ADMIN no puede emitir señales de escritura (es observador)
       if (user_sm_vc.rol === 'ADMIN') return;
+
+      // Validación defensiva: estudianteId es obligatorio para construir la sala
+      if (!payload_sm_vc?.estudianteId_sm_vc) {
+        this.logger_sm_vc.warn(
+          `[typing_sm_vc] Payload sin estudianteId_sm_vc. socket=${client_sm_vc.id} Descartado.`,
+        );
+        return;
+      }
 
       const roomId_sm_vc = this.buildRoomId_sm_vc(
         payload_sm_vc.estudianteId_sm_vc,
         payload_sm_vc.materiaId_sm_vc,
       );
 
-      client_sm_vc.to(roomId_sm_vc).emit('typing_status_sm_vc', {
+      // broadcast.to(room) — envía a TODOS en la sala EXCEPTO al emisor.
+      // Semánticamente equivalente a client.to(room) pero más explícito en intención.
+      client_sm_vc.broadcast.to(roomId_sm_vc).emit('typing_status_sm_vc', {
         userId_sm_vc:    user_sm_vc.sub,
         rol_sm_vc:       user_sm_vc.rol,
         isTyping_sm_vc:  payload_sm_vc.isTyping_sm_vc,
         timestamp_sm_vc: new Date().toISOString(),
       });
+
+      this.logger_sm_vc.debug(
+        `[Typing] userId=${user_sm_vc.sub} isTyping=${payload_sm_vc.isTyping_sm_vc} → sala "${roomId_sm_vc}"`,
+      );
     } catch (err_sm_vc) {
       this.logger_sm_vc.error(
-        `[typing_sm_vc] ${(err_sm_vc as Error).message}`,
+        `[typing_sm_vc] Error inesperado: ${(err_sm_vc as Error).message}`,
       );
     }
   }
