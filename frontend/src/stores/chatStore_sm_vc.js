@@ -274,14 +274,26 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
     // ══════════════════════════════════════════════════════════════
 
     /**
-     * message_received_sm_vc — Nuevo mensaje en tiempo real.
+     * message_received_sm_vc — Nuevo mensaje en tiempo real (broadcast a sala).
      *
-     * El backend emite este evento a la sala cuando un mensaje es persistido en BD.
-     * Inyectamos el mensaje directamente al conversacionStore para mantener una
-     * sola fuente de verdad reactiva (evitamos duplicación de estado).
+     * El backend emite este evento a TODOS los clientes de la sala cuando un
+     * mensaje es persistido en BD. Inyectamos el mensaje directamente al
+     * conversacionStore para mantener una sola fuente de verdad reactiva.
      */
     socket_sm_vc.value.on("message_received_sm_vc", (mensaje_sm_vc) => {
       _inyectarMensajeEnStore_sm_vc(mensaje_sm_vc);
+    });
+
+    /**
+     * message_ack_sm_vc — Confirmación de que el mensaje fue guardado en BD.
+     *
+     * [FIX] El backend envía este ACK al remitente justo después de persistir.
+     * Usamos el mensaje devuelto (ya con ID de BD) para actualizar la UI.
+     */
+    socket_sm_vc.value.on("message_ack_sm_vc", (ack_sm_vc) => {
+      if (ack_sm_vc?.mensaje_sm_vc) {
+        _inyectarMensajeEnStore_sm_vc(ack_sm_vc.mensaje_sm_vc);
+      }
     });
 
     /**

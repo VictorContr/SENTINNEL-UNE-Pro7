@@ -28,8 +28,8 @@ import { TypingStatusDto_sm_vc } from '../dto/typing-status.dto';
 /** Payload tipado que emite ConversacionesService vía EventEmitter2 */
 interface MensajeCreadoPayload_sm_vc {
   estudianteId_sm_vc: number;
-  materiaId_sm_vc?:   number;
-  mensaje_sm_vc:      Record<string, unknown>;
+  materiaId_sm_vc?: number;
+  mensaje_sm_vc: Record<string, unknown>;
 }
 
 /** Datos del usuario autenticado en socket.data.user_sm_vc */
@@ -56,7 +56,8 @@ interface JwtPayloadWs_sm_vc {
 @WebSocketGateway({
   namespace: 'chat_sm_vc',
   cors: {
-    origin:      (_origin: string, cb: (err: null, allow: boolean) => void) => cb(null, true),
+    origin: (_origin: string, cb: (err: null, allow: boolean) => void) =>
+      cb(null, true),
     credentials: true,
   },
   transports: ['websocket', 'polling'],
@@ -70,10 +71,10 @@ export class ChatGateway_sm_vc
   private readonly logger_sm_vc = new Logger(ChatGateway_sm_vc.name);
 
   constructor(
-    private readonly jwtService_sm_vc:         JwtService,
-    private readonly presenceService_sm_vc:    ChatPresenceService_sm_vc,
+    private readonly jwtService_sm_vc: JwtService,
+    private readonly presenceService_sm_vc: ChatPresenceService_sm_vc,
     private readonly conversacionesService_sm_vc: ConversacionesService,
-    private readonly configService_sm_vc:      ConfigService,
+    private readonly configService_sm_vc: ConfigService,
   ) {}
 
   // ══════════════════════════════════════════════════════════════
@@ -83,7 +84,7 @@ export class ChatGateway_sm_vc
   afterInit(_server_sm_vc: Server): void {
     this.logger_sm_vc.log(
       `[ChatGateway_sm_vc] Namespace /chat_sm_vc inicializado | ` +
-      `Frontend esperado: ${this.configService_sm_vc.get('FRONTEND_URL') ?? 'http://localhost:9000'}`,
+        `Frontend esperado: ${this.configService_sm_vc.get('FRONTEND_URL') ?? 'http://localhost:9000'}`,
     );
   }
 
@@ -98,12 +99,17 @@ export class ChatGateway_sm_vc
       const token_sm_vc = this.extraerTokenHandshake_sm_vc(client_sm_vc);
 
       if (!token_sm_vc) {
-        this.emitirError_sm_vc(client_sm_vc, 'TOKEN_MISSING', 'Token de autenticación requerido.');
+        this.emitirError_sm_vc(
+          client_sm_vc,
+          'TOKEN_MISSING',
+          'Token de autenticación requerido.',
+        );
         client_sm_vc.disconnect(true);
         return;
       }
 
-      const payload_sm_vc = this.jwtService_sm_vc.verify<JwtPayloadWs_sm_vc>(token_sm_vc);
+      const payload_sm_vc =
+        this.jwtService_sm_vc.verify<JwtPayloadWs_sm_vc>(token_sm_vc);
       client_sm_vc.data.user_sm_vc = payload_sm_vc;
 
       this.presenceService_sm_vc.registrarConexion_sm_vc(
@@ -119,7 +125,11 @@ export class ChatGateway_sm_vc
       this.logger_sm_vc.warn(
         `[Conexión rechazada] socket=${client_sm_vc.id} — ${(err_sm_vc as Error).message}`,
       );
-      this.emitirError_sm_vc(client_sm_vc, 'UNAUTHORIZED', 'Token JWT inválido o expirado.');
+      this.emitirError_sm_vc(
+        client_sm_vc,
+        'UNAUTHORIZED',
+        'Token JWT inválido o expirado.',
+      );
       client_sm_vc.disconnect(true);
     }
   }
@@ -158,7 +168,12 @@ export class ChatGateway_sm_vc
     try {
       const user_sm_vc = this.obtenerUserAutenticado_sm_vc(client_sm_vc);
 
-      if (!this.verificarPermisoSala_sm_vc(user_sm_vc, payload_sm_vc.estudianteId_sm_vc)) {
+      if (
+        !this.verificarPermisoSala_sm_vc(
+          user_sm_vc,
+          payload_sm_vc.estudianteId_sm_vc,
+        )
+      ) {
         this.emitirError_sm_vc(
           client_sm_vc,
           'FORBIDDEN',
@@ -177,18 +192,18 @@ export class ChatGateway_sm_vc
 
       // Notificar a los ya presentes en la sala
       client_sm_vc.to(roomId_sm_vc).emit('user_joined_sm_vc', {
-        userId_sm_vc:       user_sm_vc.sub,
-        rol_sm_vc:          user_sm_vc.rol,
-        timestamp_sm_vc:    new Date().toISOString(),
+        userId_sm_vc: user_sm_vc.sub,
+        rol_sm_vc: user_sm_vc.rol,
+        timestamp_sm_vc: new Date().toISOString(),
       });
 
       // Confirmar al cliente que se unió exitosamente
       client_sm_vc.emit('room_joined_sm_vc', {
         roomId_sm_vc,
-        estudianteId_sm_vc:     payload_sm_vc.estudianteId_sm_vc,
-        materiaId_sm_vc:        payload_sm_vc.materiaId_sm_vc ?? null,
+        estudianteId_sm_vc: payload_sm_vc.estudianteId_sm_vc,
+        materiaId_sm_vc: payload_sm_vc.materiaId_sm_vc ?? null,
         esAdminObservador_sm_vc: user_sm_vc.rol === 'ADMIN',
-        timestamp_sm_vc:        new Date().toISOString(),
+        timestamp_sm_vc: new Date().toISOString(),
       });
 
       this.logger_sm_vc.debug(
@@ -199,7 +214,11 @@ export class ChatGateway_sm_vc
         `[join_conversation_sm_vc] ${(err_sm_vc as Error).message}`,
         (err_sm_vc as Error).stack,
       );
-      this.emitirError_sm_vc(client_sm_vc, 'INTERNAL_ERROR', 'Error al unirse a la sala.');
+      this.emitirError_sm_vc(
+        client_sm_vc,
+        'INTERNAL_ERROR',
+        'Error al unirse a la sala.',
+      );
     }
   }
 
@@ -220,10 +239,13 @@ export class ChatGateway_sm_vc
       );
 
       await client_sm_vc.leave(roomId_sm_vc);
-      this.presenceService_sm_vc.salirDeSala_sm_vc(client_sm_vc.id, roomId_sm_vc);
+      this.presenceService_sm_vc.salirDeSala_sm_vc(
+        client_sm_vc.id,
+        roomId_sm_vc,
+      );
 
       client_sm_vc.to(roomId_sm_vc).emit('user_left_sm_vc', {
-        userId_sm_vc:    user_sm_vc.sub,
+        userId_sm_vc: user_sm_vc.sub,
         timestamp_sm_vc: new Date().toISOString(),
       });
 
@@ -281,7 +303,7 @@ export class ChatGateway_sm_vc
 
         this.logger_sm_vc.warn(
           `[send_message_sm_vc] INTENTO BLOQUEADO: ` +
-          `ADMIN (userId=${user_sm_vc.sub}) intentó escribir en el chat. socket=${client_sm_vc.id}`,
+            `ADMIN (userId=${user_sm_vc.sub}) intentó escribir en el chat. socket=${client_sm_vc.id}`,
         );
 
         // Return temprano: el flujo termina aquí, no se persiste nada.
@@ -290,16 +312,19 @@ export class ChatGateway_sm_vc
       // ────────────────────────────────────────────────────────────────────────────
 
       // ── Persistir en BD (el service emitirá el evento para broadcast) ──
-      await this.conversacionesService_sm_vc.registrarMensajeManual_sm_vc({
-        estudianteId:    payload_sm_vc.estudianteId_sm_vc,
-        contenido_sm_vc: payload_sm_vc.contenido_sm_vc,
-        materiaId:       payload_sm_vc.materiaId_sm_vc,
-      });
+      const mensajeGuardado_sm_vc =
+        await this.conversacionesService_sm_vc.registrarMensajeManual_sm_vc({
+          estudianteId: payload_sm_vc.estudianteId_sm_vc,
+          contenido_sm_vc: payload_sm_vc.contenido_sm_vc,
+          materiaId: payload_sm_vc.materiaId_sm_vc,
+        });
 
       // ACK al remitente: confirmación de que el mensaje fue guardado en BD
+      // [FIX] Incluir el mensaje completo para actualización optimista de la UI
       client_sm_vc.emit('message_ack_sm_vc', {
-        status_sm_vc:    'guardado',
+        status_sm_vc: 'guardado',
         timestamp_sm_vc: new Date().toISOString(),
+        mensaje_sm_vc: mensajeGuardado_sm_vc,
       });
     } catch (err_sm_vc) {
       this.logger_sm_vc.error(
@@ -363,9 +388,9 @@ export class ChatGateway_sm_vc
       // broadcast.to(room) — envía a TODOS en la sala EXCEPTO al emisor.
       // Semánticamente equivalente a client.to(room) pero más explícito en intención.
       client_sm_vc.broadcast.to(roomId_sm_vc).emit('typing_status_sm_vc', {
-        userId_sm_vc:    user_sm_vc.sub,
-        rol_sm_vc:       user_sm_vc.rol,
-        isTyping_sm_vc:  payload_sm_vc.isTyping_sm_vc,
+        userId_sm_vc: user_sm_vc.sub,
+        rol_sm_vc: user_sm_vc.rol,
+        isTyping_sm_vc: payload_sm_vc.isTyping_sm_vc,
         timestamp_sm_vc: new Date().toISOString(),
       });
 
@@ -459,10 +484,18 @@ export class ChatGateway_sm_vc
   }
 
   /** Obtiene el payload del usuario autenticado desde socket.data. */
-  private obtenerUserAutenticado_sm_vc(client_sm_vc: Socket): JwtPayloadWs_sm_vc {
-    const user_sm_vc = client_sm_vc.data?.user_sm_vc as JwtPayloadWs_sm_vc | undefined;
+  private obtenerUserAutenticado_sm_vc(
+    client_sm_vc: Socket,
+  ): JwtPayloadWs_sm_vc {
+    const user_sm_vc = client_sm_vc.data?.user_sm_vc as
+      | JwtPayloadWs_sm_vc
+      | undefined;
     if (!user_sm_vc) {
-      this.emitirError_sm_vc(client_sm_vc, 'UNAUTHORIZED', 'Sesión no autenticada.');
+      this.emitirError_sm_vc(
+        client_sm_vc,
+        'UNAUTHORIZED',
+        'Sesión no autenticada.',
+      );
       client_sm_vc.disconnect(true);
       throw new Error(`Socket ${client_sm_vc.id} sin user_sm_vc en data.`);
     }
