@@ -1,0 +1,525 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e-chat-tests.spec.js >> Módulo de Chat E2E - SENTINNEL >> Escenario 4: Seguridad - Verificar restricciones de Admin
+- Location: e2e-chat-tests.spec.js:252:3
+
+# Error details
+
+```
+Test timeout of 60000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- main [ref=e5]:
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - img [ref=e9]
+      - generic [ref=e12]: SENTINNEL
+    - navigation "Navegación de la landing" [ref=e13]:
+      - link "Beneficios" [ref=e14] [cursor=pointer]:
+        - /url: "#beneficios"
+      - link "Demo" [ref=e15] [cursor=pointer]:
+        - /url: "#demo"
+      - link "Testimonios" [ref=e16] [cursor=pointer]:
+        - /url: "#testimonios"
+      - link "FAQ" [ref=e17] [cursor=pointer]:
+        - /url: "#faq"
+      - link "Contacto" [ref=e18] [cursor=pointer]:
+        - /url: "#contacto"
+    - generic [ref=e19]:
+      - button "Cambiar tema" [ref=e20] [cursor=pointer]:
+        - img [ref=e22]: dark_mode
+      - button "Acceder" [ref=e23] [cursor=pointer]:
+        - generic [ref=e24]:
+          - img [ref=e25]: login
+          - generic [ref=e26]: Acceder
+  - region "Presentación de SENTINNEL" [ref=e28]:
+    - generic [ref=e29]:
+      - generic [ref=e32]: Universidad Nueva Esparta · Computación
+      - img [ref=e34]
+      - heading "SENTINNEL Trazabilidad Académica UNE" [level=1] [ref=e38]:
+        - generic [ref=e39]: SENTINNEL
+        - generic [ref=e40]: Trazabilidad Académica UNE
+      - paragraph [ref=e41]:
+        - text: El sistema
+        - strong [ref=e42]: step-by-step
+        - text: "que digitaliza el ciclo completo de pasantías: desde la primera entrega de informe hasta el deploy del proyecto final. Sin papel, sin correos informales, con auditoría total."
+      - generic "Estadísticas del sistema" [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]: "3"
+          - generic [ref=e46]: Materias Secuenciales
+        - generic [ref=e47]:
+          - generic [ref=e48]: 100%
+          - generic [ref=e49]: Trazabilidad Digital
+        - generic [ref=e50]:
+          - generic [ref=e51]: "0"
+          - generic [ref=e52]: Papel Requerido
+        - generic [ref=e53]:
+          - generic [ref=e54]: ∞
+          - generic [ref=e55]: Historial Inmutable
+      - generic [ref=e56]:
+        - link "Acceder al Sistema" [ref=e57] [cursor=pointer]:
+          - /url: "#/login"
+          - generic [ref=e58]:
+            - generic [ref=e59]: Acceder al Sistema
+            - img [ref=e60]: arrow_forward
+        - button "Ver cómo funciona" [ref=e61] [cursor=pointer]:
+          - generic [ref=e62]:
+            - img [ref=e63]: play_circle
+            - generic [ref=e64]: Ver cómo funciona
+      - generic "Roles del sistema" [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]: admin_panel_settings
+          - text: Administrador
+        - generic [ref=e68]:
+          - generic [ref=e69]: school
+          - text: Profesor
+        - generic [ref=e70]:
+          - generic [ref=e71]: person
+          - text: Estudiante
+    - generic [ref=e74]: scroll
+  - region "Beneficios de SENTINNEL" [ref=e75]:
+    - generic [ref=e76]:
+      - generic [ref=e79]: Por qué SENTINNEL
+      - heading "Un sistema diseñado para eliminar la burocracia" [level=2] [ref=e81]:
+        - text: Un sistema diseñado para
+        - text: eliminar la burocracia
+      - paragraph [ref=e82]: Cuatro pilares tecnológicos que transforman el proceso de pasantías en la carrera de Computación de la UNE.
+    - generic [ref=e83]:
+      - generic [ref=e84]:
+        - generic [ref=e85]: "01"
+        - generic [ref=e87]: description
+        - heading "Cero Papel, Cero Correos" [level=3] [ref=e88]
+        - paragraph [ref=e89]: Toda la comunicación documental ocurre dentro de la plataforma. Los PDFs se cargan, validan y versionan digitalmente, con historial inmutable.
+        - generic [ref=e90]:
+          - generic [ref=e91]: PDF Digital
+          - generic [ref=e92]: Versionado
+          - generic [ref=e93]: Historial
+      - generic [ref=e94]:
+        - generic [ref=e95]: "02"
+        - generic [ref=e97]: linear_scale
+        - heading "Flujo Step-by-Step Bloqueante" [level=3] [ref=e98]
+        - paragraph [ref=e99]: Un estudiante solo puede avanzar a Seminario de Grado si aprueba Investigación y Desarrollo. El sistema bloquea el acceso hasta cumplir los requisitos.
+        - generic [ref=e100]:
+          - generic [ref=e101]: 4 Materias
+          - generic [ref=e102]: Desbloqueo Secuencial
+          - generic [ref=e103]: Control Docente
+      - generic [ref=e104]:
+        - generic [ref=e105]: "03"
+        - generic [ref=e107]: rocket_launch
+        - heading "Módulo de Deploy Final" [level=3] [ref=e108]
+        - paragraph [ref=e109]: Una vez aprobadas las 4 materias, el estudiante registra la URL de producción y sube el código fuente comprimido como evidencia técnica.
+        - generic [ref=e110]:
+          - generic [ref=e111]: URL Producción
+          - generic [ref=e112]: Código Fuente
+          - generic [ref=e113]: Evidencia Técnica
+      - generic [ref=e114]:
+        - generic [ref=e115]: "04"
+        - generic [ref=e117]: fact_check
+        - heading "Evaluación Granular de Requisitos" [level=3] [ref=e118]
+        - paragraph [ref=e119]: Los profesores pueden aprobar capítulos individualmente sin necesitar que todo el informe esté completo. Feedback quirúrgico por sección.
+        - generic [ref=e120]:
+          - generic [ref=e121]: Por Capítulo
+          - generic [ref=e122]: Feedback Parcial
+          - generic [ref=e123]: Auditoría Total
+    - generic [ref=e124]:
+      - generic [ref=e125]:
+        - generic [ref=e126]: route
+        - text: Flujo secuencial garantizado
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]: "01"
+          - generic [ref=e130]:
+            - generic [ref=e131]: Registro Admin
+            - generic [ref=e132]: Carga masiva de cohorte
+          - generic [ref=e133]: upload_file
+          - generic [ref=e135]: arrow_forward
+        - generic [ref=e136]:
+          - generic [ref=e137]: "02"
+          - generic [ref=e138]:
+            - generic [ref=e139]: Investigación y Desarrollo
+            - generic [ref=e140]: Anteproyecto
+          - generic [ref=e141]: description
+          - generic [ref=e143]: arrow_forward
+        - generic [ref=e144]:
+          - generic [ref=e145]: "03"
+          - generic [ref=e146]:
+            - generic [ref=e147]: Seminario de Grado
+            - generic [ref=e148]: Desarrollo inicial
+          - generic [ref=e149]: code
+          - generic [ref=e151]: arrow_forward
+        - generic [ref=e152]:
+          - generic [ref=e153]: "04"
+          - generic [ref=e154]:
+            - generic [ref=e155]: Trabajo de Grado I
+            - generic [ref=e156]: Desarrollo avanzado
+          - generic [ref=e157]: laptop_mac
+          - generic [ref=e159]: arrow_forward
+        - generic [ref=e160]:
+          - generic [ref=e161]: "05"
+          - generic [ref=e162]:
+            - generic [ref=e163]: Trabajo de Grado II
+            - generic [ref=e164]: Defensa y tesis
+          - generic [ref=e165]: school
+          - generic [ref=e167]: arrow_forward
+        - generic [ref=e168]:
+          - generic [ref=e169]: "06"
+          - generic [ref=e170]:
+            - generic [ref=e171]: Deploy
+            - generic [ref=e172]: URL + Código fuente
+          - generic [ref=e173]: rocket_launch
+  - region "Vista previa del sistema SENTINNEL" [ref=e174]:
+    - generic [ref=e175]:
+      - generic [ref=e178]: Vista Previa
+      - heading "El sistema, en acción" [level=2] [ref=e180]
+    - generic [ref=e181]:
+      - generic [ref=e187]:
+        - generic [ref=e188]: lock
+        - text: sentinnel.une.edu.ve/#/estudiante/trazabilidad
+      - generic [ref=e189]:
+        - complementary [ref=e190]:
+          - img [ref=e192]
+          - navigation [ref=e195]:
+            - generic [ref=e197]: notifications_none
+            - generic [ref=e199]: track_changes
+            - generic [ref=e201]: rocket_launch
+        - main [ref=e202]:
+          - generic [ref=e203]:
+            - generic [ref=e204]:
+              - paragraph [ref=e205]: Mi Trazabilidad
+              - paragraph [ref=e206]: Cohorte P-165 · Prof. Torres
+            - generic [ref=e207]:
+              - generic [ref=e208]: 67%
+              - progressbar [ref=e209]
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - generic [ref=e215]:
+                - generic [ref=e216]:
+                  - paragraph [ref=e217]: Investig. y Desarrollo
+                  - paragraph [ref=e218]: MAT-001
+                - generic [ref=e219]:
+                  - generic [ref=e220]: check_circle
+                  - text: APROBADO
+              - progressbar [ref=e221]
+              - paragraph [ref=e224]: 6/6 requisitos
+            - generic [ref=e225]:
+              - generic [ref=e227]:
+                - generic [ref=e228]:
+                  - paragraph [ref=e229]: Seminario de Grado
+                  - paragraph [ref=e230]: MAT-002
+                - generic [ref=e231]:
+                  - generic [ref=e232]: upload_file
+                  - text: ENTREGADO
+              - progressbar [ref=e233]
+              - paragraph [ref=e236]: 2/5 requisitos
+            - generic [ref=e237]:
+              - generic [ref=e239]:
+                - generic [ref=e240]:
+                  - paragraph [ref=e241]: Trabajo de Grado I
+                  - paragraph [ref=e242]: MAT-003
+                - generic [ref=e243]:
+                  - generic [ref=e244]: schedule
+                  - text: PENDIENTE
+              - progressbar [ref=e245]
+              - paragraph [ref=e247]: 0/3 requisitos
+          - generic [ref=e248]:
+            - generic [ref=e249]:
+              - generic [ref=e250]: forum
+              - generic [ref=e251]: Conversación Documental — Seminario de Grado
+            - generic [ref=e252]:
+              - generic [ref=e254]:
+                - generic [ref=e255]: INFORME
+                - generic [ref=e256]:
+                  - generic [ref=e257]: description
+                  - text: Cap3_Metodologia_v1.pdf
+              - generic [ref=e259]:
+                - generic [ref=e260]: CORRECCIÓN
+                - generic [ref=e261]:
+                  - generic [ref=e262]: rate_review
+                  - text: Obs_Cap3_v1.pdf
+              - generic [ref=e264]:
+                - generic [ref=e265]: INFORME
+                - generic [ref=e266]:
+                  - generic [ref=e267]: description
+                  - text: Cap4_Resultados_v1.pdf
+    - paragraph [ref=e268]: "Vista real del panel de trazabilidad — Rol: Estudiante · Modo Demo"
+  - region "Testimonios de usuarios SENTINNEL" [ref=e269]:
+    - generic [ref=e270]:
+      - generic [ref=e273]: Social Proof
+      - heading "Lo que dicen pasantes y tutores" [level=2] [ref=e275]
+    - generic [ref=e277]:
+      - tabpanel [ref=e279]:
+        - generic [ref=e281]:
+          - generic [ref=e282]:
+            - generic [ref=e283]: "\""
+            - paragraph [ref=e284]: El módulo de Deploy me permitió registrar mi URL de producción junto con el código. El proceso completo de pasantía en una sola plataforma.
+            - generic [ref=e285]:
+              - generic [ref=e286]: L
+              - generic [ref=e287]:
+                - generic [ref=e288]: Laboriosam Mollitia Et
+                - generic [ref=e289]: Pasante · Mención Electrónica
+              - generic [ref=e290]:
+                - generic [ref=e291]: P-165
+                - generic [ref=e292]: school
+          - generic [ref=e293]:
+            - generic [ref=e294]: "\""
+            - paragraph [ref=e295]: La evaluación granular de requisitos por capítulo me da un control sin precedentes. Puedo aprobar parcialmente y dar feedback específico.
+            - generic [ref=e296]:
+              - generic [ref=e297]: Q
+              - generic [ref=e298]:
+                - generic [ref=e299]: Qui Ullam Ratione
+                - generic [ref=e300]: Prof. Asesor · Trabajo de Grado
+              - generic [ref=e301]:
+                - generic [ref=e302]: P-164
+                - generic [ref=e303]: school
+      - generic [ref=e305]:
+        - button [ref=e306] [cursor=pointer]:
+          - img [ref=e308]: lens
+        - button [ref=e309] [cursor=pointer]:
+          - img [ref=e311]: lens
+        - button [ref=e312] [cursor=pointer]:
+          - img [ref=e314]: lens
+      - button [ref=e315] [cursor=pointer]:
+        - img [ref=e317]: chevron_left
+      - button [ref=e318] [cursor=pointer]:
+        - img [ref=e320]: chevron_right
+    - generic [ref=e321]:
+      - generic [ref=e322]:
+        - generic [ref=e323]: groups
+        - generic [ref=e324]: 200+
+        - generic [ref=e325]: Pasantes registrados
+      - generic [ref=e326]:
+        - generic [ref=e327]: description
+        - generic [ref=e328]: 1.4k
+        - generic [ref=e329]: Informes procesados
+      - generic [ref=e330]:
+        - generic [ref=e331]: verified
+        - generic [ref=e332]: 98%
+        - generic [ref=e333]: Tasa de aprobación
+      - generic [ref=e334]:
+        - generic [ref=e335]: timer
+        - generic [ref=e336]: "-60%"
+        - generic [ref=e337]: Tiempo de gestión
+  - region "Preguntas frecuentes" [ref=e338]:
+    - generic [ref=e339]:
+      - generic [ref=e342]: FAQ
+      - heading "Preguntas frecuentes" [level=2] [ref=e344]
+      - paragraph [ref=e345]: Todo lo que necesitas saber antes de iniciar tu proceso de pasantías.
+    - generic [ref=e346]:
+      - generic [ref=e348]:
+        - button "Expandir \"¿Qué formatos de archivo acepta el sistema?\"" [ref=e349] [cursor=pointer]:
+          - generic [ref=e351]: upload_file
+          - generic [ref=e352]:
+            - generic [ref=e353]: ¿Qué formatos de archivo acepta el sistema?
+            - generic [ref=e354]: Documentos
+          - generic [ref=e356]: keyboard_arrow_down
+        - separator [ref=e357]
+        - separator [ref=e358]
+      - generic [ref=e360]:
+        - button "Expandir \"¿Qué ocurre si soy reprobado en una materia?\"" [ref=e361] [cursor=pointer]:
+          - generic [ref=e363]: cancel
+          - generic [ref=e364]:
+            - generic [ref=e365]: ¿Qué ocurre si soy reprobado en una materia?
+            - generic [ref=e366]: Proceso Académico
+          - generic [ref=e368]: keyboard_arrow_down
+        - separator [ref=e369]
+        - separator [ref=e370]
+      - generic [ref=e372]:
+        - button "Expandir \"¿Puedo entregar en Seminario de Grado sin haber aprobado Investigación y Desarrollo?\"" [ref=e373] [cursor=pointer]:
+          - generic [ref=e375]: linear_scale
+          - generic [ref=e376]:
+            - generic [ref=e377]: ¿Puedo entregar en Seminario de Grado sin haber aprobado Investigación y Desarrollo?
+            - generic [ref=e378]: Flujo del Sistema
+          - generic [ref=e380]: keyboard_arrow_down
+        - separator [ref=e381]
+        - separator [ref=e382]
+      - generic [ref=e384]:
+        - button "Expandir \"¿Cuándo se habilita el módulo de Deploy?\"" [ref=e385] [cursor=pointer]:
+          - generic [ref=e387]: rocket_launch
+          - generic [ref=e388]:
+            - generic [ref=e389]: ¿Cuándo se habilita el módulo de Deploy?
+            - generic [ref=e390]: Módulo Deploy
+          - generic [ref=e392]: keyboard_arrow_down
+        - separator [ref=e393]
+        - separator [ref=e394]
+      - generic [ref=e396]:
+        - button "Expandir \"¿El profesor puede aprobar sólo parte de mi informe?\"" [ref=e397] [cursor=pointer]:
+          - generic [ref=e399]: rate_review
+          - generic [ref=e400]:
+            - generic [ref=e401]: ¿El profesor puede aprobar sólo parte de mi informe?
+            - generic [ref=e402]: Evaluación
+          - generic [ref=e404]: keyboard_arrow_down
+        - separator [ref=e405]
+        - separator [ref=e406]
+      - generic [ref=e408]:
+        - button "Expandir \"¿Cómo obtengo mis credenciales de acceso?\"" [ref=e409] [cursor=pointer]:
+          - generic [ref=e411]: admin_panel_settings
+          - generic [ref=e412]:
+            - generic [ref=e413]: ¿Cómo obtengo mis credenciales de acceso?
+            - generic [ref=e414]: Acceso y Roles
+          - generic [ref=e416]: keyboard_arrow_down
+        - separator [ref=e417]
+        - separator [ref=e418]
+    - generic [ref=e419]:
+      - generic [ref=e420]: support_agent
+      - generic [ref=e421]:
+        - paragraph [ref=e422]: ¿No encontraste tu respuesta?
+        - paragraph [ref=e423]: Contacta al coordinador académico de tu carrera o a la Dirección de Computación UNE.
+      - link "Contactar" [ref=e424] [cursor=pointer]:
+        - /url: mailto:computacion@une.edu.ve
+        - generic [ref=e425]:
+          - img [ref=e426]: mail
+          - generic [ref=e427]: Contactar
+  - generic [ref=e430]:
+    - generic [ref=e431]:
+      - generic [ref=e432]: Solicitar Demo
+      - heading "¿Listo para transformar tu gestión de pasantías?" [level=2] [ref=e433]:
+        - text: ¿Listo para transformar tu gestión
+        - text: de pasantías?
+      - paragraph [ref=e434]: Déjanos tus datos, crearemos tu cuenta de administrador y te enviaremos las credenciales.
+    - generic [ref=e436]:
+      - generic [ref=e437]:
+        - generic [ref=e438]:
+          - generic [ref=e439]: person
+          - text: Nombre completo
+        - textbox [ref=e444]:
+          - /placeholder: Ej. María González
+      - generic [ref=e446]:
+        - generic [ref=e447]:
+          - generic [ref=e448]: badge
+          - text: Cédula
+        - textbox [ref=e453]:
+          - /placeholder: V-12345678
+      - generic [ref=e455]:
+        - generic [ref=e456]:
+          - generic [ref=e457]: email
+          - text: Correo electrónico
+        - textbox [active] [ref=e462]:
+          - /placeholder: tu-correo@gmail.com
+          - text: admin@une.edu.ve
+      - generic [ref=e464]:
+        - generic [ref=e465]:
+          - generic [ref=e466]: subject
+          - text: Asunto / Motivo
+        - textbox [ref=e471]:
+          - /placeholder: Quiero conocer más sobre la demo para mi cohorte
+      - button "Solicitar información" [ref=e473] [cursor=pointer]:
+        - generic [ref=e474]:
+          - generic [ref=e475]: Solicitar información
+          - img [ref=e476]: send
+      - paragraph [ref=e477]:
+        - generic [ref=e478]: lock
+        - text: Tus datos no serán compartidos con terceros.
+  - generic [ref=e480]:
+    - generic [ref=e481]:
+      - generic [ref=e482]:
+        - generic [ref=e483]: location_on
+        - text: Encuéntranos
+      - heading "Universidad Nueva Esparta" [level=2] [ref=e484]
+      - paragraph [ref=e485]: Los Naranjos, Caracas, Venezuela — Sede del programa gestionado por SENTINNEL.
+    - generic [ref=e486]:
+      - generic [ref=e487]:
+        - generic:
+          - button "Marker" [ref=e488] [cursor=pointer]
+          - generic [ref=e489]:
+            - generic [ref=e492]:
+              - strong [ref=e493]: Universidad Nueva Esparta
+              - text: Los Naranjos, Caracas, Venezuela
+            - button "Close popup" [ref=e495] [cursor=pointer]: ×
+        - generic:
+          - generic [ref=e496]:
+            - button "Zoom in" [ref=e497] [cursor=pointer]: +
+            - button "Zoom out" [ref=e498] [cursor=pointer]: −
+          - generic [ref=e499]:
+            - link "Leaflet" [ref=e500] [cursor=pointer]:
+              - /url: https://leafletjs.com
+              - img [ref=e501]
+              - text: Leaflet
+            - text: "| ©"
+            - link "OpenStreetMap" [ref=e505] [cursor=pointer]:
+              - /url: https://www.openstreetmap.org/copyright
+      - generic:
+        - generic: location_on
+        - generic: Universidad Nueva Esparta · Los Naranjos, Caracas
+  - generic "Pie de página SENTINNEL" [ref=e506]:
+    - generic [ref=e508]:
+      - generic [ref=e509]:
+        - generic [ref=e510]:
+          - img [ref=e511]
+          - generic [ref=e515]:
+            - paragraph [ref=e516]: SGTIP-UNE
+            - heading "SENTINNEL" [level=3] [ref=e517]
+        - paragraph [ref=e518]: Sistema de Gestión y Trazabilidad de Informes de Pasantías de la Universidad Nueva Esparta — Carrera de Computación.
+        - switch "Modo Claro" [ref=e520] [cursor=pointer]:
+          - generic [ref=e524]: wb_sunny
+          - generic [ref=e525]: Modo Claro
+      - generic [ref=e526]:
+        - heading "Navegación" [level=4] [ref=e527]
+        - navigation [ref=e528]:
+          - link "Inicio" [ref=e529] [cursor=pointer]:
+            - /url: "#hero"
+            - generic [ref=e530]: home
+            - text: Inicio
+          - link "Beneficios" [ref=e531] [cursor=pointer]:
+            - /url: "#beneficios"
+            - generic [ref=e532]: star
+            - text: Beneficios
+          - link "Vista Previa" [ref=e533] [cursor=pointer]:
+            - /url: "#demo"
+            - generic [ref=e534]: preview
+            - text: Vista Previa
+          - link "Testimonios" [ref=e535] [cursor=pointer]:
+            - /url: "#testimonios"
+            - generic [ref=e536]: chat_bubble
+            - text: Testimonios
+          - link "Preguntas" [ref=e537] [cursor=pointer]:
+            - /url: "#faq"
+            - generic [ref=e538]: help
+            - text: Preguntas
+          - link "Acceder" [ref=e539] [cursor=pointer]:
+            - /url: "#/login"
+            - generic [ref=e540]: login
+            - text: Acceder
+      - generic [ref=e541]:
+        - heading "Contacto Institucional" [level=4] [ref=e542]
+        - generic [ref=e543]:
+          - generic [ref=e544]:
+            - generic [ref=e545]: school
+            - generic [ref=e546]:
+              - paragraph [ref=e547]: Institución
+              - paragraph [ref=e548]: Universidad Nueva Esparta
+          - generic [ref=e549]:
+            - generic [ref=e550]: location_on
+            - generic [ref=e551]:
+              - paragraph [ref=e552]: Ubicación
+              - paragraph [ref=e553]: Los Naranjos, Caracas, Venezuela
+          - generic [ref=e554]:
+            - generic [ref=e555]: mail
+            - generic [ref=e556]:
+              - paragraph [ref=e557]: Correo
+              - link "computacion@une.edu.ve" [ref=e558] [cursor=pointer]:
+                - /url: mailto:computacion@une.edu.ve
+          - generic [ref=e559]:
+            - generic [ref=e560]: web
+            - generic [ref=e561]:
+              - paragraph [ref=e562]: Web Institucional
+              - link "www.une.edu.ve" [ref=e563] [cursor=pointer]:
+                - /url: https://www.une.edu.ve
+    - generic [ref=e566]:
+      - paragraph [ref=e567]: © 2026 SENTINNEL · Universidad Nueva Esparta · Todos los derechos reservados
+      - generic [ref=e568]:
+        - generic [ref=e569]: Vue 3
+        - generic [ref=e571]: Quasar v2
+        - generic [ref=e573]: Tailwind v4
+        - generic [ref=e575]: Pinia
+  - button "Volver al inicio" [ref=e576] [cursor=pointer]:
+    - img [ref=e578]: keyboard_arrow_up
+```

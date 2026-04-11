@@ -140,6 +140,7 @@
         class="send-btn_sm_vc send-btn--profesor_sm_vc"
         :loading="enviandoRespuesta_sm_vc"
         :disable="
+          props.bloqueado_sm_vc ||
           !form_sm_vc.estado_evaluacion_sm_vc ||
           !form_sm_vc.comentario_sm_vc ||
           enviandoRespuesta_sm_vc
@@ -292,48 +293,63 @@
 
 <script setup>
 import { ref, watch, onMounted } from "vue";
-import { useQuasar }             from "quasar";
+import { useQuasar } from "quasar";
 import { getRequisitoSeleccionado_sm_vc } from "src/stores/requisitoContextoStore";
-import { subirDocumento_sm_vc }           from "src/services/documentosService";
-import { useChatStore_sm_vc }             from "src/stores/chatStore_sm_vc";
+import { subirDocumento_sm_vc } from "src/services/documentosService";
+import { useChatStore_sm_vc } from "src/stores/chatStore_sm_vc";
 
-const $q         = useQuasar()
-const chat_sm_vc = useChatStore_sm_vc()
+const $q = useQuasar();
+const chat_sm_vc = useChatStore_sm_vc();
 
 const props = defineProps({
-  requisitos:                   { type: Array,             default: () => [] },
-  requisitosAprobadosIniciales: { type: Array,             default: () => [] },
+  requisitos: { type: Array, default: () => [] },
+  requisitosAprobadosIniciales: { type: Array, default: () => [] },
   /**
    * materiaId: clave de indexación en localStorage y payload WS.
    */
   materiaId: { type: [String, Number], default: null },
+  /**
+   * estudianteId: ID del estudiante propietario de la conversación.
+   * Requerido para enviar notificaciones WebSocket correctamente.
+   */
+  estudianteId: { type: [String, Number], default: null },
+  /**
+   * bloqueado_sm_vc: true cuando el WebSocket está desconectado.
+   * Bloquea los inputs temporalmente hasta que se restablezca la conexión.
+   */
+  bloqueado_sm_vc: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["responder", "guardarRequisitos"]);
 
 /* ── Estado local ── */
-const mostrarModal_sm_vc          = ref(false);
+const mostrarModal_sm_vc = ref(false);
 const mostrarModalAprobarTodo_sm_vc = ref(false);
-const fileInputProf_sm_vc         = ref(null);
-const enviandoRespuesta_sm_vc     = ref(false);
+const fileInputProf_sm_vc = ref(null);
+const enviandoRespuesta_sm_vc = ref(false);
 
 const form_sm_vc = ref({
   estado_evaluacion_sm_vc: null,
-  nota_sm_dec:             null,
-  archivo_nombre_sm_vc:    "",
-  archivo_raw_sm_vc:       null,
-  comentario_sm_vc:        "",
+  nota_sm_dec: null,
+  archivo_nombre_sm_vc: "",
+  archivo_raw_sm_vc: null,
+  comentario_sm_vc: "",
 });
 
 const formAprobarTodo_sm_vc = ref({
-  nota_sm_dec:      null,
+  nota_sm_dec: null,
   comentario_sm_vc: "",
 });
 
 const evalOpciones_sm_vc = [
-  { value: "OBSERVACIONES", label: "Observaciones", icon: "warning",  color: "#f0a500" },
-  { value: "APROBADO",      label: "Aprobar Item",  icon: "done",     color: "#6fffe9" },
-  { value: "REPROBADO",     label: "Reprobado",     icon: "cancel",   color: "#ff8fa3" },
+  {
+    value: "OBSERVACIONES",
+    label: "Observaciones",
+    icon: "warning",
+    color: "#f0a500",
+  },
+  { value: "APROBADO", label: "Aprobar Item", icon: "done", color: "#6fffe9" },
+  { value: "REPROBADO", label: "Reprobado", icon: "cancel", color: "#ff8fa3" },
 ];
 
 const requisitosSeleccionados_sm_vc = ref([]);
@@ -351,7 +367,7 @@ watch(mostrarModal_sm_vc, (val_sm_vc) => {
 const handleFileProf_sm_vc = (e_sm_vc) => {
   const file = e_sm_vc.target.files[0];
   if (file) {
-    form_sm_vc.value.archivo_raw_sm_vc    = file;
+    form_sm_vc.value.archivo_raw_sm_vc = file;
     form_sm_vc.value.archivo_nombre_sm_vc = file.name;
   }
 };
@@ -368,7 +384,11 @@ const handleFileProf_sm_vc = (e_sm_vc) => {
  *  De esta forma el historial muestra el documento antes de la evaluación.
  * ══════════════════════════════════════════════════════════════ */
 const emitirRespuesta_sm_vc = async () => {
-  if (!form_sm_vc.value.estado_evaluacion_sm_vc || !form_sm_vc.value.comentario_sm_vc) return;
+  if (
+    !form_sm_vc.value.estado_evaluacion_sm_vc ||
+    !form_sm_vc.value.comentario_sm_vc
+  )
+    return;
   if (enviandoRespuesta_sm_vc.value) return; // Guard anti-doble clic
 
   enviandoRespuesta_sm_vc.value = true;
@@ -379,21 +399,24 @@ const emitirRespuesta_sm_vc = async () => {
     // El backend acepta tipo CORRECCION_PROFESOR sin entrega_id.
     if (form_sm_vc.value.archivo_raw_sm_vc) {
       const formData_sm_vc = new FormData();
-      formData_sm_vc.append("archivo_sm_vc", form_sm_vc.value.archivo_raw_sm_vc);
-      formData_sm_vc.append("tipo_sm_vc",    "CORRECCION_PROFESOR");
+      formData_sm_vc.append(
+        "archivo_sm_vc",
+        form_sm_vc.value.archivo_raw_sm_vc,
+      );
+      formData_sm_vc.append("tipo_sm_vc", "CORRECCION_PROFESOR");
       // Sin entrega_id_sm_vc ni requisito_id: adjunto flotante (Caso A)
 
       const docRespuesta_sm_vc = await subirDocumento_sm_vc(formData_sm_vc);
 
       // Notificación WS del documento al estudiante y al propio profesor
-      const contenidoDoc_sm_vc =
-        `📎 Corrección adjunta: ${form_sm_vc.value.archivo_raw_sm_vc.name}`;
+      const contenidoDoc_sm_vc = `📎 Corrección adjunta: ${form_sm_vc.value.archivo_raw_sm_vc.name}`;
 
+      // [FIX] Incluir estudianteId_sm_vc — requerido por el backend para registrar el mensaje
       chat_sm_vc.enviarMensaje_sm_vc(
         contenidoDoc_sm_vc,
+        props.estudianteId, // ID del estudiante (requerido por backend)
         props.materiaId,
         docRespuesta_sm_vc.id_sm_vc, // documentoId del archivo de corrección
-        "DOCUMENTO",
       );
     }
 
@@ -408,10 +431,10 @@ const emitirRespuesta_sm_vc = async () => {
     // ── Limpiar formulario ────────────────────────────────────────
     form_sm_vc.value = {
       estado_evaluacion_sm_vc: null,
-      nota_sm_dec:             null,
-      archivo_nombre_sm_vc:    "",
-      archivo_raw_sm_vc:       null,
-      comentario_sm_vc:        "",
+      nota_sm_dec: null,
+      archivo_nombre_sm_vc: "",
+      archivo_raw_sm_vc: null,
+      comentario_sm_vc: "",
     };
     if (fileInputProf_sm_vc.value) fileInputProf_sm_vc.value.value = "";
   } catch (err_sm_vc) {
@@ -420,11 +443,11 @@ const emitirRespuesta_sm_vc = async () => {
       "Error al subir el archivo de corrección.";
 
     $q.notify({
-      type:     "negative",
-      message:  msg_sm_vc,
-      icon:     "error_outline",
+      type: "negative",
+      message: msg_sm_vc,
+      icon: "error_outline",
       position: "top",
-      timeout:  5000,
+      timeout: 5000,
     });
   } finally {
     enviandoRespuesta_sm_vc.value = false;
@@ -442,9 +465,9 @@ const emitirRequisitos_sm_vc = () => {
 const ejecutarAprobarTodo_sm_vc = () => {
   const todosIds_sm_vc = props.requisitos.map((r) => r.id_sm_vc);
   emit("guardarRequisitos", {
-    ids:          todosIds_sm_vc,
-    nota_global:  formAprobarTodo_sm_vc.value.nota_sm_dec,
-    comentario:   formAprobarTodo_sm_vc.value.comentario_sm_vc,
+    ids: todosIds_sm_vc,
+    nota_global: formAprobarTodo_sm_vc.value.nota_sm_dec,
+    comentario: formAprobarTodo_sm_vc.value.comentario_sm_vc,
   });
   mostrarModalAprobarTodo_sm_vc.value = false;
   formAprobarTodo_sm_vc.value = { nota_sm_dec: null, comentario_sm_vc: "" };
@@ -457,13 +480,13 @@ onMounted(() => {
   const idContexto_sm_vc = getRequisitoSeleccionado_sm_vc(props.materiaId);
   if (idContexto_sm_vc === null) return;
 
-  const idStr_sm_vc  = String(idContexto_sm_vc);
+  const idStr_sm_vc = String(idContexto_sm_vc);
   const existe_sm_vc = props.requisitos.some(
     (r_sm_vc) => String(r_sm_vc.id_sm_vc) === idStr_sm_vc,
   );
   if (!existe_sm_vc) return;
 
-  const requisito_sm_vc  = props.requisitos.find(
+  const requisito_sm_vc = props.requisitos.find(
     (r_sm_vc) => String(r_sm_vc.id_sm_vc) === idStr_sm_vc,
   );
   const idOriginal_sm_vc = requisito_sm_vc?.id_sm_vc ?? idContexto_sm_vc;
