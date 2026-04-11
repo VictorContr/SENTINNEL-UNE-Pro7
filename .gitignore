@@ -1,1 +1,10 @@
 test-results/
+node_modules/
+package-lock.json
+package.json
+playwright.config.js
+e2e-chat-tests.spec.js
+INSTRUCCIONES_PRUEBAS_E2E.md
+PLAN.md
+README.md
+REPORTE_QA_E2E_CHAT.md
