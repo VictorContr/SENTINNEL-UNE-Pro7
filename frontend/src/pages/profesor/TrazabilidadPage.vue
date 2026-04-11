@@ -2,19 +2,34 @@
      TrazabilidadPage.vue (profesor) — Vista detalle de un estudiante.
      Thin Page: ficha del estudiante, progreso secuencial en Stepper,
      panel enfocado de conversación y deploy final.
+
+     GESTIÓN DE MEMORIA (Sprint 2):
+     ─────────────────────────────
+     `onUnmounted` llama a `chatStore_sm_vc.salirDeSala_sm_vc()` para
+     garantizar que al navegar fuera de esta página (ej: volver a
+     la lista de estudiantes) el socket sea desconectado.
+
+     NOTA: En el modo TRAZABILIDAD el profesor solo observa, NO escribe.
+     El panel de conversación embebido usa modoVista_sm_vc='TRAZABILIDAD',
+     lo que activa la lógica de solo lectura en DocumentConversacion.
      Sufijos _sm_vc en todo el script.
-     ══════════════════════════════════════════════════════════════════ -->
+     ══════════════════════════════════════════════════════════════ -->
 <template>
   <q-page class="sntnl-page_sm_vc">
-    
+
     <!-- ── VISTA PRINCIPAL (Ficha + Stepper + Deploy) ── -->
     <div v-if="!materiaSeleccionada_sm_vc">
-      
+
       <!-- Botón Volver -->
       <q-btn
-        flat no-caps icon="arrow_back" label="Volver a Estudiantes"
-        color="grey-5" size="sm" class="q-mb-lg"
-        @click="router_sm_vc.push('/profesor/estudiantes')" />
+        flat no-caps
+        icon="arrow_back"
+        label="Volver a Estudiantes"
+        color="grey-5"
+        size="sm"
+        class="q-mb-lg"
+        @click="router_sm_vc.push('/profesor/estudiantes')"
+      />
 
       <!-- Ficha del estudiante -->
       <div v-if="estudiante_sm_vc" class="student-ficha_sm_vc">
@@ -30,8 +45,13 @@
         <div class="ficha-global-estado_sm_vc">
           <div class="global-estado-label_sm_vc">Progreso Global</div>
           <q-circular-progress
-            :value="progresoGlobal_sm_vc" size="60px" :thickness="0.15"
-            color="teal-3" track-color="blue-grey-9" show-value>
+            :value="progresoGlobal_sm_vc"
+            size="60px"
+            :thickness="0.15"
+            color="teal-3"
+            track-color="blue-grey-9"
+            show-value
+          >
             <span class="pct-label_sm_vc">{{ progresoGlobal_sm_vc }}%</span>
           </q-circular-progress>
         </div>
@@ -55,22 +75,22 @@
         inactive-color="blue-grey-7"
       >
         <q-step
-          v-for="materia in materiasConFases_sm_vc"
-          :key="materia.id_sm_vc"
-          :name="materia.id_sm_vc"
-          :title="materia.nombre_sm_vc"
-          :caption="materia.captionFase_sm_vc"
-          :icon="materia.icono_sm_vc"
-          :done="materia.estado_aprobacion_sm_vc === 'APROBADO'"
-          :disable="materia.bloqueada"
-          :error="materia.estado_aprobacion_sm_vc === 'REPROBADO'"
-          :active-icon="materia.icono_sm_vc"
+          v-for="materia_sm_vc in materiasConFases_sm_vc"
+          :key="materia_sm_vc.id_sm_vc"
+          :name="materia_sm_vc.id_sm_vc"
+          :title="materia_sm_vc.nombre_sm_vc"
+          :caption="materia_sm_vc.captionFase_sm_vc"
+          :icon="materia_sm_vc.icono_sm_vc"
+          :done="materia_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
+          :disable="materia_sm_vc.bloqueada"
+          :error="materia_sm_vc.estado_aprobacion_sm_vc === 'REPROBADO'"
+          :active-icon="materia_sm_vc.icono_sm_vc"
           :done-icon="'check_circle'"
           :error-icon="'cancel'"
           class="step-item_sm_vc"
         >
           <MateriaProgressCard
-            :materia="materia"
+            :materia="materia_sm_vc"
             :estudiante-id="estudianteId_sm_vc"
             :show-description="true"
             :show-requisitos="true"
@@ -78,17 +98,17 @@
 
           <q-stepper-navigation class="step-nav_sm_vc">
             <q-btn
-              v-if="!esPrimerStep_sm_vc(materia.id_sm_vc)"
+              v-if="!esPrimerStep_sm_vc(materia_sm_vc.id_sm_vc)"
               flat no-caps
               color="blue-grey-6"
               icon="arrow_upward"
               label="Anterior"
               size="sm"
               class="step-nav-btn_sm_vc q-mr-sm"
-              @click="retrocederStep_sm_vc(materia.id_sm_vc)"
+              @click="retrocederStep_sm_vc(materia_sm_vc.id_sm_vc)"
             />
             <q-btn
-              v-if="!esUltimoStep_sm_vc(materia.id_sm_vc)"
+              v-if="!esUltimoStep_sm_vc(materia_sm_vc.id_sm_vc)"
               unelevated no-caps
               color="teal-3"
               text-color="dark"
@@ -96,8 +116,8 @@
               label="Siguiente materia"
               size="sm"
               class="step-nav-btn_sm_vc"
-              :disable="materia.bloqueada || proximaDesbloqueada_sm_vc(materia.id_sm_vc) === null"
-              @click="avanzarStep_sm_vc(materia.id_sm_vc)"
+              :disable="materia_sm_vc.bloqueada || proximaDesbloqueada_sm_vc(materia_sm_vc.id_sm_vc) === null"
+              @click="avanzarStep_sm_vc(materia_sm_vc.id_sm_vc)"
             />
           </q-stepper-navigation>
         </q-step>
@@ -119,11 +139,12 @@
               <a
                 :href="deployStore_sm_vc.datosDeploy_sm_vc.url_produccion_sm_vc"
                 target="_blank"
-                class="deploy-url_sm_vc">
+                class="deploy-url_sm_vc"
+              >
                 <q-icon name="open_in_new" size="12px" />
                 {{ deployStore_sm_vc.datosDeploy_sm_vc.url_produccion_sm_vc }}
               </a>
-              <!-- Registro de fecha (Uso de formatDate_sm_vc para fix de ESLint) -->
+              <!-- Registro de fecha (formatDate_sm_vc para fix de ESLint) -->
               <p class="deploy-date_sm_vc">
                 Registrado el {{ formatDate_sm_vc(deployStore_sm_vc.datosDeploy_sm_vc.fecha_deploy_sm_vc) }}
               </p>
@@ -131,12 +152,14 @@
           </div>
           <q-btn
             unelevated no-caps
-            color="teal-3" text-color="dark"
+            color="teal-3"
+            text-color="dark"
             icon-right="arrow_forward"
             label="Ver Detalle"
             size="sm"
             class="deploy-nav-btn_sm_vc"
-            @click="verDeploy_sm_vc" />
+            @click="verDeploy_sm_vc"
+          />
         </div>
 
         <!-- Sin deploy: estado vacío informativo -->
@@ -150,23 +173,42 @@
       </div>
     </div>
 
-    <!-- ── PANEL DE CONVERSACIÓN (Aislado a pantalla completa) ── -->
+    <!-- ── PANEL DE CONVERSACIÓN EN MODO TRAZABILIDAD ── -->
+    <!--
+      Se muestra cuando el profesor hace clic en "Ver Conversación" de una materia.
+      modoVista_sm_vc='TRAZABILIDAD' → DocumentConversacion activará solo lectura;
+      la prop `puedeEscribir_sm_vc` será false internamente porque el modo no es 'CHAT'.
+      Se conecta igualmente el socket para recibir mensajes en tiempo real si los hay.
+    -->
     <div v-if="materiaSeleccionada_sm_vc" class="materia-activa-panel_sm_vc">
       <div class="panel-header_sm_vc">
         <div class="panel-title_sm_vc">
           <q-icon name="edit_document" size="16px" color="teal-3" />
           <span>Revisando Informe — {{ materiaSeleccionada_sm_vc.nombre_sm_vc }}</span>
         </div>
-        <q-btn flat no-caps icon="arrow_back" label="Volver a trazabilidad" color="teal-3" size="sm"
-          @click="materiaSeleccionada_sm_vc = null" />
+        <q-btn
+          flat no-caps
+          icon="arrow_back"
+          label="Volver a trazabilidad"
+          color="teal-3"
+          size="sm"
+          @click="materiaSeleccionada_sm_vc = null"
+        />
       </div>
       <div class="conv-embed_sm_vc">
+        <!--
+          Cambio clave (Sprint 2):
+          ANTES: :es-trazabilidad_sm_vc="true" :readonly="..."
+          AHORA: :modo-vista_sm_vc="'TRAZABILIDAD'"
+          Esto le dice a DocumentConversacion que active el modo de solo lectura
+          sin necesitar combinar dos props con lógica implícita confusa.
+        -->
         <DocumentConversacion
           :materia-id="materiaSeleccionada_sm_vc.id_sm_vc"
           :estudiante-id="estudianteId_sm_vc"
-          :es-trazabilidad_sm_vc="true"
-          :readonly="materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
-          :estado-progreso="materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc" />
+          :modo-vista_sm_vc="'TRAZABILIDAD'"
+          :estado-progreso="materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc"
+        />
       </div>
     </div>
 
@@ -174,23 +216,30 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, onMounted } from 'vue'
+import { ref, computed, watchEffect, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
 import { useUsersStore } from 'src/stores/usersStore'
 import { useDeployStore } from 'src/stores/deployStore'
+import { useChatStore_sm_vc } from 'src/stores/chatStore_sm_vc'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
-const route_sm_vc   = useRoute()
-const router_sm_vc  = useRouter()
-const store_sm_vc   = usePasantiasStore()
+const route_sm_vc       = useRoute()
+const router_sm_vc      = useRouter()
+const store_sm_vc       = usePasantiasStore()
 const progressBar_sm_vc = useProgressBarStore()
-const usersStore_sm_vc = useUsersStore()
+const usersStore_sm_vc  = useUsersStore()
 const deployStore_sm_vc = useDeployStore()
 
-/* ── Computed principales ── */
+/* ── Store de Chat (WebSocket) ── */
+const chatStore_sm_vc = useChatStore_sm_vc()
+
+/* ══════════════════════════════════════════════════════════════
+ *  COMPUTED PRINCIPALES
+ * ══════════════════════════════════════════════════════════════ */
+
 const estudianteId_sm_vc = computed(() => route_sm_vc.params.id_sm_vc)
 
 const estudiante_sm_vc = computed(() =>
@@ -204,19 +253,23 @@ const progresoEstudiante_sm_vc = computed(() =>
 const progresoGlobal_sm_vc = computed(() => {
   const items_sm_vc = progresoEstudiante_sm_vc.value
   if (!items_sm_vc.length) return 0
-  const suma_sm_vc = items_sm_vc.reduce((acc, m) => acc + (m.progreso_decimal || 0), 0)
+  const suma_sm_vc = items_sm_vc.reduce(
+    (acc_sm_vc, m_sm_vc) => acc_sm_vc + (m_sm_vc.progreso_decimal || 0), 0
+  )
   return Math.round((suma_sm_vc / items_sm_vc.length) * 100)
 })
 
-
-
 /* ── Estado local del Stepper ── */
-const stepActivo_sm_vc = ref(null)
+const stepActivo_sm_vc          = ref(null)
 const materiaSeleccionada_sm_vc = ref(null)
 
 const materiasConFases_sm_vc = computed(() =>
   progressBar_sm_vc.enriquecerMateriasTrazabilidad_sm_vc(progresoEstudiante_sm_vc.value)
 )
+
+/* ══════════════════════════════════════════════════════════════
+ *  CICLO DE VIDA
+ * ══════════════════════════════════════════════════════════════ */
 
 onMounted(async () => {
   if (estudianteId_sm_vc.value) {
@@ -224,21 +277,64 @@ onMounted(async () => {
       store_sm_vc.fetch_progreso_estudiante_sm_vc(estudianteId_sm_vc.value),
       usersStore_sm_vc.fetch_usuario_sm_vc(estudianteId_sm_vc.value),
       // Cargar el estado del deploy del estudiante (accesible para PROFESOR y ADMIN)
-      deployStore_sm_vc.verificarEstadoDeploy_sm_vc(Number(estudianteId_sm_vc.value))
+      deployStore_sm_vc.verificarEstadoDeploy_sm_vc(Number(estudianteId_sm_vc.value)),
     ])
+  }
+
+  // Establecer conexión WebSocket en modo observador (modo TRAZABILIDAD)
+  // El profesor se conecta para poder recibir actualizaciones en tiempo real,
+  // pero no enviará mensajes (el modo TRAZABILIDAD lo bloqueará en el UI).
+  if (estudianteId_sm_vc.value) {
+    chatStore_sm_vc.conectar_sm_vc()
   }
 })
 
-// Inicialización reactiva segura
+/**
+ * PREVENCIÓN DE MEMORY LEAK (Obligatorio según arquitectura del Sprint 2).
+ *
+ * Al desmontar esta página (profesor sale de la ficha del estudiante),
+ * se desconecta el socket y se limpia cualquier sala activa.
+ * Esto previene listeners acumulados en memoria si el profesor navega
+ * entre diferentes estudiantes sin recargar la aplicación.
+ */
+onUnmounted(() => {
+  chatStore_sm_vc.salirDeSala_sm_vc()
+})
+
+// Inicialización reactiva segura del step activo en el stepper
 watchEffect(() => {
-  if (stepActivo_sm_vc.value) return 
+  if (stepActivo_sm_vc.value) return
   const lista_sm_vc = materiasConFases_sm_vc.value
   if (!lista_sm_vc.length) return
-  const primera_sm_vc = lista_sm_vc.find((m) => !m.bloqueada) ?? lista_sm_vc[0]
+  const primera_sm_vc = lista_sm_vc.find((m_sm_vc) => !m_sm_vc.bloqueada) ?? lista_sm_vc[0]
   stepActivo_sm_vc.value = primera_sm_vc.id_sm_vc
 })
 
-/* ── Helpers de navegación del stepper ── */
+/* ══════════════════════════════════════════════════════════════
+ *  WATCH: Sala de chat reactiva según materia seleccionada
+ * ══════════════════════════════════════════════════════════════ */
+
+/**
+ * Cuando el profesor selecciona una materia para ver la conversación,
+ * se une a esa sala específica para recibir cualquier actualización en tiempo real.
+ * Cuando cierra el panel (materiaSeleccionada = null), emite el leave.
+ */
+import { watch } from 'vue'
+
+watch(materiaSeleccionada_sm_vc, (nuevaMateria_sm_vc) => {
+  if (nuevaMateria_sm_vc && estudianteId_sm_vc.value) {
+    // Unirse a la sala de esta materia específica para recibir actualizaciones WS
+    chatStore_sm_vc.unirASala_sm_vc(
+      estudianteId_sm_vc.value,
+      nuevaMateria_sm_vc.id_sm_vc
+    )
+  }
+})
+
+/* ══════════════════════════════════════════════════════════════
+ *  HELPERS: Navegación del Stepper
+ * ══════════════════════════════════════════════════════════════ */
+
 const esUltimoStep_sm_vc = (id_sm_vc) => {
   const lista_sm_vc = materiasConFases_sm_vc.value
   return lista_sm_vc[lista_sm_vc.length - 1]?.id_sm_vc === id_sm_vc
@@ -251,15 +347,15 @@ const esPrimerStep_sm_vc = (id_sm_vc) => {
 
 const retrocederStep_sm_vc = (idActual_sm_vc) => {
   const lista_sm_vc = materiasConFases_sm_vc.value
-  const idx_sm_vc   = lista_sm_vc.findIndex((m) => m.id_sm_vc === idActual_sm_vc)
+  const idx_sm_vc   = lista_sm_vc.findIndex((m_sm_vc) => m_sm_vc.id_sm_vc === idActual_sm_vc)
   if (idx_sm_vc > 0) {
     stepActivo_sm_vc.value = lista_sm_vc[idx_sm_vc - 1].id_sm_vc
   }
 }
 
 const proximaDesbloqueada_sm_vc = (idActual_sm_vc) => {
-  const lista_sm_vc = materiasConFases_sm_vc.value
-  const idx_sm_vc   = lista_sm_vc.findIndex((m) => m.id_sm_vc === idActual_sm_vc)
+  const lista_sm_vc  = materiasConFases_sm_vc.value
+  const idx_sm_vc    = lista_sm_vc.findIndex((m_sm_vc) => m_sm_vc.id_sm_vc === idActual_sm_vc)
   const proxima_sm_vc = lista_sm_vc[idx_sm_vc + 1]
   return proxima_sm_vc && !proxima_sm_vc.bloqueada ? proxima_sm_vc.id_sm_vc : null
 }
@@ -281,7 +377,7 @@ const verDeploy_sm_vc = () => {
 
 /* ── Utils ── */
 const iniciales_sm_vc = (nombre_sm_vc) =>
-  (nombre_sm_vc ?? '').split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+  (nombre_sm_vc ?? '').split(' ').slice(0, 2).map((w_sm_vc) => w_sm_vc[0]).join('').toUpperCase()
 
 const formatDate_sm_vc = (iso_sm_vc) =>
   new Date(iso_sm_vc).toLocaleDateString('es-VE', {
@@ -324,7 +420,10 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   margin: 0 0 .4rem; letter-spacing: .04em;
 }
 .ficha-meta_sm_vc { display: flex; gap: 1rem; flex-wrap: wrap; }
-.meta-item_sm_vc { display: flex; align-items: center; gap: .3rem; font-size: .65rem; color: var(--sn-texto-terciario); }
+.meta-item_sm_vc {
+  display: flex; align-items: center; gap: .3rem;
+  font-size: .65rem; color: var(--sn-texto-terciario);
+}
 
 .ficha-global-estado_sm_vc { display: flex; flex-direction: column; align-items: center; gap: .3rem; flex-shrink: 0; }
 .global-estado-label_sm_vc { font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--sn-texto-apagado); }
@@ -431,4 +530,5 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   font-size: .72rem; color: var(--sn-acento-sec);
   letter-spacing: .06em; text-transform: uppercase;
 }
+.conv-embed_sm_vc { /* sin padding, DocumentConversacion maneja su propio layout */ }
 </style>
