@@ -29,6 +29,7 @@ import { TypingStatusDto_sm_vc } from '../dto/typing-status.dto';
 interface MensajeCreadoPayload_sm_vc {
   estudianteId_sm_vc: number;
   materiaId_sm_vc?: number;
+  conversacion_id_sm_vc: number;
   mensaje_sm_vc: Record<string, unknown>;
 }
 

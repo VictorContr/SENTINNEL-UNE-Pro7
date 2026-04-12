@@ -299,6 +299,12 @@ const cargarDatos_sm_vc = () => {
 onMounted(() => {
   cargarDatos_sm_vc();
   chatStore_sm_vc.conectar_sm_vc();
+  if (idEstudianteFinal_sm_vc.value) {
+    chatStore_sm_vc.unirASala_sm_vc(
+      idEstudianteFinal_sm_vc.value,
+      props.materiaId ?? null,
+    );
+  }
 });
 
 onUnmounted(() => {

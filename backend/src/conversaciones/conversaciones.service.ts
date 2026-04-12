@@ -73,6 +73,7 @@ export class ConversacionesService {
       this.eventEmitter_sm_vc.emit('mensaje.creado_sm_vc', {
         estudianteId_sm_vc: payload.estudianteId,
         materiaId_sm_vc: payload.materiaId ?? null,
+        conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
         mensaje_sm_vc: this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
       });
     } catch (error_sm_vc) {
@@ -142,6 +143,7 @@ export class ConversacionesService {
       this.eventEmitter_sm_vc.emit('mensaje.creado_sm_vc', {
         estudianteId_sm_vc: estudianteVinculado_sm_vc.id_sm_vc,
         materiaId_sm_vc: payload.materiaId ?? null,
+        conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
         mensaje_sm_vc: this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
       });
 
