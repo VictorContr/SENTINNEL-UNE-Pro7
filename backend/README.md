@@ -44,16 +44,68 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## 💾 Base de Datos y Seeds
+## 💾 Base de Datos y Prisma
 
-Para inicializar la base de datos con los datos maestros de la UNE (Materias, Requisitos, Usuarios de prueba):
+### 📋 Comandos principales
 
 ```bash
-# Sincronizar esquema y ejecutar el seed
-$ npx prisma db seed
+# 🔄 Actualizar schema en DB (sin migraciones - para desarrollo rápido)
+npx prisma db push
+
+# 🌱 Ejecutar seed con datos iniciales
+npx prisma db seed
+
+# 🔧 Generar Prisma Client (después de cambios en schema)
+npx prisma generate
+
+# 📊 Abrir Prisma Studio (UI para ver/editar datos)
+npx prisma studio
 ```
 
-Esto ejecutará `prisma/seed.ts` y poblará el sistema con los estados de avance académico necesarios para las pruebas.
+### 🔄 Flujo de trabajo cuando cambias el schema
+
+**Opción A: Desarrollo rápido (recomendado durante desarrollo)**
+
+```bash
+# 1. Modificar prisma/schema.prisma
+# 2. Sincronizar con base de datos
+npx prisma db push
+
+# 3. Regenerar el cliente Prisma
+npx prisma generate
+
+# 4. Reiniciar el servidor
+npm run start:dev
+```
+
+**Opción B: Con migraciones (para producción)**
+
+```bash
+# 1. Modificar prisma/schema.prisma
+# 2. Crear migración
+npx prisma migrate dev --name nombre_del_cambio
+
+# 3. Aplicar migración
+npx prisma migrate deploy
+
+# 4. Regenerar cliente
+npx prisma generate
+```
+
+### 🌱 Seed de datos
+
+Para poblar la base de datos con datos iniciales (Materias, Requisitos, Usuarios de prueba):
+
+```bash
+npx prisma db seed
+```
+
+Esto ejecuta `prisma/seed.ts` y carga:
+
+- Período académico actual
+- Materias (5 materias del ciclo de pasantías)
+- Requisitos por materia
+- Usuarios de prueba (Admin, Profesor, Estudiante)
 
 ## Run tests
 

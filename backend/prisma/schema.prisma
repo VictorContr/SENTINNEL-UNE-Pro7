@@ -122,6 +122,7 @@ model Documento {
   usuario                 Usuario         @relation("UsuarioSubeDocumento", fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
   deployCodigo            ProyectoDeploy? @relation("DeployCodigoZIP")
   deployDocs              ProyectoDeploy? @relation("DeployDocumentacion")
+  mensajes                Mensaje[]
 
   @@map("tddocumento_sm_vc")
 }
@@ -172,8 +173,10 @@ model Mensaje {
   fecha_creacion_sm_vc  DateTime     @default(now())
   /// Segmentación por materia: null = log global (deploy, inicio de ciclo, etc.)
   materia_id_sm_vc      Int?
+  documento_id_sm_vc    Int?
   conversacion          Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
   materia               Materia?     @relation(fields: [materia_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
+  documento_sm_vc       Documento?   @relation(fields: [documento_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
 
   @@map("tdmensaje_sm_vc")
 }

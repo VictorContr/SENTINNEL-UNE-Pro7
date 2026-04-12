@@ -219,6 +219,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, watch } from "vue";
+import { useQuasar } from "quasar";
 import { usePasantiasStore } from "src/stores/pasantiasStore";
 import { useAuthStore } from "src/stores/authStore";
 import { useConversacionStore_sm_vc } from "src/stores/conversacionStore";
@@ -230,170 +231,80 @@ import ConvMessages from "./conv/ConvMessages.vue";
 import ConvFormEstudiante from "./conv/ConvFormEstudiante.vue";
 import ConvFormProfesor from "./conv/ConvFormProfesor.vue";
 
-/* ══════════════════════════════════════════════════════════════
- *  PROPS
- * ══════════════════════════════════════════════════════════════ */
+/* ── Props ── */
 const props = defineProps({
-  /**
-   * ID de la materia para filtrar el historial y resolver requisitos.
-   * null = sin filtro de materia (historial global).
-   */
   materiaId: { type: [String, Number], default: null },
-
-  /**
-   * ID del estudiante cuyo historial se va a cargar.
-   * Solo es relevante para PROFESOR / ADMIN (el estudiante usa su propio ID del auth).
-   */
   estudianteId: { type: [String, Number], default: null },
-
-  /**
-   * Estado de aprobación de la materia. Usado para determinar si el panel
-   * de inputs debe mostrarse (e.g. 'APROBADO' → bloquea escritura).
-   */
   estadoProgreso: { type: String, default: null },
-
-  /**
-   * NUEVO PROP CENTRAL (reemplaza `esTrazabilidad_sm_vc` + `readonly`).
-   *
-   * 'CHAT'        → Conversación activa. Inputs visibles según rol.
-   * 'TRAZABILIDAD'→ Revisión de historia. Solo lectura para todos.
-   * 'HISTORIAL'   → Vista archivada post-aprobación. Solo lectura.
-   *
-   * @required
-   */
   modoVista_sm_vc: {
     type: String,
     default: "CHAT",
-    validator: (valor_sm_vc) =>
-      ["CHAT", "TRAZABILIDAD", "HISTORIAL"].includes(valor_sm_vc),
+    validator: (v) => ["CHAT", "TRAZABILIDAD", "HISTORIAL"].includes(v),
   },
 });
 
 const emit = defineEmits(["mensajeEnviado"]);
 
-/* ══════════════════════════════════════════════════════════════
- *  STORES
- * ══════════════════════════════════════════════════════════════ */
+/* ── Stores ── */
 const pasantiasStore_sm_vc = usePasantiasStore();
 const auth_sm_vc = useAuthStore();
 const conversacionStore_sm_vc = useConversacionStore_sm_vc();
 const chatStore_sm_vc = useChatStore_sm_vc();
+const $q_sm_vc = useQuasar();
 
-/* ══════════════════════════════════════════════════════════════
- *  COMPUTED: Identidad del usuario
- * ══════════════════════════════════════════════════════════════ */
-
-/** Rol del usuario autenticado (normalizado a uppercase). */
+/* ── Computed: Identidad ── */
 const userRol_sm_vc = computed(() => auth_sm_vc.user_sm_vc?.rol_sm_vc ?? null);
 
-/** true si el usuario es Administrador (cualquier variante del rol). */
 const esAdmin_sm_vc = computed(
   () =>
     userRol_sm_vc.value === "ADMIN" || userRol_sm_vc.value === "ADMINISTRADOR",
 );
 
-/**
- * RESOLUCIÓN INFALIBLE DEL ID DEL ESTUDIANTE (Directiva 2026-04-07)
- * ─────────────────────────────────────────────────────────────────
- * Prioridad:
- *   1. ESTUDIANTE → ID del auth store (evita race conditions con props asíncronas).
- *   2. PROFESOR / ADMIN → prop `estudianteId` del padre (route params).
- *   3. Fallback → null (el template muestra el estado de error vacío).
- */
 const idEstudianteFinal_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
-
-  if (rol_sm_vc === "ESTUDIANTE") {
-    // Estudiante: siempre su propio ID, sin importar la prop
+  if (rol_sm_vc === "ESTUDIANTE")
     return auth_sm_vc.user_sm_vc?.id_sm_vc ?? null;
-  }
-
   if (
     rol_sm_vc === "PROFESOR" ||
     rol_sm_vc === "ADMINISTRADOR" ||
     rol_sm_vc === "ADMIN"
   ) {
-    // Profesor / Admin: la prop es la fuente de verdad (inyectada por la vista padre)
     return props.estudianteId ?? null;
   }
-
-  // Fallback contextual desconocido
   return props.estudianteId ?? auth_sm_vc.user_sm_vc?.id_sm_vc ?? null;
 });
 
-/* ══════════════════════════════════════════════════════════════
- *  COMPUTED: Control de Escritura
- * ══════════════════════════════════════════════════════════════ */
-
-/**
- * Determina si el usuario actual puede escribir en esta conversación.
- *
- * Reglas por rol:
- *   - ESTUDIANTE: puede escribir si el modo es CHAT y la materia NO está APROBADA.
- *   - PROFESOR:   puede escribir SOLO en modo CHAT y materia NO aprobada.
- *   - ADMIN:      nunca puede escribir (es observador). Banner visual indica esto.
- *
- * Esta computed reemplaza la antigua combinación de props `readonly` + `esTrazabilidad_sm_vc`.
- */
+/* ── Computed: Control de escritura ── */
 const puedeEscribir_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
   const esModoChat_sm_vc = props.modoVista_sm_vc === "CHAT";
   const estaAprobada_sm_vc = props.estadoProgreso === "APROBADO";
-
-  // Administrador: siempre solo lectura, sin excepciones
   if (esAdmin_sm_vc.value) return false;
-
-  // Estudiante: puede escribir si está en modo CHAT y la materia no está aprobada
-  if (rol_sm_vc === "ESTUDIANTE") {
+  if (rol_sm_vc === "ESTUDIANTE")
     return esModoChat_sm_vc && !estaAprobada_sm_vc;
-  }
-
-  // Profesor: puede escribir SOLO en modo CHAT y materia no aprobada
-  if (rol_sm_vc === "PROFESOR") {
-    return esModoChat_sm_vc && !estaAprobada_sm_vc;
-  }
-
-  // Cualquier otro rol desconocido → sin permisos de escritura
+  if (rol_sm_vc === "PROFESOR") return esModoChat_sm_vc && !estaAprobada_sm_vc;
   return false;
 });
 
-/* ══════════════════════════════════════════════════════════════
- *  CARGA DE DATOS
- * ══════════════════════════════════════════════════════════════ */
-
-/** Dispara la carga del historial cuando el ID y la materia están disponibles. */
+/* ── Carga de datos ── */
 const cargarDatos_sm_vc = () => {
   const id_sm_vc = idEstudianteFinal_sm_vc.value;
   if (!id_sm_vc) return;
-
-  // Segmenta el historial por materia si se proporciona el ID.
-  // Si materiaId es null → el backend devuelve el historial global completo.
   conversacionStore_sm_vc.obtenerConversacion_sm_vc(
     id_sm_vc,
     props.materiaId ?? null,
   );
 };
 
-/**
- * onMounted — Inicializa la vista y establece la conexión WebSocket.
- * Importante: conectar_sm_vc() debe llamarse para que los estudiantes y admins
- * puedan recibir mensajes en tiempo real.
- */
 onMounted(() => {
   cargarDatos_sm_vc();
-  // [WS] Inicializar conexión socket para todos los roles (ESTUDIANTE, PROFESOR, ADMIN)
   chatStore_sm_vc.conectar_sm_vc();
 });
 
-/**
- * onUnmounted — Limpieza del socket al salir de la vista.
- * Evita memory leaks y conexiones huérfanas.
- */
 onUnmounted(() => {
   chatStore_sm_vc.salirDeSala_sm_vc();
 });
 
-/** Recargar si el ID del estudiante cambia (profesor navega entre perfiles). */
 watch(idEstudianteFinal_sm_vc, (nuevoId_sm_vc, viejoId_sm_vc) => {
   if (nuevoId_sm_vc && nuevoId_sm_vc !== viejoId_sm_vc) {
     conversacionStore_sm_vc.limpiarConversaciones_sm_vc();
@@ -401,7 +312,6 @@ watch(idEstudianteFinal_sm_vc, (nuevoId_sm_vc, viejoId_sm_vc) => {
   }
 });
 
-/** Recargar si la materia cambia (profesor abre otra materia del mismo estudiante). */
 watch(
   () => props.materiaId,
   (nuevaMateria_sm_vc, viejaMateria_sm_vc) => {
@@ -412,48 +322,30 @@ watch(
   },
 );
 
-/* ══════════════════════════════════════════════════════════════
- *  COMPUTED: Datos derivados para los componentes hijos
- * ══════════════════════════════════════════════════════════════ */
-
-/** Mensajes ordenados cronológicamente (el más antiguo primero). Frontend Safety Sort. */
+/* ── Computed: datos derivados para hijos ── */
 const mensajesOrdenados_sm_vc = computed(() => {
   const lista_sm_vc = conversacionStore_sm_vc.conversaciones_sm_vc || [];
-  return [...lista_sm_vc].sort((a_sm_vc, b_sm_vc) => {
-    const ta_sm_vc = new Date(a_sm_vc.fecha_creacion_sm_vc).getTime();
-    const tb_sm_vc = new Date(b_sm_vc.fecha_creacion_sm_vc).getTime();
-    return ta_sm_vc - tb_sm_vc;
-  });
+  return [...lista_sm_vc].sort(
+    (a_sm_vc, b_sm_vc) =>
+      new Date(a_sm_vc.fecha_creacion_sm_vc).getTime() -
+      new Date(b_sm_vc.fecha_creacion_sm_vc).getTime(),
+  );
 });
 
-/** Objeto completo de la materia activa (para el ConvHeader). */
 const materia_sm_vc = computed(() => {
   if (!props.materiaId) return null;
-
-  // BÚSQUEDA ROBUSTA:
-  // 1. Buscamos en el array 'miProgreso' que sabemos que SÍ tiene la data.
-  // 2. Parseamos a String() para evitar el clásico error de tipado estricto (1 !== '1')
-  const materiaEnProgreso_sm_vc = pasantiasStore_sm_vc.miProgreso?.find(
+  const enProgreso_sm_vc = pasantiasStore_sm_vc.miProgreso?.find(
     (m_sm_vc) => String(m_sm_vc.id_sm_vc) === String(props.materiaId),
   );
-
-  // Retorna la materia encontrada, o usa el getter original como último recurso
   return (
-    materiaEnProgreso_sm_vc ||
-    pasantiasStore_sm_vc.getMateriaById(props.materiaId)
+    enProgreso_sm_vc || pasantiasStore_sm_vc.getMateriaById(props.materiaId)
   );
 });
 
-/** Requisitos de la materia activa (para los formularios de acción). */
 const requisitos_sm_vc = computed(() => materia_sm_vc.value?.requisitos ?? []);
 
-/**
- * IDs de los requisitos ya aprobados para este estudiante en esta materia.
- * Permite pre-marcar el formulario del profesor con los requisitos previamente aprobados.
- */
 const requisitosAprobadosIniciales_sm_vc = computed(() => {
   if (!props.materiaId || !idEstudianteFinal_sm_vc.value) return [];
-
   const prog_sm_vc = pasantiasStore_sm_vc.progreso_sm_vc.find(
     (p_sm_vc) =>
       String(p_sm_vc.estudiante_id_sm_vc) ===
@@ -466,27 +358,98 @@ const requisitosAprobadosIniciales_sm_vc = computed(() => {
 });
 
 /* ══════════════════════════════════════════════════════════════
- *  HANDLERS — Delegan la lógica al store de pasantías
+ *  HANDLER PRINCIPAL — PATRÓN ASÍNCRONO DE 2 PASOS
+ *
+ *  Fase A (Archivo): Si el formulario incluye un archivo adjunto,
+ *    sube el binario al servidor vía POST /api/documentos y obtiene
+ *    el id_sm_vc del Documento persistido en BD.
+ *
+ *  Fase B (Mensaje): Envía el JSON ligero al socket con el
+ *    documento_id_sm_vc ya conocido para que el receptor descargue
+ *    el archivo sin necesidad de polling adicional.
+ *
+ *  Estado de carga:
+ *    - conversacionStore_sm_vc.subiendo_sm_vc = true durante Fase A.
+ *    - El botón del formulario hijo se deshabilita durante ambas fases
+ *      leyendo esta misma ref (prop :bloqueado_sm_vc).
  * ══════════════════════════════════════════════════════════════ */
-
-const handleEnviarInforme_sm_vc = (payload_sm_vc) => {
-  // [FIX] Inyectar identidad del estudiante antes de enviar al store
+const handleEnviarInforme_sm_vc = async (payload_sm_vc) => {
   const id_sm_vc = idEstudianteFinal_sm_vc.value;
+
   if (!id_sm_vc) {
     console.error(
       "[DocumentConversacion] No se pudo determinar el ID del estudiante.",
     );
-    return;
+    throw new Error("No se pudo determinar el ID del estudiante.");
   }
 
-  const msg_sm_vc = pasantiasStore_sm_vc.enviarInforme({
-    estudiante_id_sm_vc: id_sm_vc,
-    materia_id_sm_vc: props.materiaId,
-    ...payload_sm_vc,
-  });
-  emit("mensajeEnviado", msg_sm_vc);
+  let documentoGeneradoId_sm_vc = null;
+
+  try {
+    // ── FASE A: Subida física del archivo ────────────────────────
+    // Solo se ejecuta si el formulario hijo adjuntó un archivo.
+    if (payload_sm_vc?.archivo_sm_vc) {
+      const docRespuesta_sm_vc =
+        await conversacionStore_sm_vc.subirDocumentoFisico_sm_vc(
+          payload_sm_vc.archivo_sm_vc, // File object
+          id_sm_vc, // estudianteId
+          payload_sm_vc.requisito_id_sm_vc ?? null, // requisitoId (para UPSERT de Entrega)
+          payload_sm_vc.tipo_documento_sm_vc ?? "ENTREGABLE_ESTUDIANTE",
+        );
+
+      documentoGeneradoId_sm_vc = docRespuesta_sm_vc?.id_sm_vc ?? null;
+
+      if (!documentoGeneradoId_sm_vc) {
+        throw new Error("El servidor no retornó un ID de documento válido.");
+      }
+    }
+
+    // ── FASE B: Envío del mensaje JSON por WebSocket ─────────────
+    // El texto del mensaje puede venir del formulario o se genera
+    // automáticamente a partir del nombre del archivo adjunto.
+    const contenido_sm_vc =
+      payload_sm_vc?.mensaje_sm_vc?.trim() ||
+      (payload_sm_vc?.archivo_sm_vc
+        ? `📄 ${payload_sm_vc.archivo_sm_vc.name} (${payload_sm_vc?.version_sm_vc ?? "v1.0"})`
+        : "");
+
+    if (!contenido_sm_vc) {
+      // Sin texto ni archivo no hay nada que enviar
+      console.warn(
+        "[DocumentConversacion] Payload vacío — no se envía mensaje.",
+      );
+      return false;
+    }
+
+    chatStore_sm_vc.enviarMensaje_sm_vc(
+      contenido_sm_vc,
+      id_sm_vc, // estudianteId (requerido por el backend)
+      props.materiaId ?? null,
+      documentoGeneradoId_sm_vc, // documentoId: null si no hubo archivo
+    );
+
+    emit("mensajeEnviado", { documentoId_sm_vc: documentoGeneradoId_sm_vc });
+
+    return true;
+  } catch (err_sm_vc) {
+    const msg_sm_vc =
+      err_sm_vc?.response?.data?.message ||
+      err_sm_vc?.message ||
+      "Error al enviar el informe. Verifica el archivo e inténtalo de nuevo.";
+
+    $q_sm_vc.notify({
+      type: "negative",
+      message: msg_sm_vc,
+      icon: "error_outline",
+      position: "top",
+      timeout: 5000,
+    });
+
+    throw err_sm_vc;
+  }
 };
 
+/* ── Handlers de Profesor ── */
 const handleResponderCorreccion_sm_vc = (payload_sm_vc) => {
   const msg_sm_vc = pasantiasStore_sm_vc.responderCorreccion({
     estudiante_id_sm_vc: idEstudianteFinal_sm_vc.value,

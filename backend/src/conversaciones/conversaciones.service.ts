@@ -6,35 +6,35 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class ConversacionesService {
   constructor(
-    private readonly prisma_sm_vc:        PrismaService,
-    private readonly eventEmitter_sm_vc:  EventEmitter2,   // ← NUEVO
+    private readonly prisma_sm_vc: PrismaService,
+    private readonly eventEmitter_sm_vc: EventEmitter2, // ← NUEVO
   ) {}
 
   // ─── Listeners de Eventos (trazabilidad automática) ────────────
 
   @OnEvent('materia.aprobada_sm_vc')
   async manejarMateriaAprobada_sm_vc(payload: {
-    estudianteId:      number;
+    estudianteId: number;
     descripcion_sm_vc: string;
-    materiaId?:        number;
+    materiaId?: number;
   }) {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
 
   @OnEvent('documento.subido_sm_vc')
   async manejarDocumentoSubido_sm_vc(payload: {
-    estudianteId:      number;
+    estudianteId: number;
     descripcion_sm_vc: string;
-    materiaId?:        number;
+    materiaId?: number;
   }) {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
 
   @OnEvent('deploy.completado_sm_vc')
   async manejarDeployCompletado_sm_vc(payload: {
-    estudianteId:      number;
+    estudianteId: number;
     descripcion_sm_vc: string;
-    materiaId?:        number;
+    materiaId?: number;
   }) {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
@@ -42,14 +42,16 @@ export class ConversacionesService {
   // ─── Persistencia de mensajes de sistema ───────────────────────
 
   private async registrarMensajeSistema_sm_vc(payload: {
-    estudianteId:      number;
+    estudianteId: number;
     descripcion_sm_vc: string;
-    materiaId?:        number;
+    materiaId?: number;
   }) {
     try {
-      const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.findFirst({
-        where: { estudiante_id_sm_vc: payload.estudianteId },
-      });
+      const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.findFirst(
+        {
+          where: { estudiante_id_sm_vc: payload.estudianteId },
+        },
+      );
 
       if (!conversacion_sm_vc) {
         console.error(
@@ -61,17 +63,17 @@ export class ConversacionesService {
       const mensajeGuardado_sm_vc = await this.prisma_sm_vc.mensaje.create({
         data: {
           conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
-          contenido_sm_vc:       payload.descripcion_sm_vc,
-          es_sistema_sm_vc:      true,
-          materia_id_sm_vc:      payload.materiaId ?? null,
+          contenido_sm_vc: payload.descripcion_sm_vc,
+          es_sistema_sm_vc: true,
+          materia_id_sm_vc: payload.materiaId ?? null,
         },
       });
 
       // ── Broadcast WS: notificar a clientes de la sala ──────────
       this.eventEmitter_sm_vc.emit('mensaje.creado_sm_vc', {
         estudianteId_sm_vc: payload.estudianteId,
-        materiaId_sm_vc:    payload.materiaId ?? null,
-        mensaje_sm_vc:      this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
+        materiaId_sm_vc: payload.materiaId ?? null,
+        mensaje_sm_vc: this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
       });
     } catch (error_sm_vc) {
       console.error(
@@ -95,20 +97,22 @@ export class ConversacionesService {
    *           → ChatGateway_sm_vc.handleMensajeCreado_sm_vc (broadcast a sala)
    */
   async registrarMensajeManual_sm_vc(payload: {
-    estudianteId:      number;
-    contenido_sm_vc:   string;
-    materiaId?:        number;
+    estudianteId: number;
+    contenido_sm_vc: string;
+    materiaId?: number;
+    documentoId?: number;
   }) {
     try {
       // Resolver ID real del estudiante (acepta usuario_id o estudiante_id)
-      const estudianteVinculado_sm_vc = await this.prisma_sm_vc.estudiante.findFirst({
-        where: {
-          OR: [
-            { id_sm_vc:         payload.estudianteId },
-            { usuario_id_sm_vc: payload.estudianteId },
-          ],
-        },
-      });
+      const estudianteVinculado_sm_vc =
+        await this.prisma_sm_vc.estudiante.findFirst({
+          where: {
+            OR: [
+              { id_sm_vc: payload.estudianteId },
+              { usuario_id_sm_vc: payload.estudianteId },
+            ],
+          },
+        });
 
       if (!estudianteVinculado_sm_vc) {
         console.error(
@@ -118,7 +122,7 @@ export class ConversacionesService {
       }
 
       const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.upsert({
-        where:  { estudiante_id_sm_vc: estudianteVinculado_sm_vc.id_sm_vc },
+        where: { estudiante_id_sm_vc: estudianteVinculado_sm_vc.id_sm_vc },
         update: {},
         create: { estudiante_id_sm_vc: estudianteVinculado_sm_vc.id_sm_vc },
       });
@@ -126,17 +130,19 @@ export class ConversacionesService {
       const mensajeGuardado_sm_vc = await this.prisma_sm_vc.mensaje.create({
         data: {
           conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
-          contenido_sm_vc:       payload.contenido_sm_vc,
-          es_sistema_sm_vc:      false, // Mensaje MANUAL
-          materia_id_sm_vc:      payload.materiaId ?? null,
+          contenido_sm_vc: payload.contenido_sm_vc,
+          es_sistema_sm_vc: false, // Mensaje MANUAL
+          materia_id_sm_vc: payload.materiaId ?? null,
+          documento_id_sm_vc: payload.documentoId ?? null,
         },
+        include: { documento_sm_vc: true },
       });
 
-      // ── NUEVO: Broadcast vía EventEmitter2 → ChatGateway_sm_vc ──
+      // ── Broadcast vía EventEmitter2 → ChatGateway_sm_vc ──
       this.eventEmitter_sm_vc.emit('mensaje.creado_sm_vc', {
         estudianteId_sm_vc: estudianteVinculado_sm_vc.id_sm_vc,
-        materiaId_sm_vc:    payload.materiaId ?? null,
-        mensaje_sm_vc:      this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
+        materiaId_sm_vc: payload.materiaId ?? null,
+        mensaje_sm_vc: this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
       });
 
       return mensajeGuardado_sm_vc;
@@ -155,24 +161,25 @@ export class ConversacionesService {
     try {
       // Resolución de IDs
       let idRealEstudiante_sm_vc = estudianteId;
-      let idRealUsuario_sm_vc    = estudianteId;
+      let idRealUsuario_sm_vc = estudianteId;
 
-      const estudianteVinculado_sm_vc = await this.prisma_sm_vc.estudiante.findFirst({
-        where: {
-          OR: [
-            { id_sm_vc:         estudianteId },
-            { usuario_id_sm_vc: estudianteId },
-          ],
-        },
-      });
+      const estudianteVinculado_sm_vc =
+        await this.prisma_sm_vc.estudiante.findFirst({
+          where: {
+            OR: [
+              { id_sm_vc: estudianteId },
+              { usuario_id_sm_vc: estudianteId },
+            ],
+          },
+        });
 
       if (estudianteVinculado_sm_vc) {
         idRealEstudiante_sm_vc = estudianteVinculado_sm_vc.id_sm_vc;
-        idRealUsuario_sm_vc    = estudianteVinculado_sm_vc.usuario_id_sm_vc;
+        idRealUsuario_sm_vc = estudianteVinculado_sm_vc.usuario_id_sm_vc;
       }
 
       const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.upsert({
-        where:  { estudiante_id_sm_vc: idRealEstudiante_sm_vc },
+        where: { estudiante_id_sm_vc: idRealEstudiante_sm_vc },
         update: {},
         create: { estudiante_id_sm_vc: idRealEstudiante_sm_vc },
       });
@@ -182,56 +189,63 @@ export class ConversacionesService {
           conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
           ...(materiaId != null ? { materia_id_sm_vc: materiaId } : {}),
         },
+        include: {
+          documento_sm_vc: {
+            include: {
+              entrega: {
+                include: { requisito: true },
+              },
+            },
+          },
+        },
         orderBy: { fecha_creacion_sm_vc: 'asc' },
       });
 
-      const documentos_sm_vc = await this.prisma_sm_vc.documento.findMany({
-        where: {
-          usuario_subida_id_sm_vc: idRealUsuario_sm_vc,
-          ...(materiaId != null
-            ? { entrega: { requisito: { materia_id_sm_vc: materiaId } } }
-            : {}),
-        },
-        include: { entrega: { include: { requisito: true } } },
-        orderBy: { fecha_subida_sm_vc: 'asc' },
+      // ─── Lógica de Par de Nodos (Documento + Texto) ───────────
+      const timelineUnificado_sm_vc = mensajesRaw_sm_vc.flatMap((m: any) => {
+        const nodos_sm_vc: any[] = [];
+
+        // Si tiene documento, generar nodo DOCUMENTO primero
+        if (m.documento_sm_vc) {
+          const doc_sm_vc = m.documento_sm_vc;
+          nodos_sm_vc.push({
+            id_sm_vc: `doc-${doc_sm_vc.id_sm_vc}`,
+            tipo_nodo_sm_vc: 'DOCUMENTO',
+            archivo_nombre_sm_vc: doc_sm_vc.nombre_archivo_sm_vc,
+            ruta_archivo_sm_vc: doc_sm_vc.ruta_archivo_sm_vc,
+            tamanio_sm_vc: doc_sm_vc.tamanio_bytes_sm_vc
+              ? `${(doc_sm_vc.tamanio_bytes_sm_vc / 1024).toFixed(1)} KB`
+              : '1.2 MB',
+            mock_sm_vc: doc_sm_vc.mock_sm_vc,
+            fecha_creacion_sm_vc: m.fecha_creacion_sm_vc,
+            es_sistema_sm_vc: m.es_sistema_sm_vc,
+            requisito_id_sm_vc: doc_sm_vc.entrega?.requisito_id_sm_vc ?? null,
+            estado_sm_vc: doc_sm_vc.entrega?.estado_sm_vc ?? 'ENTREGADO',
+            materia_id_sm_vc:
+              doc_sm_vc.entrega?.requisito?.materia_id_sm_vc ??
+              m.materia_id_sm_vc ??
+              null,
+          });
+        }
+
+        // Siempre generar nodo TEXTO
+        nodos_sm_vc.push({
+          id_sm_vc: m.id_sm_vc,
+          tipo_nodo_sm_vc: 'TEXTO',
+          contenido_sm_vc: m.contenido_sm_vc,
+          es_sistema_sm_vc: m.es_sistema_sm_vc,
+          fecha_creacion_sm_vc: m.fecha_creacion_sm_vc,
+          materia_id_sm_vc: m.materia_id_sm_vc,
+        });
+
+        return nodos_sm_vc;
       });
 
-      const msgsTexto_sm_vc = mensajesRaw_sm_vc.map((m: any) => ({
-        id_sm_vc:             m.id_sm_vc,
-        tipo_nodo_sm_vc:      'TEXTO',
-        contenido_sm_vc:      m.contenido_sm_vc,
-        es_sistema_sm_vc:     m.es_sistema_sm_vc,
-        fecha_creacion_sm_vc: m.fecha_creacion_sm_vc,
-        materia_id_sm_vc:     m.materia_id_sm_vc,
-      }));
-
-      const msgsDoc_sm_vc = documentos_sm_vc.map((d: any) => ({
-        id_sm_vc:             `doc-${d.id_sm_vc}`,
-        tipo_nodo_sm_vc:      'DOCUMENTO',
-        archivo_nombre_sm_vc: d.nombre_archivo_sm_vc,
-        ruta_archivo_sm_vc:   d.ruta_archivo_sm_vc,
-        tamanio_sm_vc:        d.tamanio_bytes_sm_vc
-                                ? `${(d.tamanio_bytes_sm_vc / 1024).toFixed(1)} KB`
-                                : '1.2 MB',
-        mock_sm_vc:           d.mock_sm_vc,
-        fecha_creacion_sm_vc: d.fecha_subida_sm_vc,
-        es_sistema_sm_vc:     false,
-        requisito_id_sm_vc:   d.entrega?.requisito_id_sm_vc ?? null,
-        estado_sm_vc:         d.entrega?.estado_sm_vc ?? 'PENDIENTE',
-        materia_id_sm_vc:     d.entrega?.requisito?.materia_id_sm_vc ?? null,
-      }));
-
-      const timelineUnificado_sm_vc = [...msgsTexto_sm_vc, ...msgsDoc_sm_vc].sort(
-        (a, b) =>
-          new Date(a.fecha_creacion_sm_vc).getTime() -
-          new Date(b.fecha_creacion_sm_vc).getTime(),
-      );
-
       return {
-        id_sm_vc:            conversacion_sm_vc.id_sm_vc,
+        id_sm_vc: conversacion_sm_vc.id_sm_vc,
         estudiante_id_sm_vc: estudianteId,
-        materia_id_sm_vc:    materiaId ?? null,
-        mensajes_sm_vc:      timelineUnificado_sm_vc,
+        materia_id_sm_vc: materiaId ?? null,
+        mensajes_sm_vc: timelineUnificado_sm_vc,
       };
     } catch (error_sm_vc) {
       console.error(
@@ -249,21 +263,42 @@ export class ConversacionesService {
   /**
    * Formatea un registro Prisma de Mensaje al nodo de timeline
    * que espera el frontend (ConvMessages.vue).
+   *
+   * Si el mensaje tiene un documento vinculado, se retorna como nodo DOCUMENTO
+   * con toda la metadata del archivo incluida.
    */
-  private formatearNodoTimeline_sm_vc(mensaje_sm_vc: {
-    id_sm_vc:             number;
-    contenido_sm_vc:      string;
-    es_sistema_sm_vc:     boolean;
-    fecha_creacion_sm_vc: Date;
-    materia_id_sm_vc:     number | null;
-  }): Record<string, unknown> {
+  private formatearNodoTimeline_sm_vc(
+    mensaje_sm_vc: any,
+  ): Record<string, unknown> {
+    const tieneDocumento_sm_vc = !!mensaje_sm_vc.documento_sm_vc;
+
+    if (tieneDocumento_sm_vc) {
+      const doc_sm_vc = mensaje_sm_vc.documento_sm_vc;
+      return {
+        id_sm_vc: `doc-${doc_sm_vc.id_sm_vc}`,
+        tipo_nodo_sm_vc: 'DOCUMENTO',
+        contenido_sm_vc: mensaje_sm_vc.contenido_sm_vc,
+        es_sistema_sm_vc: mensaje_sm_vc.es_sistema_sm_vc,
+        fecha_creacion_sm_vc: mensaje_sm_vc.fecha_creacion_sm_vc.toISOString(),
+        materia_id_sm_vc: mensaje_sm_vc.materia_id_sm_vc,
+        // ── Metadata del documento ──
+        documento_id_sm_vc: doc_sm_vc.id_sm_vc,
+        archivo_nombre_sm_vc: doc_sm_vc.nombre_archivo_sm_vc,
+        tamanio_sm_vc: doc_sm_vc.tamanio_bytes_sm_vc
+          ? `${(doc_sm_vc.tamanio_bytes_sm_vc / 1024).toFixed(1)} KB`
+          : '1.2 MB',
+        mock_sm_vc: doc_sm_vc.mock_sm_vc ?? false,
+        estado_sm_vc: 'ENTREGADO', // Los mensajes con documento son entregas
+      };
+    }
+
     return {
-      id_sm_vc:             mensaje_sm_vc.id_sm_vc,
-      tipo_nodo_sm_vc:      'TEXTO',
-      contenido_sm_vc:      mensaje_sm_vc.contenido_sm_vc,
-      es_sistema_sm_vc:     mensaje_sm_vc.es_sistema_sm_vc,
+      id_sm_vc: mensaje_sm_vc.id_sm_vc,
+      tipo_nodo_sm_vc: 'TEXTO',
+      contenido_sm_vc: mensaje_sm_vc.contenido_sm_vc,
+      es_sistema_sm_vc: mensaje_sm_vc.es_sistema_sm_vc,
       fecha_creacion_sm_vc: mensaje_sm_vc.fecha_creacion_sm_vc.toISOString(),
-      materia_id_sm_vc:     mensaje_sm_vc.materia_id_sm_vc,
+      materia_id_sm_vc: mensaje_sm_vc.materia_id_sm_vc,
     };
   }
 }

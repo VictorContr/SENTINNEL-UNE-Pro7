@@ -317,6 +317,7 @@ export class ChatGateway_sm_vc
           estudianteId: payload_sm_vc.estudianteId_sm_vc,
           contenido_sm_vc: payload_sm_vc.contenido_sm_vc,
           materiaId: payload_sm_vc.materiaId_sm_vc,
+          documentoId: payload_sm_vc.documentoId_sm_vc,
         });
 
       // ACK al remitente: confirmación de que el mensaje fue guardado en BD

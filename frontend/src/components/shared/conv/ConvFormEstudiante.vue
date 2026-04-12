@@ -107,7 +107,7 @@
           !archivo_sm_vc ||
           enviando_sm_vc
         "
-        @click="emitirEnvio_sm_vc"
+        @click="enviarDatos_sm_vc"
       />
     </div>
   </div>
@@ -115,15 +115,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useQuasar } from "quasar";
 import { getRequisitoSeleccionado_sm_vc } from "src/stores/requisitoContextoStore";
-import { subirDocumento_sm_vc } from "src/services/documentosService";
-import { useChatStore_sm_vc } from "src/stores/chatStore_sm_vc";
-import { useAuthStore } from "src/stores/authStore";
-
-const $q = useQuasar();
-const chat_sm_vc = useChatStore_sm_vc();
-const auth_sm_vc = useAuthStore();
 
 const props = defineProps({
   requisitos: { type: Array, default: () => [] },
@@ -147,7 +139,7 @@ const props = defineProps({
   bloqueado_sm_vc: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["enviado"]);
+const emit = defineEmits(["enviar"]);
 
 /* ── Estado local ── */
 const fileInput_sm_vc = ref(null);
@@ -171,82 +163,27 @@ const handleFileSelect_sm_vc = (e_sm_vc) => {
 };
 
 /* ══════════════════════════════════════════════════════════════
- *  FLUJO PRINCIPAL DE ENVÍO — Sprint 3
- *  Paso 1: POST multipart a /api/documentos → obtiene documentoId
- *  Paso 2: Emit por WebSocket con chatStore → notifica en tiempo real
+ *  FLUJO PRINCIPAL DE ENVÍO — Dumb Component Pattern
+ *  El padre (DocumentConversacion) implementa el patrón de 2 pasos.
+ *  Este componente solo recolecta datos y delega al orquestador.
  * ══════════════════════════════════════════════════════════════ */
-const emitirEnvio_sm_vc = async () => {
+const enviarDatos_sm_vc = async () => {
   if (!archivo_sm_vc.value || !form_sm_vc.value.requisito_id_sm_vc) return;
-  if (enviando_sm_vc.value) return; // Guard anti-doble clic
+  if (enviando_sm_vc.value) return;
 
   enviando_sm_vc.value = true;
 
   try {
-    // ── PASO 1: Subir el archivo al servidor ──────────────────────
-    // Construimos el FormData para el POST multipart.
-    // El backend usará el campo 'archivo_sm_vc' como FileInterceptor.
-    const formData_sm_vc = new FormData();
-    formData_sm_vc.append("archivo_sm_vc", archivo_sm_vc.value);
-    formData_sm_vc.append("tipo_sm_vc", "ENTREGABLE_ESTUDIANTE");
-
-    // CASO B: Vinculado a un requisito específico → el backend hará UPSERT
-    // Enviamos requisito_id + estudiante_id para la transacción atómica.
-    const estudianteIdResuelto_sm_vc =
-      props.estudianteId ?? auth_sm_vc.user?.id_sm_vc;
-
-    if (form_sm_vc.value.requisito_id_sm_vc && estudianteIdResuelto_sm_vc) {
-      formData_sm_vc.append(
-        "requisito_id_sm_vc",
-        String(form_sm_vc.value.requisito_id_sm_vc),
-      );
-      formData_sm_vc.append(
-        "estudiante_id_sm_vc",
-        String(estudianteIdResuelto_sm_vc),
-      );
-    }
-
-    const docRespuesta_sm_vc = await subirDocumento_sm_vc(formData_sm_vc);
-
-    // ── PASO 2: Notificar por WebSocket a la sala ─────────────────
-    // El contenido del mensaje WS es el nombre del archivo.
-    // El documentoId permite al receptor descargarlo sin polling.
-    const contenido_sm_vc =
-      form_sm_vc.value.comentario_sm_vc?.trim() ||
-      `📄 ${archivo_sm_vc.value.name} (${form_sm_vc.value.version_sm_vc})`;
-
-    // [FIX] Incluir estudianteId_sm_vc — requerido por el backend para registrar el mensaje
-    chat_sm_vc.enviarMensaje_sm_vc(
-      contenido_sm_vc,
-      estudianteIdResuelto_sm_vc, // ID del estudiante (requerido por backend)
-      props.materiaId,
-      docRespuesta_sm_vc.id_sm_vc, // documentoId del Paso 1
-    );
-
-    $q.notify({
-      type: "positive",
-      message: "Informe enviado correctamente.",
-      icon: "check_circle",
-      position: "top-right",
-      timeout: 2500,
+    await emit("enviar", {
+      mensaje_sm_vc: form_sm_vc.value.comentario_sm_vc?.trim() || "",
+      archivo_sm_vc: archivo_sm_vc.value,
+      archivo_nombre_sm_vc: form_sm_vc.value.archivo_nombre_sm_vc,
+      requisito_id_sm_vc: form_sm_vc.value.requisito_id_sm_vc,
+      version_sm_vc: form_sm_vc.value.version_sm_vc,
     });
 
-    // Emitir evento al padre (DocumentConversacion) para posibles side-effects
-    emit("enviado", { documentoId: docRespuesta_sm_vc.id_sm_vc });
-
-    // ── Limpiar formulario ────────────────────────────────────────
+    // Limpiar formulario tras envío exitoso
     resetForm_sm_vc();
-  } catch (err_sm_vc) {
-    const msg_sm_vc =
-      err_sm_vc?.response?.data?.message ||
-      "Error al enviar el informe. Verifica el archivo e inténtalo nuevamente.";
-
-    $q.notify({
-      type: "negative",
-      message: msg_sm_vc,
-      icon: "error_outline",
-      position: "top",
-      timeout: 5000,
-    });
   } finally {
     enviando_sm_vc.value = false;
   }
