@@ -1,9 +1,21 @@
 import {
-  Controller, Get, Post, Param, UseGuards, Request, Body,
-  UseInterceptors, UploadedFile, BadRequestException
+  Controller,
+  Get,
+  Post,
+  Param,
+  UseGuards,
+  Request,
+  Body,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard_sm_vc, RolesGuard_sm_vc, Roles_sm_vc } from '../auth/guards';
+import {
+  JwtAuthGuard_sm_vc,
+  RolesGuard_sm_vc,
+  Roles_sm_vc,
+} from '../auth/guards';
 import { PasantiasService_sm_vc } from './pasantias.service';
 import { CreateEntregaDto_sm_vc } from './dto/create-entrega.dto';
 import { multerDocumentosConfig } from '../config/multer.config';
@@ -62,7 +74,9 @@ export class PasantiasController_sm_vc {
 
   @Post('evaluar-entrega')
   @Roles_sm_vc('PROFESOR', 'ADMIN')
-  @UseInterceptors(FileInterceptor('archivo_correccion_sm_vc', multerDocumentosConfig))
+  @UseInterceptors(
+    FileInterceptor('archivo_correccion_sm_vc', multerDocumentosConfig),
+  )
   async evaluarEntrega_sm_vc(
     @Request() req: RequestWithUser,
     @Body() body: any,
@@ -88,7 +102,8 @@ export class PasantiasController_sm_vc {
   @Roles_sm_vc('PROFESOR', 'ADMIN')
   async evaluarRequisitosBulk_sm_vc(
     @Request() req: RequestWithUser,
-    @Body() body: {
+    @Body()
+    body: {
       estudiante_id_sm_vc: number;
       materia_id_sm_vc: number;
       requisitos_ids: number[];
@@ -97,11 +112,18 @@ export class PasantiasController_sm_vc {
     },
   ) {
     const profesorId = req.user.id_sm_vc;
+    // FIX: Convertir IDs a números para evitar error de tipado en Prisma
+    const estudianteIdParsed = parseInt(body.estudiante_id_sm_vc as any, 10);
+    const materiaIdParsed = parseInt(body.materia_id_sm_vc as any, 10);
+    const requisitosIdsParsed = body.requisitos_ids.map((id) =>
+      parseInt(id as any, 10),
+    );
+
     return this.pasantiasService.evaluarRequisitosBulk_sm_vc(
       profesorId,
-      body.estudiante_id_sm_vc,
-      body.materia_id_sm_vc,
-      body.requisitos_ids,
+      estudianteIdParsed,
+      materiaIdParsed,
+      requisitosIdsParsed,
       body.nota_global_sm_dec,
       body.comentario_sm_vc,
     );

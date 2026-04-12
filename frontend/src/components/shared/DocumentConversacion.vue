@@ -465,15 +465,23 @@ const handleResponderCorreccion_sm_vc = (payload_sm_vc) => {
   emit("mensajeEnviado", msg_sm_vc);
 };
 
-const handleGuardarRequisitos_sm_vc = (payload_sm_vc) => {
-  const msg_sm_vc = pasantiasStore_sm_vc.aprobarRequisitosGranular({
-    estudiante_id_sm_vc: idEstudianteFinal_sm_vc.value,
-    materia_id_sm_vc: props.materiaId,
-    requisitos_seleccionados_ids: payload_sm_vc.ids,
+const handleGuardarRequisitos_sm_vc = async (payload_sm_vc) => {
+  // FIX: Agregar await para esperar la respuesta del store
+  const msg_sm_vc = await pasantiasStore_sm_vc.aprobarRequisitosGranular({
+    estudiante_id_sm_vc: parseInt(idEstudianteFinal_sm_vc.value, 10),
+    materia_id_sm_vc: parseInt(props.materiaId, 10),
+    requisitos_seleccionados_ids: payload_sm_vc.ids.map((id) =>
+      parseInt(id, 10),
+    ),
     nota_global_sm_dec: payload_sm_vc.nota_global,
     comentario_sm_vc: payload_sm_vc.comentario,
   });
-  if (msg_sm_vc) emit("mensajeEnviado", msg_sm_vc);
+
+  // FIX: Recargar conversación para actualizar estado de requisitos en UI
+  if (msg_sm_vc) {
+    emit("mensajeEnviado", msg_sm_vc);
+    await cargarDatos_sm_vc();
+  }
 };
 </script>
 
