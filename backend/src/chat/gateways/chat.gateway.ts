@@ -29,6 +29,7 @@ import { TypingStatusDto_sm_vc } from '../dto/typing-status.dto';
 interface MensajeCreadoPayload_sm_vc {
   estudianteId_sm_vc: number;
   materiaId_sm_vc?: number;
+  conversacion_id_sm_vc: number;
   mensaje_sm_vc: Record<string, unknown>;
 }
 
@@ -317,14 +318,21 @@ export class ChatGateway_sm_vc
           estudianteId: payload_sm_vc.estudianteId_sm_vc,
           contenido_sm_vc: payload_sm_vc.contenido_sm_vc,
           materiaId: payload_sm_vc.materiaId_sm_vc,
+          documentoId: payload_sm_vc.documentoId_sm_vc,
         });
 
       // ACK al remitente: confirmación de que el mensaje fue guardado en BD
-      // [FIX] Incluir el mensaje completo para actualización optimista de la UI
+      // [FIX] Formatear como array de nodos desdoblados para consistencia con HTTP GET
+      const nodosFormateados_sm_vc = mensajeGuardado_sm_vc
+        ? this.conversacionesService_sm_vc.formatearNodoTimeline_sm_vc(
+            mensajeGuardado_sm_vc,
+          )
+        : [];
+
       client_sm_vc.emit('message_ack_sm_vc', {
         status_sm_vc: 'guardado',
         timestamp_sm_vc: new Date().toISOString(),
-        mensaje_sm_vc: mensajeGuardado_sm_vc,
+        mensaje_sm_vc: nodosFormateados_sm_vc,
       });
     } catch (err_sm_vc) {
       this.logger_sm_vc.error(

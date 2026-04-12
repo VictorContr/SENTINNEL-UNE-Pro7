@@ -3,6 +3,11 @@
 // Consume el endpoint /conversaciones/:estudianteId
 // con soporte de filtro por materia: ?materiaId=X
 //
+// SPRINT 3 — Patrón 2 Pasos:
+//   subirDocumentoFisico_sm_vc → POST /api/documentos → devuelve id_sm_vc
+//   El ID se incluye en el payload del mensaje WS para que el receptor
+//   pueda descargar el archivo sin necesidad de polling.
+//
 // Contrato del backend:
 //   { id_sm_vc, estudiante_id_sm_vc, materia_id_sm_vc, mensajes_sm_vc: [...] }
 // ══════════════════════════════════════════════════════════════════
@@ -15,19 +20,21 @@ import { getConversacionesByEstudianteId_sm_vc } from "src/services/conversacion
 
 export const useConversacionStore_sm_vc = defineStore("conversacion", () => {
   /* ── State ── */
-  const conversaciones_sm_vc = ref([]); // Array de nodos del timeline (TEXTO + DOCUMENTO)
+  const conversaciones_sm_vc = ref([]);
   const cargando_sm_vc = ref(false);
   const error_sm_vc = ref(null);
-  const materiaActiva_sm_vc = ref(null); // Refleja el último filtro de materia aplicado
+  const materiaActiva_sm_vc = ref(null);
+
+  /** true exclusivamente durante la subida física del archivo (Fase A). */
+  const subiendo_sm_vc = ref(false);
 
   /* ── Actions ── */
 
   /**
    * Obtiene el historial de trazabilidad de un estudiante.
    *
-   * @param {number|string} estudianteId_sm_vc - ID del estudiante (o usuario).
-   * @param {number|null}   materiaId_sm_vc    - Opcional. Si se envía, filtra por materia.
-   *                                             Si es null/undefined → historial global.
+   * @param {number|string} estudianteId_sm_vc
+   * @param {number|null}   materiaId_sm_vc
    * @returns {Promise<Array|null>}
    */
   const obtenerConversacion_sm_vc = async (
@@ -46,9 +53,7 @@ export const useConversacionStore_sm_vc = defineStore("conversacion", () => {
         materiaId_sm_vc,
       );
 
-      // Extraemos el array de nodos del timeline del objeto envolvente del backend
       conversaciones_sm_vc.value = data.mensajes_sm_vc || [];
-
       return conversaciones_sm_vc.value;
     } catch (err_sm_vc) {
       const mensaje_sm_vc =
@@ -73,27 +78,19 @@ export const useConversacionStore_sm_vc = defineStore("conversacion", () => {
   };
 
   /**
-   * Resetea el estado de conversaciones al navegar entre estudiantes o la materialista.
-   */
-  const limpiarConversaciones_sm_vc = () => {
-    conversaciones_sm_vc.value = [];
-    error_sm_vc.value = null;
-    materiaActiva_sm_vc.value = null;
-  };
-
-  /** Estado de carga durante la subida física de archivos (Fase A del patrón 2 pasos). */
-  const subiendo_sm_vc = ref(false);
-
-  /**
-   * PASO 1 DEL PATRÓN ASÍNCRONO DE 2 PASOS.
+   * PASO 2 DEL PATRÓN ASÍNCRONO DE 2 PASOS.
    *
    * Sube el archivo físico al servidor vía POST /api/documentos y
    * devuelve el objeto Documento creado (con su id_sm_vc).
    *
-   * @param {File}          archivo_sm_vc       — Archivo a subir
-   * @param {number|string} estudianteId_sm_vc  — ID del estudiante propietario
-   * @param {number|null}   requisitoId_sm_vc   — ID del requisito (para UPSERT de Entrega)
-   * @param {string}        tipo_sm_vc          — TipoDocumento enum (default ENTREGABLE_ESTUDIANTE)
+   * Este método no envía ningún mensaje de chat; solo persiste el
+   * archivo y retorna el ID para que el llamador lo incluya en el
+   * payload del evento WebSocket (Fase B).
+   *
+   * @param {File}          archivo_sm_vc          — Archivo a subir
+   * @param {number|string} estudianteId_sm_vc     — ID del estudiante propietario
+   * @param {number|null}   requisitoId_sm_vc      — ID del requisito (Caso B del backend)
+   * @param {string}        tipo_sm_vc             — TipoDocumento enum (default ENTREGABLE_ESTUDIANTE)
    * @returns {Promise<{ id_sm_vc: number, nombre_archivo_sm_vc: string, ... }>}
    * @throws {Error} Si el servidor rechaza el archivo
    */
@@ -110,7 +107,7 @@ export const useConversacionStore_sm_vc = defineStore("conversacion", () => {
       formData_sm_vc.append("archivo_sm_vc", archivo_sm_vc);
       formData_sm_vc.append("tipo_sm_vc", tipo_sm_vc);
 
-      // Incluir contexto para que el backend haga el UPSERT de Entrega
+      // Incluir contexto para que el backend haga el UPSERT de Entrega (Caso B)
       if (estudianteId_sm_vc) {
         formData_sm_vc.append(
           "estudiante_id_sm_vc",
@@ -131,6 +128,15 @@ export const useConversacionStore_sm_vc = defineStore("conversacion", () => {
     }
   };
 
+  /**
+   * Resetea el estado de conversaciones al navegar entre perfiles.
+   */
+  const limpiarConversaciones_sm_vc = () => {
+    conversaciones_sm_vc.value = [];
+    error_sm_vc.value = null;
+    materiaActiva_sm_vc.value = null;
+  };
+
   return {
     /* State */
     conversaciones_sm_vc,
@@ -141,7 +147,7 @@ export const useConversacionStore_sm_vc = defineStore("conversacion", () => {
 
     /* Actions */
     obtenerConversacion_sm_vc,
-    limpiarConversaciones_sm_vc,
     subirDocumentoFisico_sm_vc,
+    limpiarConversaciones_sm_vc,
   };
 });

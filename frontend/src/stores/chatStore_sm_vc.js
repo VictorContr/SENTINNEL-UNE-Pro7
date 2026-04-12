@@ -281,6 +281,7 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
      * conversacionStore para mantener una sola fuente de verdad reactiva.
      */
     socket_sm_vc.value.on("message_received_sm_vc", (mensaje_sm_vc) => {
+      console.log("📡 [WS BROADCAST] Payload crudo recibido:", mensaje_sm_vc);
       _inyectarMensajeEnStore_sm_vc(mensaje_sm_vc);
     });
 
@@ -291,6 +292,7 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
      * Usamos el mensaje devuelto (ya con ID de BD) para actualizar la UI.
      */
     socket_sm_vc.value.on("message_ack_sm_vc", (ack_sm_vc) => {
+      console.log("📨 [WS ACK] Payload crudo recibido:", ack_sm_vc);
       if (ack_sm_vc?.mensaje_sm_vc) {
         _inyectarMensajeEnStore_sm_vc(ack_sm_vc.mensaje_sm_vc);
       }
@@ -552,18 +554,30 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
    * El mensaje se agrega al final del array `conversaciones_sm_vc` del store,
    * que es la fuente de verdad para todos los componentes de chat.
    *
-   * @param {object} mensaje_sm_vc - Objeto mensaje formateado por el backend.
+   * [FIX] Detectar si el payload es un array (Par de Nodos: DOCUMENTO + TEXTO)
+   * y usar spread operator para empujar elementos individuales, no el array completo.
+   *
+   * @param {object|array} payload_sm_vc - Objeto mensaje o array de nodos formateado por el backend.
    * @returns {void}
    */
-  const _inyectarMensajeEnStore_sm_vc = (mensaje_sm_vc) => {
-    // Importación dinámica para evitar circular dependency store ↔ store
-    import("src/stores/conversacionStore").then(
-      ({ useConversacionStore_sm_vc }) => {
-        const conversacionStore_sm_vc = useConversacionStore_sm_vc();
-        // Agregar el mensaje en tiempo real al array reactivo sin rehacer el fetch
-        conversacionStore_sm_vc.conversaciones_sm_vc.push(mensaje_sm_vc);
-      },
-    );
+  const _inyectarMensajeEnStore_sm_vc = (payload_sm_vc) => {
+    import("src/stores/conversacionStore")
+      .then(({ useConversacionStore_sm_vc }) => {
+        const store_sm_vc = useConversacionStore_sm_vc();
+        // Asegurar reactividad con desempaquetado de array
+        if (Array.isArray(payload_sm_vc)) {
+          store_sm_vc.conversaciones_sm_vc.push(...payload_sm_vc);
+        } else {
+          store_sm_vc.conversaciones_sm_vc.push(payload_sm_vc);
+        }
+        console.log(
+          "✅ Inyección exitosa. Total:",
+          store_sm_vc.conversaciones_sm_vc.length,
+        );
+      })
+      .catch((err_sm_vc) => {
+        console.error("❌ ERROR FATAL EN PINIA:", err_sm_vc);
+      });
   };
 
   /**
