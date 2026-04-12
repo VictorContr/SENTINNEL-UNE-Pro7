@@ -264,17 +264,20 @@ export class ConversacionesService {
    * Formatea un registro Prisma de Mensaje al nodo de timeline
    * que espera el frontend (ConvMessages.vue).
    *
-   * Si el mensaje tiene un documento vinculado, se retorna como nodo DOCUMENTO
-   * con toda la metadata del archivo incluida.
+   * Implementa la estructura "Par de Nodos": si el mensaje tiene un documento
+   * vinculado, retorna un array con [nodoDocumento, nodoTexto].
+   * Si no tiene documento, retorna un array con [nodoTexto].
+   *
+   * Esto asegura consistencia entre HTTP GET y WebSocket broadcast.
    */
-  private formatearNodoTimeline_sm_vc(
-    mensaje_sm_vc: any,
-  ): Record<string, unknown> {
+  formatearNodoTimeline_sm_vc(mensaje_sm_vc: any): Record<string, unknown>[] {
+    const nodos_sm_vc: Record<string, unknown>[] = [];
     const tieneDocumento_sm_vc = !!mensaje_sm_vc.documento_sm_vc;
 
+    // ── Nodo DOCUMENTO (primero, si existe) ──
     if (tieneDocumento_sm_vc) {
       const doc_sm_vc = mensaje_sm_vc.documento_sm_vc;
-      return {
+      nodos_sm_vc.push({
         id_sm_vc: `doc-${doc_sm_vc.id_sm_vc}`,
         tipo_nodo_sm_vc: 'DOCUMENTO',
         contenido_sm_vc: mensaje_sm_vc.contenido_sm_vc,
@@ -288,17 +291,22 @@ export class ConversacionesService {
           ? `${(doc_sm_vc.tamanio_bytes_sm_vc / 1024).toFixed(1)} KB`
           : '1.2 MB',
         mock_sm_vc: doc_sm_vc.mock_sm_vc ?? false,
-        estado_sm_vc: 'ENTREGADO', // Los mensajes con documento son entregas
-      };
+        estado_sm_vc: 'ENTREGADO',
+        ruta_archivo_sm_vc: doc_sm_vc.ruta_archivo_sm_vc,
+        requisito_id_sm_vc: doc_sm_vc.entrega?.requisito_id_sm_vc ?? null,
+      });
     }
 
-    return {
+    // ── Nodo TEXTO (siempre presente) ──
+    nodos_sm_vc.push({
       id_sm_vc: mensaje_sm_vc.id_sm_vc,
       tipo_nodo_sm_vc: 'TEXTO',
       contenido_sm_vc: mensaje_sm_vc.contenido_sm_vc,
       es_sistema_sm_vc: mensaje_sm_vc.es_sistema_sm_vc,
       fecha_creacion_sm_vc: mensaje_sm_vc.fecha_creacion_sm_vc.toISOString(),
       materia_id_sm_vc: mensaje_sm_vc.materia_id_sm_vc,
-    };
+    });
+
+    return nodos_sm_vc;
   }
 }

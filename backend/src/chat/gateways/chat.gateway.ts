@@ -321,11 +321,17 @@ export class ChatGateway_sm_vc
         });
 
       // ACK al remitente: confirmación de que el mensaje fue guardado en BD
-      // [FIX] Incluir el mensaje completo para actualización optimista de la UI
+      // [FIX] Formatear como array de nodos desdoblados para consistencia con HTTP GET
+      const nodosFormateados_sm_vc = mensajeGuardado_sm_vc
+        ? this.conversacionesService_sm_vc.formatearNodoTimeline_sm_vc(
+            mensajeGuardado_sm_vc,
+          )
+        : [];
+
       client_sm_vc.emit('message_ack_sm_vc', {
         status_sm_vc: 'guardado',
         timestamp_sm_vc: new Date().toISOString(),
-        mensaje_sm_vc: mensajeGuardado_sm_vc,
+        mensaje_sm_vc: nodosFormateados_sm_vc,
       });
     } catch (err_sm_vc) {
       this.logger_sm_vc.error(

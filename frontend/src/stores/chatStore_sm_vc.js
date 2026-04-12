@@ -552,7 +552,10 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
    * El mensaje se agrega al final del array `conversaciones_sm_vc` del store,
    * que es la fuente de verdad para todos los componentes de chat.
    *
-   * @param {object} mensaje_sm_vc - Objeto mensaje formateado por el backend.
+   * [FIX] Detectar si el payload es un array (Par de Nodos: DOCUMENTO + TEXTO)
+   * y usar spread operator para empujar elementos individuales, no el array completo.
+   *
+   * @param {object|array} mensaje_sm_vc - Objeto mensaje o array de nodos formateado por el backend.
    * @returns {void}
    */
   const _inyectarMensajeEnStore_sm_vc = (mensaje_sm_vc) => {
@@ -561,7 +564,12 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
       ({ useConversacionStore_sm_vc }) => {
         const conversacionStore_sm_vc = useConversacionStore_sm_vc();
         // Agregar el mensaje en tiempo real al array reactivo sin rehacer el fetch
-        conversacionStore_sm_vc.conversaciones_sm_vc.push(mensaje_sm_vc);
+        // [FIX] Detectar array y usar spread operator para empujar elementos individuales
+        if (Array.isArray(mensaje_sm_vc)) {
+          conversacionStore_sm_vc.conversaciones_sm_vc.push(...mensaje_sm_vc);
+        } else {
+          conversacionStore_sm_vc.conversaciones_sm_vc.push(mensaje_sm_vc);
+        }
       },
     );
   };
