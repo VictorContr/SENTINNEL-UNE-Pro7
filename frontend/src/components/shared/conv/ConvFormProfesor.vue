@@ -12,9 +12,23 @@
      Como el profesor adjunta correcciones (no crea Entregas), usamos
      el Caso A (adjunto flotante, sin entrega_id ni requisito_id).
 
-     IMPORTANTE: En un mismo submit, el profesor puede combinar:
-       - Un mensaje de evaluación (texto, estado) → evento 'responder'
-       - Un archivo de corrección → flujo de 2 pasos via chatStore WS
+     TAREA 2: Modal de Vinculación de Entregas
+     ─────────────────────────────────────────────────────────────────────
+     Al seleccionar "Observación" o "Aprobar Item", se dispara un modal
+     que lista los mensajes DOCUMENTO del alumno que no han sido evaluados
+     (!msg.evaluacion_estado_sm_vc). Solo se puede seleccionar uno a la vez.
+     Al confirmar, se adjunta id_entrega_sm_vc al payload del backend.
+
+     TAREA 3: Acción Global de Reprobar
+     ─────────────────────────────────────────────────────────────────────
+     "Reprobado" no vincula un documento específico: es un cambio de
+     estado global del estudiante. El payload refleja este cambio
+     sin id_entrega_sm_vc.
+
+     TAREA 4: Modal de Requisitos con Estado Visual
+     ─────────────────────────────────────────────────────────────────────
+     Los requisitos ya aprobados aparecen pre-marcados, en verde y
+     deshabilitados para evitar re-envíos accidentales.
      ══════════════════════════════════════════════════════════════════ -->
 <template>
   <div class="action-panel_sm_vc">
@@ -62,6 +76,7 @@
             :class="{
               'eval-option--selected_sm_vc':
                 form_sm_vc.estado_evaluacion_sm_vc === opt.value,
+              'eval-option--reprobado_sm_vc': opt.value === 'REPROBADO',
             }"
             :style="
               form_sm_vc.estado_evaluacion_sm_vc === opt.value
@@ -72,6 +87,18 @@
           >
             <q-icon :name="opt.icon" size="14px" />{{ opt.label }}
           </button>
+        </div>
+
+        <!-- Aviso informativo cuando se selecciona "Reprobado" -->
+        <div
+          v-if="form_sm_vc.estado_evaluacion_sm_vc === 'REPROBADO'"
+          class="reprobado-notice_sm_vc"
+        >
+          <q-icon name="warning_amber" size="14px" color="negative" />
+          <span>
+            Acción de <strong>Reprobar Materia</strong>: esta decisión cambia el
+            estado global del estudiante sin vincular un documento específico.
+          </span>
         </div>
       </div>
 
@@ -132,11 +159,26 @@
         />
       </div>
 
+      <!-- Entrega vinculada (muestra la selección previa del modal) -->
+      <div
+        v-if="entregaVinculada_sm_vc"
+        class="entrega-vinculada-badge_sm_vc"
+      >
+        <q-icon name="link" size="14px" color="teal-3" />
+        <span>Entrega vinculada: <strong>{{ entregaVinculada_sm_vc.archivo_nombre_sm_vc }}</strong></span>
+        <q-btn
+          flat dense round icon="close" size="xs" color="grey-5"
+          @click="entregaVinculada_sm_vc = null"
+        >
+          <q-tooltip class="bg-dark text-caption">Desvincular</q-tooltip>
+        </q-btn>
+      </div>
+
       <q-btn
         unelevated
         no-caps
-        label="Enviar Evaluación"
-        icon="send"
+        :label="labelBotonEnvio_sm_vc"
+        :icon="iconBotonEnvio_sm_vc"
         class="send-btn_sm_vc send-btn--profesor_sm_vc"
         :loading="enviandoRespuesta_sm_vc"
         :disable="
@@ -145,10 +187,105 @@
           !form_sm_vc.comentario_sm_vc ||
           enviandoRespuesta_sm_vc
         "
-        @click="emitirRespuesta_sm_vc"
+        @click="handleClickEnvio_sm_vc"
       />
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       TAREA 2: Modal de Vinculación de Entregas
+       Lista los mensajes de tipo DOCUMENTO enviados por el alumno
+       que aún NO han sido evaluados (!evaluacion_estado_sm_vc).
+       Funciona como radio: solo se puede seleccionar uno a la vez.
+       Al confirmar, adjunta id_entrega_sm_vc al payload.
+       ══════════════════════════════════════════════════════════════════ -->
+  <q-dialog v-model="mostrarModalEntregas_sm_vc" persistent>
+    <q-card class="modal-card_sm_vc modal-entregas-card_sm_vc">
+      <q-card-section class="row items-center q-pb-none">
+        <div
+          class="text-subtitle1 text-teal-3 text-weight-bold"
+          style="display: flex; align-items: center"
+        >
+          <q-icon name="folder_open" size="sm" class="q-mr-sm" />
+          Vincular Entrega del Alumno
+        </div>
+        <q-space />
+        <q-btn icon="close" flat round dense color="grey-5" v-close-popup />
+      </q-card-section>
+
+      <q-card-section>
+        <div class="q-mb-sm text-caption text-grey-5">
+          Selecciona el documento que será evaluado con esta
+          <strong style="color: var(--sn-texto-principal)">
+            {{ form_sm_vc.estado_evaluacion_sm_vc === 'APROBADO' ? 'Aprobación' : 'Observación' }}
+          </strong>.
+          Solo aparecen los documentos pendientes de evaluación.
+        </div>
+
+        <!-- ── Estado vacío: no hay documentos pendientes ── -->
+        <div v-if="documentosPendientes_sm_vc.length === 0" class="empty-entregas_sm_vc">
+          <q-icon name="inbox" size="28px" color="blue-grey-7" />
+          <span>No hay documentos pendientes de evaluación.</span>
+        </div>
+
+        <!-- ── Lista de documentos pendientes ── -->
+        <q-list v-else dark bordered separator class="rounded-borders">
+          <q-item
+            v-for="doc in documentosPendientes_sm_vc"
+            :key="doc.id_sm_vc"
+            tag="label"
+            v-ripple
+            :class="{ 'doc-item--seleccionado_sm_vc': entregaSeleccionadaTemp_sm_vc?.id_sm_vc === doc.id_sm_vc }"
+          >
+            <!-- Radio: solo uno seleccionable -->
+            <q-item-section avatar>
+              <q-radio
+                v-model="entregaSeleccionadaTemp_sm_vc"
+                :val="doc"
+                color="teal-3"
+              />
+            </q-item-section>
+
+            <!-- Icono de tipo de documento -->
+            <q-item-section avatar>
+              <q-avatar size="32px" color="blue-grey-9" text-color="blue-grey-4">
+                <q-icon name="description" size="16px" />
+              </q-avatar>
+            </q-item-section>
+
+            <q-item-section>
+              <q-item-label style="font-size: 0.8rem; font-weight: 600;">
+                {{ doc.archivo_nombre_sm_vc || 'Documento sin nombre' }}
+              </q-item-label>
+              <q-item-label caption class="text-grey-5" style="font-size: 0.65rem;">
+                {{ formatDateTime_sm_vc(doc.fecha_creacion_sm_vc) }}
+                <span v-if="doc.requisito_id_sm_vc" class="q-ml-sm">
+                  · Req. #{{ doc.requisito_id_sm_vc }}
+                </span>
+              </q-item-label>
+            </q-item-section>
+
+            <q-item-section side>
+              <q-badge color="blue-7" label="SIN EVALUAR" style="font-size: 0.52rem;" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card-section>
+
+      <q-card-actions align="right" class="q-pb-md q-pr-md">
+        <q-btn outline label="Cancelar" color="grey-5" v-close-popup no-caps />
+        <q-btn
+          unelevated
+          label="Confirmar Vinculación"
+          color="teal-3"
+          no-caps
+          icon="link"
+          :disable="!entregaSeleccionadaTemp_sm_vc"
+          @click="confirmarVinculacion_sm_vc"
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 
   <!-- ── Modal: Evaluación granular de requisitos ── -->
   <q-dialog v-model="mostrarModal_sm_vc">
@@ -167,8 +304,9 @@
 
       <q-card-section>
         <div class="q-mb-sm text-caption text-grey-5">
-          Marca los requisitos que deseas aprobar en este lote. Los ya aprobados
-          aparecen pre-seleccionados.
+          Marca los requisitos que deseas aprobar en este lote.
+          Los requisitos <span style="color: #6fffe9; font-weight: 700;">en verde</span>
+          ya están consolidados y no se pueden modificar.
         </div>
         <q-list dark bordered separator class="rounded-borders">
           <q-item
@@ -176,12 +314,15 @@
             :key="req.id_sm_vc"
             tag="label"
             v-ripple
+            :class="{ 'req-item--aprobado_sm_vc': esRequisitoAprobado_sm_vc(req.id_sm_vc) }"
           >
             <q-item-section avatar>
+              <!-- TAREA 4: Si ya está aprobado en BD → deshabilitar checkbox -->
               <q-checkbox
                 v-model="requisitosSeleccionados_sm_vc"
                 :val="req.id_sm_vc"
                 color="teal-3"
+                :disable="esRequisitoAprobado_sm_vc(req.id_sm_vc)"
               />
             </q-item-section>
             <q-item-section>
@@ -197,13 +338,14 @@
               </q-item-label>
             </q-item-section>
             <q-item-section side>
+              <!-- TAREA 4: Indicador visual consolidado (check verde) -->
               <div
-                v-if="requisitosAprobadosIniciales.includes(req.id_sm_vc)"
-                class="text-teal-3"
-                style="font-size: 0.65rem; display: flex; align-items: center"
+                v-if="esRequisitoAprobado_sm_vc(req.id_sm_vc)"
+                class="req-aprobado-badge_sm_vc"
               >
-                <q-icon name="check_circle" class="q-mr-xs" size="10px" />
-                Aprobado
+                <q-icon name="check_circle" size="14px" color="teal-3" />
+                <span>Aprobado</span>
+                <q-badge color="teal-9" label="CONSOLIDADO" style="font-size: 0.48rem; margin-left: 4px;" />
               </div>
               <div v-else class="text-grey-7" style="font-size: 0.65rem">
                 Pendiente
@@ -292,7 +434,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { getRequisitoSeleccionado_sm_vc } from "src/stores/requisitoContextoStore";
 import { subirDocumento_sm_vc } from "src/services/documentosService";
@@ -318,6 +460,12 @@ const props = defineProps({
    * Bloquea los inputs temporalmente hasta que se restablezca la conexión.
    */
   bloqueado_sm_vc: { type: Boolean, default: false },
+  /**
+   * TAREA 2: mensajes — Lista completa de mensajes de la conversación.
+   * Se filtran los DOCUMENTO del alumno sin evaluación para el modal
+   * de vinculación de entregas.
+   */
+  mensajes: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(["responder", "guardarRequisitos"]);
@@ -325,8 +473,14 @@ const emit = defineEmits(["responder", "guardarRequisitos"]);
 /* ── Estado local ── */
 const mostrarModal_sm_vc = ref(false);
 const mostrarModalAprobarTodo_sm_vc = ref(false);
+const mostrarModalEntregas_sm_vc = ref(false);
 const fileInputProf_sm_vc = ref(null);
 const enviandoRespuesta_sm_vc = ref(false);
+
+// Entrega seleccionada en el modal de vinculación (temporal, antes de confirmar)
+const entregaSeleccionadaTemp_sm_vc = ref(null);
+// Entrega confirmada que se adjuntará al payload
+const entregaVinculada_sm_vc = ref(null);
 
 const form_sm_vc = ref({
   estado_evaluacion_sm_vc: null,
@@ -349,12 +503,12 @@ const evalOpciones_sm_vc = [
     color: "#f0a500",
   },
   { value: "APROBADO", label: "Aprobar Item", icon: "done", color: "#6fffe9" },
-  { value: "REPROBADO", label: "Reprobado", icon: "cancel", color: "#ff8fa3" },
+  { value: "REPROBADO", label: "Reprobar Materia", icon: "block", color: "#ff8fa3" },
 ];
 
 const requisitosSeleccionados_sm_vc = ref([]);
 
-// Sincronización de requisitos seleccionados al abrir el modal granular
+/* ── Sincronización de requisitos seleccionados al abrir el modal granular ── */
 watch(mostrarModal_sm_vc, (val_sm_vc) => {
   if (val_sm_vc) {
     requisitosSeleccionados_sm_vc.value = [
@@ -362,6 +516,57 @@ watch(mostrarModal_sm_vc, (val_sm_vc) => {
     ];
   }
 });
+
+/* ── Al cambiar el estado, limpiar la entrega vinculada si se selecciona REPROBADO ── */
+watch(() => form_sm_vc.value.estado_evaluacion_sm_vc, (nuevoEstado_sm_vc) => {
+  if (nuevoEstado_sm_vc === 'REPROBADO') {
+    // TAREA 3: Reprobar no vincula documentos — limpiar selección previa
+    entregaVinculada_sm_vc.value = null;
+    entregaSeleccionadaTemp_sm_vc.value = null;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   TAREA 2: Computed — Documentos del alumno pendientes de evaluación
+   Filtra el array de mensajes por:
+     1. tipo_nodo_sm_vc === 'DOCUMENTO'
+     2. remitente_rol_sm_vc === 'ESTUDIANTE' (o sin rol, asume estudiante)
+     3. !evaluacion_estado_sm_vc (aún no evaluado)
+   ═══════════════════════════════════════════════════════════ */
+const documentosPendientes_sm_vc = computed(() => {
+  return props.mensajes.filter((msg_sm_vc) => {
+    const esDocumento_sm_vc = msg_sm_vc.tipo_nodo_sm_vc === 'DOCUMENTO';
+    // Solo documentos del alumno (no correcciones del profesor)
+    const esDeAlumno_sm_vc =
+      !msg_sm_vc.es_sistema_sm_vc &&
+      msg_sm_vc.remitente_rol_sm_vc !== 'PROFESOR';
+    // Sin evaluación registrada
+    const sinEvaluar_sm_vc = !msg_sm_vc.evaluacion_estado_sm_vc;
+    return esDocumento_sm_vc && esDeAlumno_sm_vc && sinEvaluar_sm_vc;
+  });
+});
+
+/* ── Computed: label e icono del botón de envío dinámico ── */
+const labelBotonEnvio_sm_vc = computed(() => {
+  if (form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO') {
+    return 'Reprobar Materia';
+  }
+  return 'Enviar Evaluación';
+});
+
+const iconBotonEnvio_sm_vc = computed(() => {
+  if (form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO') {
+    return 'block';
+  }
+  return 'send';
+});
+
+/* ── TAREA 4: Helper para verificar si un requisito ya está aprobado ── */
+const esRequisitoAprobado_sm_vc = (requisitoId_sm_vc) => {
+  return props.requisitosAprobadosIniciales.some(
+    (id_sm_vc) => String(id_sm_vc) === String(requisitoId_sm_vc)
+  );
+};
 
 /* ── Handler de selección de archivo ── */
 const handleFileProf_sm_vc = (e_sm_vc) => {
@@ -372,18 +577,63 @@ const handleFileProf_sm_vc = (e_sm_vc) => {
   }
 };
 
-/* ══════════════════════════════════════════════════════════════
- *  FLUJO PRINCIPAL DE ENVÍO — Sprint 3
+/* ═══════════════════════════════════════════════════════════
+   TAREA 2: handleClickEnvio_sm_vc — Punto de entrada del botón
+   Decide si abrir el modal de vinculación o enviar directamente:
+     - OBSERVACIONES / APROBADO → abrir modal de entregas
+     - REPROBADO                → envío directo (acción global)
+   ═══════════════════════════════════════════════════════════ */
+const handleClickEnvio_sm_vc = () => {
+  if (!form_sm_vc.value.estado_evaluacion_sm_vc || !form_sm_vc.value.comentario_sm_vc) return;
+
+  const estado_sm_vc = form_sm_vc.value.estado_evaluacion_sm_vc;
+
+  if (estado_sm_vc === 'REPROBADO') {
+    // TAREA 3: Acción Global — no necesita vinculación de documento
+    emitirRespuesta_sm_vc(null);
+    return;
+  }
+
+  // OBSERVACIONES o APROBADO → requieren vincular una entrega
+  // Si ya hay una entrega vinculada confirmada, enviar directamente
+  if (entregaVinculada_sm_vc.value) {
+    emitirRespuesta_sm_vc(entregaVinculada_sm_vc.value);
+    return;
+  }
+
+  // Sin entrega vinculada → abrir modal de selección
+  entregaSeleccionadaTemp_sm_vc.value = null;
+  mostrarModalEntregas_sm_vc.value = true;
+};
+
+/* ── TAREA 2: Confirmar vinculación desde el modal ── */
+const confirmarVinculacion_sm_vc = () => {
+  if (!entregaSeleccionadaTemp_sm_vc.value) return;
+
+  // Guardar la entrega seleccionada como vinculada
+  entregaVinculada_sm_vc.value = entregaSeleccionadaTemp_sm_vc.value;
+  mostrarModalEntregas_sm_vc.value = false;
+
+  // Proceder inmediatamente con el envío
+  emitirRespuesta_sm_vc(entregaVinculada_sm_vc.value);
+};
+
+/* ═══════════════════════════════════════════════════════════════
+ *  FLUJO PRINCIPAL DE ENVÍO — Sprint 3 + Tareas 2 y 3
+ *
+ *  @param {Object|null} entrega_sm_vc — Objeto de entrega vinculada
+ *    (null si es Reprobado global).
  *
  *  Acción combinada en un solo clic:
  *    A) Si hay archivo adjunto → POST + notificación WS con tipo DOCUMENTO
  *    B) Siempre → emite evento 'responder' al orquestador (DocumentConversacion)
  *       para que este llame a pasantiasStore.responderCorreccion()
  *
- *  El orden es: primero el archivo (Paso 1+2), luego la evaluación (B).
- *  De esta forma el historial muestra el documento antes de la evaluación.
+ *  El payload siempre incluye:
+ *    - id_entrega_sm_vc: ID de la entrega vinculada (null para REPROBADO)
+ *    - es_reprobacion_global_sm_vc: true si es REPROBADO (acción global)
  * ══════════════════════════════════════════════════════════════ */
-const emitirRespuesta_sm_vc = async () => {
+const emitirRespuesta_sm_vc = async (entrega_sm_vc) => {
   if (
     !form_sm_vc.value.estado_evaluacion_sm_vc ||
     !form_sm_vc.value.comentario_sm_vc
@@ -408,10 +658,10 @@ const emitirRespuesta_sm_vc = async () => {
 
       const docRespuesta_sm_vc = await subirDocumento_sm_vc(formData_sm_vc);
 
-      // Notificación WS del documento al estudiante y al propio profesor
+      // Notificación WS del documento al estudiante
       const contenidoDoc_sm_vc = `📎 Corrección adjunta: ${form_sm_vc.value.archivo_raw_sm_vc.name}`;
 
-      // [FIX] Incluir estudianteId_sm_vc — requerido por el backend para registrar el mensaje
+      // Incluir estudianteId_sm_vc — requerido por el backend para registrar el mensaje
       chat_sm_vc.enviarMensaje_sm_vc(
         contenidoDoc_sm_vc,
         props.estudianteId, // ID del estudiante (requerido por backend)
@@ -423,9 +673,20 @@ const emitirRespuesta_sm_vc = async () => {
     // ── SECCIÓN B: Emitir evento de evaluación al orquestador ─────
     // DocumentConversacion escucha este evento y llama a
     // pasantiasStore.responderCorreccion() con el payload completo.
+    //
+    // TAREA 2 y 3: Se adjunta id_entrega_sm_vc y el flag de reprobación global.
+    const esReprobacionGlobal_sm_vc =
+      form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO';
+
     emit("responder", {
       ...form_sm_vc.value,
       archivo_correccion_sm_vc: form_sm_vc.value.archivo_raw_sm_vc,
+      // Contrato de datos con el backend:
+      id_entrega_sm_vc: esReprobacionGlobal_sm_vc
+        ? null
+        : (entrega_sm_vc?.id_sm_vc ?? null),
+      // Flag para que el backend diferencie la acción global
+      es_reprobacion_global_sm_vc: esReprobacionGlobal_sm_vc,
     });
 
     // ── Limpiar formulario ────────────────────────────────────────
@@ -436,7 +697,19 @@ const emitirRespuesta_sm_vc = async () => {
       archivo_raw_sm_vc: null,
       comentario_sm_vc: "",
     };
+    entregaVinculada_sm_vc.value = null;
+    entregaSeleccionadaTemp_sm_vc.value = null;
     if (fileInputProf_sm_vc.value) fileInputProf_sm_vc.value.value = "";
+
+    $q.notify({
+      type: 'positive',
+      message: esReprobacionGlobal_sm_vc
+        ? 'Acción de Reprobar Materia registrada correctamente.'
+        : 'Evaluación enviada correctamente.',
+      icon: esReprobacionGlobal_sm_vc ? 'block' : 'how_to_reg',
+      position: 'top-right',
+      timeout: 3000,
+    });
   } catch (err_sm_vc) {
     const msg_sm_vc =
       err_sm_vc?.response?.data?.message ||
@@ -452,6 +725,15 @@ const emitirRespuesta_sm_vc = async () => {
   } finally {
     enviandoRespuesta_sm_vc.value = false;
   }
+};
+
+/* ── Helpers de formato (para el modal de entregas) ── */
+const formatDateTime_sm_vc = (iso_sm_vc) => {
+  if (!iso_sm_vc) return '';
+  return new Date(iso_sm_vc).toLocaleString('es-VE', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
 };
 
 /* ── Handlers de modales ── */
@@ -603,6 +885,48 @@ onMounted(() => {
 .eval-option--selected_sm_vc {
   font-weight: 700;
 }
+/* Estilo adicional para el botón de Reprobar (feedback de peligro) */
+.eval-option--reprobado_sm_vc:hover {
+  background: rgba(255, 143, 163, 0.06);
+  border-color: rgba(255, 143, 163, 0.35);
+}
+
+/* Aviso informativo de reprobación global */
+.reprobado-notice_sm_vc {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: #fca5a5;
+  font-family: var(--sn-font-sans);
+  line-height: 1.5;
+  margin-top: 0.25rem;
+}
+.reprobado-notice_sm_vc strong {
+  color: #ff8fa3;
+}
+
+/* Badge de entrega ya vinculada */
+.entrega-vinculada-badge_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(111, 255, 233, 0.06);
+  border: 1px solid rgba(111, 255, 233, 0.2);
+  border-radius: 6px;
+  font-size: 0.68rem;
+  color: var(--sn-texto-secundario);
+  font-family: var(--sn-font-sans);
+}
+.entrega-vinculada-badge_sm_vc strong {
+  color: #6fffe9;
+}
+
 .send-btn_sm_vc {
   background: var(--sn-surface-active) !important;
   color: var(--sn-primario) !important;
@@ -618,6 +942,8 @@ onMounted(() => {
   color: #9e9e9e !important;
   border-color: rgba(158, 158, 158, 0.25) !important;
 }
+
+/* ── Modales ── */
 .modal-card_sm_vc {
   background: var(--sn-fondo-panel) !important;
   border: 1px solid var(--sn-borde-hover) !important;
@@ -627,5 +953,45 @@ onMounted(() => {
 }
 .approve-all-card_sm_vc {
   max-width: 500px;
+}
+
+/* Modal de entregas */
+.modal-entregas-card_sm_vc {
+  min-width: 520px;
+  max-width: 640px;
+}
+
+/* Estado vacío del modal de entregas */
+.empty-entregas_sm_vc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--sn-texto-apagado);
+}
+
+/* Item seleccionado del modal de entregas */
+.doc-item--seleccionado_sm_vc {
+  background: rgba(111, 255, 233, 0.06) !important;
+}
+
+/* ── TAREA 4: Estilos del modal de requisitos (estado consolidado) ── */
+/* Item de requisito ya aprobado: fondo verde muy sutil */
+.req-item--aprobado_sm_vc {
+  background: rgba(111, 255, 233, 0.04) !important;
+  border-left: 2px solid rgba(111, 255, 233, 0.3) !important;
+}
+
+/* Badge de "Aprobado + Consolidado" */
+.req-aprobado-badge_sm_vc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  color: #6fffe9;
+  font-weight: 600;
 }
 </style>

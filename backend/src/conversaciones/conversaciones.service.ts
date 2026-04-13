@@ -102,6 +102,8 @@ export class ConversacionesService {
     contenido_sm_vc: string;
     materiaId?: number;
     documentoId?: number;
+    remitenteId?: number;   // ID del usuario que escribe (no el estudiante-contexto)
+    remitenteRol?: string;  // Rol del remitente: 'ESTUDIANTE' | 'PROFESOR'
   }) {
     try {
       // Resolver ID real del estudiante (acepta usuario_id o estudiante_id)
@@ -135,6 +137,9 @@ export class ConversacionesService {
           es_sistema_sm_vc: false, // Mensaje MANUAL
           materia_id_sm_vc: payload.materiaId ?? null,
           documento_id_sm_vc: payload.documentoId ?? null,
+          // Trazabilidad de remitente: quien realmente escribió el mensaje
+          remitente_id_sm_vc: payload.remitenteId ?? null,
+          remitente_rol_sm_vc: payload.remitenteRol ?? null,
         },
         include: { documento_sm_vc: true },
       });
@@ -203,7 +208,7 @@ export class ConversacionesService {
         orderBy: { fecha_creacion_sm_vc: 'asc' },
       });
 
-      // ─── Lógica de Par de Nodos (Documento + Texto) ───────────
+      // ─── Lógica de Par de Nodos (Documento + Texto) ─────────────
       const timelineUnificado_sm_vc = mensajesRaw_sm_vc.flatMap((m: any) => {
         const nodos_sm_vc: any[] = [];
 
@@ -227,6 +232,9 @@ export class ConversacionesService {
               doc_sm_vc.entrega?.requisito?.materia_id_sm_vc ??
               m.materia_id_sm_vc ??
               null,
+            // Trazabilidad del remitente (para diferenciación visual en el chat)
+            remitente_id_sm_vc: m.remitente_id_sm_vc ?? null,
+            remitente_rol_sm_vc: m.remitente_rol_sm_vc ?? null,
           });
         }
 
@@ -238,6 +246,9 @@ export class ConversacionesService {
           es_sistema_sm_vc: m.es_sistema_sm_vc,
           fecha_creacion_sm_vc: m.fecha_creacion_sm_vc,
           materia_id_sm_vc: m.materia_id_sm_vc,
+          // Trazabilidad del remitente (para diferenciación visual en el chat)
+          remitente_id_sm_vc: m.remitente_id_sm_vc ?? null,
+          remitente_rol_sm_vc: m.remitente_rol_sm_vc ?? null,
         });
 
         return nodos_sm_vc;
@@ -296,6 +307,9 @@ export class ConversacionesService {
         estado_sm_vc: 'ENTREGADO',
         ruta_archivo_sm_vc: doc_sm_vc.ruta_archivo_sm_vc,
         requisito_id_sm_vc: doc_sm_vc.entrega?.requisito_id_sm_vc ?? null,
+        // ── Trazabilidad del remitente ──
+        remitente_id_sm_vc: mensaje_sm_vc.remitente_id_sm_vc ?? null,
+        remitente_rol_sm_vc: mensaje_sm_vc.remitente_rol_sm_vc ?? null,
       });
     }
 
@@ -307,6 +321,9 @@ export class ConversacionesService {
       es_sistema_sm_vc: mensaje_sm_vc.es_sistema_sm_vc,
       fecha_creacion_sm_vc: mensaje_sm_vc.fecha_creacion_sm_vc.toISOString(),
       materia_id_sm_vc: mensaje_sm_vc.materia_id_sm_vc,
+      // ── Trazabilidad del remitente ──
+      remitente_id_sm_vc: mensaje_sm_vc.remitente_id_sm_vc ?? null,
+      remitente_rol_sm_vc: mensaje_sm_vc.remitente_rol_sm_vc ?? null,
     });
 
     return nodos_sm_vc;

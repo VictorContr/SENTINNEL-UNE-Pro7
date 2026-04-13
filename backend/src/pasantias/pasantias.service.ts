@@ -255,14 +255,17 @@ export class PasantiasService_sm_vc {
         });
       }
 
-      // 4. Log de trazabilidad
+      // 4. Log de trazabilidad con identidad del Profesor
       const prefijoLog = decision === EstadoAprobacion.APROBADO ? '✅ Aprobado' : (decision === EstadoAprobacion.REPROBADO ? '❌ Reprobado' : '📝 Observaciones');
-      const contenidoMensaje = `${prefijoLog}: Requisito **${entrega.requisito.nombre_sm_vc}**.\n\n**Nota:** ${nota || 'N/A'}\n**Profesor:** ${observaciones || 'Sin observaciones.'}`;
+      const contenidoMensaje = `${prefijoLog}: Requisito **${entrega.requisito.nombre_sm_vc}**.\n\n**Nota:** ${nota || 'N/A'}\n**Observaciones:** ${observaciones || 'Sin observaciones.'}`;
 
+      // [FIX] Propagar identidad del Profesor para que el mensaje aparezca con birrete
       await this.conversacionesService.registrarMensajeManual_sm_vc({
         estudianteId: entrega.estudiante_id_sm_vc,
         contenido_sm_vc: contenidoMensaje,
-        materiaId: entrega.requisito.materia_id_sm_vc
+        materiaId: entrega.requisito.materia_id_sm_vc,
+        remitenteId: profesorId,
+        remitenteRol: 'PROFESOR',
       });
 
       return evaluacion;
@@ -331,7 +334,7 @@ export class PasantiasService_sm_vc {
       }
     });
 
-    // 3. Trazabilidad
+    // 3. Trazabilidad con identidad del Profesor
     let mensajeLog = '';
     if (esMateriaCompleta) {
       mensajeLog = `🏆 **Materia Aprobada en Totalidad**\n\nEl profesor ha aprobado todos los requisitos de **${materia.nombre_sm_vc}**.\n\n**Calificación Global:** ${notaGlobal}\n**Comentario:** ${comentario || 'Ninguno'}`;
@@ -339,10 +342,13 @@ export class PasantiasService_sm_vc {
       mensajeLog = `✅ **Aprobación de Requisitos (${requisitosIds.length}/${materia.requisitos.length})**\n\nEl profesor ha aprobado un lote de requisitos de la materia.\n\n${comentario || ''}`;
     }
 
+    // [FIX] Propagar identidad del Profesor para el icono de birrete
     await this.conversacionesService.registrarMensajeManual_sm_vc({
       estudianteId: estudianteId,
       contenido_sm_vc: mensajeLog,
-      materiaId: materiaId
+      materiaId: materiaId,
+      remitenteId: profesorId,
+      remitenteRol: 'PROFESOR',
     });
 
     return { success: true, count: requisitosIds.length };

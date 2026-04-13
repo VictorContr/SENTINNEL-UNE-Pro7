@@ -233,6 +233,15 @@ export class ChatGateway_sm_vc
     @MessageBody() payload_sm_vc: JoinRoomDto_sm_vc,
   ): Promise<void> {
     try {
+      // [FIX] Guard defensivo: el cliente puede emitir leave sin payload al desconectarse bruscamente.
+      // En ese caso, simplemente limpiamos la presencia sin intentar construir el roomId.
+      if (!payload_sm_vc?.estudianteId_sm_vc) {
+        this.logger_sm_vc.debug(
+          `[leave_conversation_sm_vc] Payload vacío/nulo recibido de socket=${client_sm_vc.id}. Limpieza silenciosa.`,
+        );
+        return;
+      }
+
       const user_sm_vc = this.obtenerUserAutenticado_sm_vc(client_sm_vc);
       const roomId_sm_vc = this.buildRoomId_sm_vc(
         payload_sm_vc.estudianteId_sm_vc,
@@ -319,6 +328,9 @@ export class ChatGateway_sm_vc
           contenido_sm_vc: payload_sm_vc.contenido_sm_vc,
           materiaId: payload_sm_vc.materiaId_sm_vc,
           documentoId: payload_sm_vc.documentoId_sm_vc,
+          // Trazabilidad: identidad del usuario que realmente escribió el mensaje
+          remitenteId: user_sm_vc.sub,
+          remitenteRol: user_sm_vc.rol,
         });
 
       // ACK al remitente: confirmación de que el mensaje fue guardado en BD
