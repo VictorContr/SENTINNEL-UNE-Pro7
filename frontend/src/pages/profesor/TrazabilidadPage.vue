@@ -37,30 +37,50 @@
         </div>
         <div class="ficha-data_sm_vc">
           <h1 class="ficha-nombre_sm_vc">
-            {{ estudiante_sm_vc.nombre_sm_vc }}
+            {{ estudiante_sm_vc?.nombre_sm_vc ?? 'Estudiante' }} {{ estudiante_sm_vc?.apellido_sm_vc ?? '' }}
           </h1>
           <div class="ficha-meta_sm_vc">
-            <span class="meta-item_sm_vc"
-              ><q-icon name="badge" size="12px" />{{
-                estudiante_sm_vc.id_sm_vc
-              }}</span
-            >
-            <span class="meta-item_sm_vc"
-              ><q-icon name="email" size="12px" />{{
-                estudiante_sm_vc.correo_sm_vc
-              }}</span
-            >
-            <span class="meta-item_sm_vc"
-              ><q-icon name="calendar_month" size="12px" />Periodo
-              {{ estudiante_sm_vc.cohorte_sm_vc }}</span
-            >
+            <span class="meta-item_sm_vc">
+              <q-icon name="badge" size="15px" />
+              {{ estudiante_sm_vc.cedula_sm_vc || estudiante_sm_vc.id_sm_vc }}
+            </span>
+            <span v-if="estudiante_sm_vc.correo_sm_vc" class="meta-item_sm_vc">
+              <q-icon name="email" size="15px" />
+              {{ estudiante_sm_vc.correo_sm_vc }}
+            </span>
+            <span v-if="estudiante_sm_vc.rol_sm_vc" class="meta-item_sm_vc">
+              <q-icon name="school" size="15px" />
+              {{ estudiante_sm_vc.rol_sm_vc }}
+            </span>
+            <span class="meta-item_sm_vc">
+              <q-icon name="calendar_month" size="15px" />
+              Periodo: {{ estudiante_sm_vc.cohorte_sm_vc }}
+            </span>
+            <template v-if="estudiante_sm_vc.estudiante_sm_vc">
+              <span v-if="estudiante_sm_vc.estudiante_sm_vc.profesor_tutor || estudiante_sm_vc.estudiante_sm_vc.profesorTutor" class="meta-item_sm_vc">
+                <q-icon name="local_library" size="15px" />
+                Profesor: {{ estudiante_sm_vc.estudiante_sm_vc.profesorTutor?.nombre_sm_vc || estudiante_sm_vc.estudiante_sm_vc.profesor_tutor?.nombre_sm_vc }} {{ estudiante_sm_vc.estudiante_sm_vc.profesorTutor?.apellido_sm_vc || estudiante_sm_vc.estudiante_sm_vc.profesor_tutor?.apellido_sm_vc }}
+              </span>
+              <span v-if="estudiante_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc" class="meta-item_sm_vc">
+                <q-icon name="supervisor_account" size="15px" />
+                Tutor: {{ estudiante_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc }}
+              </span>
+              <span v-if="estudiante_sm_vc.estudiante_sm_vc.empresa_sm_vc" class="meta-item_sm_vc">
+                <q-icon name="business" size="15px" />
+                Empresa: {{ estudiante_sm_vc.estudiante_sm_vc.empresa_sm_vc }}
+              </span>
+              <span v-if="estudiante_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc" class="meta-item_sm_vc">
+                <q-icon name="work" size="15px" />
+                Proyecto: {{ estudiante_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc }}
+              </span>
+            </template>
           </div>
         </div>
         <div class="ficha-global-estado_sm_vc">
           <div class="global-estado-label_sm_vc">Progreso Global</div>
           <q-circular-progress
             :value="progresoGlobal_sm_vc"
-            size="60px"
+            size="55px"
             :thickness="0.15"
             color="teal-3"
             track-color="blue-grey-9"
