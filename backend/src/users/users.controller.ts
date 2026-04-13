@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Query, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Query, Delete, Req } from '@nestjs/common';
 import {
   JwtAuthGuard_sm_vc,
   RolesGuard_sm_vc,
@@ -27,8 +27,8 @@ export class UsersController_sm_vc {
 
   @Post()
   @Roles_sm_vc('ADMIN')
-  async create_sm_vc(@Body() dto_sm_vc: CreateUserDto_sm_vc) {
-    return this.usersService.create_sm_vc(dto_sm_vc);
+  async create_sm_vc(@Req() req: any, @Body() dto_sm_vc: CreateUserDto_sm_vc) {
+    return this.usersService.create_sm_vc(dto_sm_vc, req.user);
   }
 
   @Get(':id')
@@ -39,10 +39,11 @@ export class UsersController_sm_vc {
   @Patch(':id')
   @Roles_sm_vc('ADMIN')
   async update_sm_vc(
+    @Req() req: any,
     @Param('id') id_sm_vc: string,
     @Body() dto_sm_vc: UpdateUserDto_sm_vc,
   ) {
-    return this.usersService.update_sm_vc(id_sm_vc, dto_sm_vc);
+    return this.usersService.update_sm_vc(id_sm_vc, dto_sm_vc, req.user);
   }
 
   @Patch(':id/ban')

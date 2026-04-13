@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
@@ -64,9 +64,11 @@ export class UsersService_sm_vc {
         apellido_sm_vc:       true,
         correo_sm_vc:         true,
         cedula_sm_vc:         true,
+        telefono_sm_vc:       true,
         rol_sm_vc:            true,
         activo_sm_vc:         true,
         fecha_creacion_sm_vc: true,
+        estudiante_sm_vc:     true,
       },
     });
 
@@ -77,45 +79,228 @@ export class UsersService_sm_vc {
     return usuario_sm_vc;
   }
 
-  async create_sm_vc(dto_sm_vc: any) {
-    const { clave_sm_vc, ...rest_sm_vc } = dto_sm_vc;
+  async create_sm_vc(dto_sm_vc: any, adminUser_sm_vc: any) {
+    const { clave_sm_vc, estudiante_sm_vc, ...rest_sm_vc } = dto_sm_vc;
     const hashed_clave_sm_vc = await bcrypt.hash(clave_sm_vc, 10);
 
-    return this.prisma.usuario.create({
-      data: {
-        ...rest_sm_vc,
-        clave_sm_vc:                hashed_clave_sm_vc,
-        requiere_cambio_clave_sm_vc: true,
-      },
-      select: {
-        id_sm_vc:    true,
-        nombre_sm_vc: true,
-        correo_sm_vc: true,
-        rol_sm_vc:    true,
-        activo_sm_vc: true,
-      },
-    });
+    const data_create_sm_vc: any = {
+      ...rest_sm_vc,
+      clave_sm_vc:                hashed_clave_sm_vc,
+      requiere_cambio_clave_sm_vc: true,
+    };
+
+    if (dto_sm_vc.rol_sm_vc === 'ESTUDIANTE' && estudiante_sm_vc) {
+      // Saneamiento: eliminar campos técnicos y blindar puede_hacer_deploy
+      const { id_sm_vc, usuario_id_sm_vc, puede_hacer_deploy_sm_vc, ...valid_est_sm_vc } = estudiante_sm_vc;
+      data_create_sm_vc.estudiante_sm_vc = {
+        create: {
+          ...valid_est_sm_vc,
+          puede_hacer_deploy_sm_vc: false, // DEFENSE IN DEPTH
+        }
+      };
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const nuevoUsuario = await tx.usuario.create({
+          data: data_create_sm_vc,
+          select: {
+            id_sm_vc:    true,
+            nombre_sm_vc: true,
+            correo_sm_vc: true,
+            rol_sm_vc:    true,
+            activo_sm_vc: true,
+            estudiante_sm_vc: true,
+          },
+        });
+
+        if (nuevoUsuario.rol_sm_vc === 'ESTUDIANTE' && nuevoUsuario.estudiante_sm_vc) {
+          // Asegurar que si el estudiante fue creado y no tiene conversacion, se le cree una
+          await tx.conversacion.upsert({
+            where: { estudiante_id_sm_vc: nuevoUsuario.estudiante_sm_vc.id_sm_vc },
+            create: { estudiante_id_sm_vc: nuevoUsuario.estudiante_sm_vc.id_sm_vc },
+            update: {}
+          });
+
+          await this.ejecutarAprobacionesPrelacion_sm_vc(
+            nuevoUsuario.estudiante_sm_vc.id_sm_vc,
+            nuevoUsuario.estudiante_sm_vc.materia_activa_id_sm_vc,
+            adminUser_sm_vc,
+            tx
+          );
+        }
+        return nuevoUsuario;
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        const target = error.meta?.target || ['campo'];
+        throw new ConflictException(`Ya existe un usuario registrado con ese/a ${target.join(', ')}.`);
+      }
+      throw error;
+    }
   }
 
-  async update_sm_vc(id_sm_vc: string, dto_sm_vc: any) {
-    const { clave_sm_vc, ...rest_sm_vc } = dto_sm_vc;
+  async update_sm_vc(id_sm_vc: string, dto_sm_vc: any, adminUser_sm_vc: any) {
+    const { clave_sm_vc, estudiante_sm_vc, ...rest_sm_vc } = dto_sm_vc;
     const data_update_sm_vc: any = { ...rest_sm_vc };
 
     if (clave_sm_vc) {
       data_update_sm_vc.clave_sm_vc = await bcrypt.hash(clave_sm_vc, 10);
     }
 
-    return this.prisma.usuario.update({
-      where: { id_sm_vc: parseInt(id_sm_vc) },
-      data:  data_update_sm_vc,
-      select: {
-        id_sm_vc:    true,
-        nombre_sm_vc: true,
-        correo_sm_vc: true,
-        rol_sm_vc:    true,
-        activo_sm_vc: true,
-      },
+    if (estudiante_sm_vc && dto_sm_vc.rol_sm_vc === 'ESTUDIANTE') {
+      // Saneamiento: descartar id, usuario_id y bloquear alteracion manual de deploy_sm_vc
+      const { id_sm_vc: _id, usuario_id_sm_vc: _uid, puede_hacer_deploy_sm_vc: _deploy, ...valid_est_sm_vc } = estudiante_sm_vc;
+      data_update_sm_vc.estudiante_sm_vc = {
+        upsert: {
+          create: {
+            ...valid_est_sm_vc,
+            puede_hacer_deploy_sm_vc: false, // DEFENSE IN DEPTH
+          },
+          update: valid_est_sm_vc,
+        },
+      };
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const usuarioAct = await tx.usuario.update({
+          where: { id_sm_vc: parseInt(id_sm_vc) },
+          data:  data_update_sm_vc,
+          select: {
+            id_sm_vc:    true,
+            nombre_sm_vc: true,
+            correo_sm_vc: true,
+            rol_sm_vc:    true,
+            activo_sm_vc: true,
+            estudiante_sm_vc: true,
+          },
+        });
+
+        if (usuarioAct.rol_sm_vc === 'ESTUDIANTE' && usuarioAct.estudiante_sm_vc) {
+          // Aseguramos existencia conversacion para logs
+          await tx.conversacion.upsert({
+            where: { estudiante_id_sm_vc: usuarioAct.estudiante_sm_vc.id_sm_vc },
+            create: { estudiante_id_sm_vc: usuarioAct.estudiante_sm_vc.id_sm_vc },
+            update: {}
+          });
+
+          // Motor de prelaciones invocado tras cada edición exitosa
+          await this.ejecutarAprobacionesPrelacion_sm_vc(
+            usuarioAct.estudiante_sm_vc.id_sm_vc,
+            usuarioAct.estudiante_sm_vc.materia_activa_id_sm_vc,
+            adminUser_sm_vc,
+            tx
+          );
+        }
+
+        return usuarioAct;
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        const target = error.meta?.target || ['campo'];
+        throw new ConflictException(`Ya existe un usuario registrado con ese/a ${target.join(', ')}.`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Motor Lógico de Prelación
+   * Transaccionalmente aprueba todos los requisitos de las materias previas al nivel actual del estudiante.
+   */
+  private async ejecutarAprobacionesPrelacion_sm_vc(
+    estudianteId: number,
+    materiaActivaId: number,
+    adminUser: any,
+    tx: any
+  ) {
+    const materiaActual = await tx.materia.findUnique({
+      where: { id_sm_vc: materiaActivaId }
     });
+    
+    if (!materiaActual) return;
+
+    // Buscar materias previas ordenadas (usando posicion que es equivalente a orden de prelacion)
+    const materiasPrevias = await tx.materia.findMany({
+      where: {
+        periodo_sm_vc: materiaActual.periodo_sm_vc,
+        posicion_sm_vc: { lt: materiaActual.posicion_sm_vc }
+      },
+      include: { requisitos: true }
+    });
+
+    if (materiasPrevias.length === 0) return;
+
+    const conversacion = await tx.conversacion.findUnique({
+      where: { estudiante_id_sm_vc: estudianteId }
+    });
+
+    for (const mat of materiasPrevias) {
+      // Verificamos si en esta materia hay al menos un requisito sin aprobar, 
+      // para no re-escribir y spamear si ya estaban aprobados globalmente.
+      let generoSpoil = false;
+
+      for (const req of mat.requisitos) {
+        // Obtenemos si ya existe entrega aprobada
+        const entregaPrev = await tx.entrega.findUnique({
+          where: {
+            estudiante_id_sm_vc_requisito_id_sm_vc: {
+              estudiante_id_sm_vc: estudianteId,
+              requisito_id_sm_vc: req.id_sm_vc
+            }
+          }
+        });
+
+        if (entregaPrev?.estado_sm_vc === 'APROBADO') continue;
+
+        generoSpoil = true;
+
+        const entrega = await tx.entrega.upsert({
+          where: {
+            estudiante_id_sm_vc_requisito_id_sm_vc: {
+              estudiante_id_sm_vc: estudianteId,
+              requisito_id_sm_vc: req.id_sm_vc
+            }
+          },
+          update: { estado_sm_vc: 'APROBADO', fecha_actualizacion_sm_vc: new Date() },
+          create: {
+            estudiante_id_sm_vc: estudianteId,
+            requisito_id_sm_vc: req.id_sm_vc,
+            estado_sm_vc: 'APROBADO'
+          }
+        });
+
+        await tx.evaluacion.upsert({
+          where: { entrega_id_sm_vc: entrega.id_sm_vc },
+          update: {
+            decision_sm_vc: 'APROBADO',
+            profesor_id_sm_vc: adminUser.id_sm_vc,
+            observaciones_sm_vc: `Aprobado automáticamente por prelación superior decidido por el Administrador ${adminUser.nombre_sm_vc || adminUser.nombre}`.substring(0, 255)
+          },
+          create: {
+            entrega_id_sm_vc: entrega.id_sm_vc,
+            decision_sm_vc: 'APROBADO',
+            profesor_id_sm_vc: adminUser.id_sm_vc,
+            observaciones_sm_vc: `Aprobado automáticamente por prelación superior decidido por el Administrador ${adminUser.nombre_sm_vc || adminUser.nombre}`.substring(0, 255)
+          }
+        });
+      }
+
+      // Si sí aprobamos algo nuevo de esta materia previa, lanzamos System Log
+      if (generoSpoil && conversacion) {
+        await tx.mensaje.create({
+          data: {
+            conversacion_id_sm_vc: conversacion.id_sm_vc,
+            contenido_sm_vc: `⚡ Log de Sistema: Todos los requisitos de **${mat.nombre_sm_vc}** han sido **Aprobados Automáticamente** por prelación (asignación técnica). Ejecutado por el Admin: ${adminUser.nombre_sm_vc || adminUser.nombre}`,
+            es_sistema_sm_vc: true,
+            materia_id_sm_vc: mat.id_sm_vc,
+            remitente_id_sm_vc: adminUser.id_sm_vc,
+            remitente_rol_sm_vc: 'ADMIN'
+          }
+        });
+      }
+    }
   }
 
   async toggleBan_sm_vc(id_sm_vc: string) {
