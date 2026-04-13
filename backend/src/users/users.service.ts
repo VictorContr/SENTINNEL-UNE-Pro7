@@ -33,6 +33,9 @@ export class UsersService_sm_vc {
           rol_sm_vc:            true,
           activo_sm_vc:         true,
           fecha_creacion_sm_vc: true,
+          estudiante_sm_vc: {
+            select: { id_sm_vc: true }
+          },
         },
         orderBy: { fecha_creacion_sm_vc: 'desc' },
         skip,
