@@ -116,6 +116,7 @@ async function main() {
       correo_sm_vc: 'admin@une.edu.ve',
       clave_sm_vc: await hash('Admin@2025!'),
       rol_sm_vc: RolUsuario.ADMIN,
+      telefono_sm_vc: '+584121112233',
       requiere_cambio_clave_sm_vc: false,
     },
   });
@@ -128,6 +129,7 @@ async function main() {
       correo_sm_vc: 'ana.torres@une.edu.ve',
       clave_sm_vc: await hash('Prof@2025!'),
       rol_sm_vc: RolUsuario.PROFESOR,
+      telefono_sm_vc: '+584142223344',
       requiere_cambio_clave_sm_vc: false,
     },
   });
@@ -140,6 +142,7 @@ async function main() {
       correo_sm_vc: 'roberto.gomez@une.edu.ve',
       clave_sm_vc: await hash('Prof@2025!'),
       rol_sm_vc: RolUsuario.PROFESOR,
+      telefono_sm_vc: '+584243334455',
       requiere_cambio_clave_sm_vc: false,
     },
   });
@@ -294,6 +297,7 @@ async function main() {
         correo_sm_vc: data.correo,
         clave_sm_vc: await hash('Est@2025!'),
         rol_sm_vc: RolUsuario.ESTUDIANTE,
+        telefono_sm_vc: data.telefono || '+584160000000',
         requiere_cambio_clave_sm_vc: true,
       }
     });
@@ -327,7 +331,7 @@ async function main() {
   const luisData = await crearEstudianteFull_sm_vc({
     nombre: 'Luis', apellido: 'Ramírez', cedula: 'V-30000001', correo: 'luis@une.edu.ve',
     empresa: 'TechVe C.A.', tutor: 'Ing. Javier Solís', titulo: 'Sistema SENTINNEL Core',
-    profId: prof1.id_sm_vc, materiaId: mat1_sm_vc.id_sm_vc
+    profId: prof1.id_sm_vc, materiaId: mat1_sm_vc.id_sm_vc, telefono: '+584125556677'
   });
   await simularAprobado_sm_vc(luisData.perfil.id_sm_vc, luisData.usuario.id_sm_vc, luisData.conversacion.id_sm_vc, reqs1[0], mat1_sm_vc.id_sm_vc, offsetDate(-10), prof1.id_sm_vc);
   await simularReprobadoConCorreccion_sm_vc(luisData.perfil.id_sm_vc, luisData.usuario.id_sm_vc, luisData.conversacion.id_sm_vc, reqs1[1], mat1_sm_vc.id_sm_vc, offsetDate(-5), prof1.id_sm_vc);
@@ -336,7 +340,7 @@ async function main() {
   const mariaData = await crearEstudianteFull_sm_vc({
     nombre: 'María', apellido: 'González', cedula: 'V-30000002', correo: 'maria@une.edu.ve',
     empresa: 'DataSoft S.A.', tutor: 'Lic. Patricia Rodríguez', titulo: 'Análisis Financiero AI',
-    profId: prof1.id_sm_vc, materiaId: mat2_sm_vc.id_sm_vc
+    profId: prof1.id_sm_vc, materiaId: mat2_sm_vc.id_sm_vc, telefono: '+584148889900'
   });
   for (const req of reqs1) {
     await simularAprobado_sm_vc(mariaData.perfil.id_sm_vc, mariaData.usuario.id_sm_vc, mariaData.conversacion.id_sm_vc, req, mat1_sm_vc.id_sm_vc, offsetDate(-30), prof1.id_sm_vc);
@@ -347,7 +351,7 @@ async function main() {
   const carlosData = await crearEstudianteFull_sm_vc({
     nombre: 'Carlos', apellido: 'Pérez', cedula: 'V-30000003', correo: 'carlos@une.edu.ve',
     empresa: 'InnoTech Labs', tutor: 'Dr. Miguel Fernández', titulo: 'App Gestión Inventario',
-    profId: prof2.id_sm_vc, materiaId: mat3_sm_vc.id_sm_vc
+    profId: prof2.id_sm_vc, materiaId: mat3_sm_vc.id_sm_vc, telefono: '+584241112233'
   });
   for (const req of reqs1) await simularAprobado_sm_vc(carlosData.perfil.id_sm_vc, carlosData.usuario.id_sm_vc, carlosData.conversacion.id_sm_vc, req, mat1_sm_vc.id_sm_vc, offsetDate(-60), prof2.id_sm_vc);
   for (const req of reqs2) await simularAprobado_sm_vc(carlosData.perfil.id_sm_vc, carlosData.usuario.id_sm_vc, carlosData.conversacion.id_sm_vc, req, mat2_sm_vc.id_sm_vc, offsetDate(-40), prof2.id_sm_vc);
@@ -356,7 +360,7 @@ async function main() {
   const valentinaData = await crearEstudianteFull_sm_vc({
     nombre: 'Valentina', apellido: 'Díaz', cedula: 'V-30000004', correo: 'valentina@une.edu.ve',
     empresa: 'CloudNet', tutor: 'Ing. Carmen Morales', titulo: 'Monitoreo Cloud UNE',
-    profId: prof2.id_sm_vc, materiaId: mat1_sm_vc.id_sm_vc
+    profId: prof2.id_sm_vc, materiaId: mat1_sm_vc.id_sm_vc, telefono: '+584126667788'
   });
   await simularReprobadoConCorreccion_sm_vc(valentinaData.perfil.id_sm_vc, valentinaData.usuario.id_sm_vc, valentinaData.conversacion.id_sm_vc, reqs1[0], mat1_sm_vc.id_sm_vc, offsetDate(-2), prof2.id_sm_vc);
 
@@ -364,7 +368,7 @@ async function main() {
   const andresData = await crearEstudianteFull_sm_vc({
     nombre: 'Andrés', apellido: 'Martínez', cedula: 'V-30000005', correo: 'andres@une.edu.ve',
     empresa: 'BioMed', tutor: 'Dr. Rafael Castillo', titulo: 'Historial Médico Web',
-    profId: prof1.id_sm_vc, materiaId: mat1_sm_vc.id_sm_vc
+    profId: prof1.id_sm_vc, materiaId: mat1_sm_vc.id_sm_vc, telefono: '+584149990011'
   });
   await simularPendiente_sm_vc(andresData.perfil.id_sm_vc, andresData.usuario.id_sm_vc, andresData.conversacion.id_sm_vc, reqs1[0], mat1_sm_vc.id_sm_vc, offsetDate(-1));
 
@@ -372,7 +376,7 @@ async function main() {
   const casiGraduadoData = await crearEstudianteFull_sm_vc({
     nombre: 'Estudiante', apellido: 'Casi Graduado', cedula: 'V-99999999', correo: 'deploy@une.edu.ve',
     empresa: 'SENTINNEL Dev Labs', tutor: 'Ing. Santiago Contreras', titulo: 'Trazabilidad Académica UNE',
-    profId: prof1.id_sm_vc, materiaId: mat4_sm_vc.id_sm_vc
+    profId: prof1.id_sm_vc, materiaId: mat4_sm_vc.id_sm_vc, telefono: '+584245554433'
   });
   
   // Aprobando todas las materias

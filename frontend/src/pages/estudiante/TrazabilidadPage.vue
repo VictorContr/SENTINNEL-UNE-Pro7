@@ -13,13 +13,46 @@
       <div class="page-header_sm_vc">
         <div class="page-title-row_sm_vc">
           <q-icon name="track_changes" size="22px" color="teal-3" class="q-mr-sm" />
-          <h1 class="page-title_sm_vc">Mi Trazabilidad</h1>
+          <h1 class="page-title_sm_vc">
+            {{ auth_sm_vc.user_sm_vc?.nombre_sm_vc ?? 'Estudiante' }} {{ auth_sm_vc.user_sm_vc?.apellido_sm_vc ?? '' }}
+          </h1>
         </div>
-        <p class="page-subtitle_sm_vc">
-          Progreso secuencial de tus 4 materias de grado ·
-          Periodo: <span class="code-tag_sm_vc">{{ auth_sm_vc.user_sm_vc?.cohorte_sm_vc }}</span>
-          · Profesor asignado: <span class="code-tag_sm_vc">{{ auth_sm_vc.user_sm_vc?.profesor_id_sm_vc }}</span>
-        </p>
+        <div class="traz-ficha-meta_sm_vc">
+          <span class="trz-meta-item_sm_vc">
+            <q-icon name="badge" size="15px" />
+            {{ auth_sm_vc.user_sm_vc?.cedula_sm_vc }}
+          </span>
+          <span v-if="auth_sm_vc.user_sm_vc?.correo_sm_vc" class="trz-meta-item_sm_vc">
+            <q-icon name="email" size="15px" />
+            {{ auth_sm_vc.user_sm_vc.correo_sm_vc }}
+          </span>
+          <span v-if="auth_sm_vc.user_sm_vc?.rol_sm_vc" class="trz-meta-item_sm_vc">
+            <q-icon name="school" size="15px" />
+            {{ auth_sm_vc.user_sm_vc.rol_sm_vc }}
+          </span>
+          <span v-if="auth_sm_vc.user_sm_vc?.cohorte_sm_vc" class="trz-meta-item_sm_vc">
+            <q-icon name="calendar_month" size="15px" />
+            Periodo: {{ auth_sm_vc.user_sm_vc.cohorte_sm_vc }}
+          </span>
+          <template v-if="auth_sm_vc.user_sm_vc?.estudiante_sm_vc">
+            <span v-if="auth_sm_vc.user_sm_vc.estudiante_sm_vc.profesorTutor" class="trz-meta-item_sm_vc">
+              <q-icon name="local_library" size="15px" />
+              Profesor: {{ auth_sm_vc.user_sm_vc.estudiante_sm_vc.profesorTutor.nombre_sm_vc }} {{ auth_sm_vc.user_sm_vc.estudiante_sm_vc.profesorTutor.apellido_sm_vc }}
+            </span>
+            <span v-if="auth_sm_vc.user_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc" class="trz-meta-item_sm_vc">
+              <q-icon name="supervisor_account" size="15px" />
+              Tutor: {{ auth_sm_vc.user_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc }}
+            </span>
+            <span v-if="auth_sm_vc.user_sm_vc.estudiante_sm_vc.empresa_sm_vc" class="trz-meta-item_sm_vc">
+              <q-icon name="business" size="15px" />
+              Empresa: {{ auth_sm_vc.user_sm_vc.estudiante_sm_vc.empresa_sm_vc }}
+            </span>
+            <span v-if="auth_sm_vc.user_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc" class="trz-meta-item_sm_vc">
+              <q-icon name="work" size="15px" />
+              Proyecto: {{ auth_sm_vc.user_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc }}
+            </span>
+          </template>
+        </div>
       </div>
 
       <!-- ── Barra de progreso global ── -->
@@ -321,6 +354,21 @@ const onMensajeEnviado_sm_vc = () => {
   color: var(--sn-texto-terciario);
   margin: 0;
   font-family: var(--sn-font-sans);
+}
+.traz-ficha-meta_sm_vc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  margin-top: 0.75rem;
+}
+.trz-meta-item_sm_vc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 15px;
+  color: var(--sn-texto-terciario);
+  font-family: var(--sn-font-sans);
+  font-weight: 500;
 }
 .code-tag_sm_vc {
   background: rgba(111,255,233,.08);

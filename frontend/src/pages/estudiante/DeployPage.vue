@@ -35,8 +35,26 @@
         type="a" :href="deployStore_sm_vc.datosDeploy_sm_vc?.url_produccion_sm_vc" target="_blank" />
     </div>
 
-    <!-- Estado bloqueado -->
-    <div v-else-if="!puedeHacerDeploy_sm_vc" class="locked-state_sm_vc">
+    <!-- Botón de actualización: destruye y remonta el formulario completo -->
+    <div
+      v-if="deployStore_sm_vc.deployCompletado_sm_vc && !mostrarFormularioActualizar_sm_vc"
+      class="update-deploy-action_sm_vc"
+    >
+      <q-btn
+        unelevated no-caps
+        label="Actualizar mi Deploy"
+        icon="sync"
+        color="teal"
+        size="sm"
+        class="update-deploy-btn_sm_vc"
+        @click="activarActualizacion_sm_vc" />
+    </div>
+
+    <!-- Estado bloqueado: independiente, solo cuando no puede hacer deploy y no tiene deploy existente -->
+    <div
+      v-if="!deployStore_sm_vc.deployCompletado_sm_vc && !puedeHacerDeploy_sm_vc"
+      class="locked-state_sm_vc"
+    >
       <div class="locked-icon_sm_vc">
         <q-icon name="lock" size="32px" color="blue-grey-7" />
       </div>
@@ -48,14 +66,19 @@
       </div>
     </div>
 
-    <!-- Formulario activo -->
-    <template v-else>
+    <!-- Formulario activo: visible cuando puede hacer deploy y (no hay deploy previo O activó actualización) -->
+    <template v-if="puedeHacerDeploy_sm_vc && (!deployStore_sm_vc.deployCompletado_sm_vc || mostrarFormularioActualizar_sm_vc)">
       <div class="section-notice_sm_vc">
         <q-icon name="check_circle" size="16px" color="teal-4" />
         <span>Elegibilidad académica confirmada. Completa los datos a continuación.</span>
       </div>
 
-      <q-form @submit.prevent="registrarDeploy_sm_vc" class="deploy-form_sm_vc">
+      <!--
+        La :key reactiva deriva de formKey_sm_vc.
+        Al incrementarla, Vue destruye y remonta este bloque completo,
+        limpiando cualquier estado interno de DeployUploadZone.
+      -->
+      <q-form :key="formKey_sm_vc" @submit.prevent="registrarDeploy_sm_vc" class="deploy-form_sm_vc">
         <!-- URL producción -->
         <div class="field-group_sm_vc">
           <label class="field-label_sm_vc">
@@ -87,9 +110,16 @@
             Código Fuente <span class="req-mark_sm_vc">*</span>
             <span class="format-hint_sm_vc">.zip</span>
           </label>
+          <!--
+            archivoExistente: nombre del .zip ya guardado en el servidor.
+            Si está presente, DeployUploadZone muestra el chip de descarga.
+            solicitarDescarga: el estudiante hizo clic en su archivo previo → lo descargamos.
+          -->
           <DeployUploadZone
             v-model="form_sm_vc.archivo_zip_nombre_sm_vc"
+            :archivo-existente="archivosExistentes_sm_vc.zip"
             @archivo-seleccionado="handleZipSeleccionado_sm_vc"
+            @solicitar-descarga="deployStore_sm_vc.descargarArchivo_sm_vc(estudiante_sm_vc.id_sm_vc, 'zip')"
             accept=".zip"
             icon="folder_zip"
             accent-color="teal" />
@@ -103,7 +133,9 @@
           </label>
           <DeployUploadZone
             v-model="form_sm_vc.archivo_pdf_nombre_sm_vc"
+            :archivo-existente="archivosExistentes_sm_vc.pdf"
             @archivo-seleccionado="handlePdfSeleccionado_sm_vc"
+            @solicitar-descarga="deployStore_sm_vc.descargarArchivo_sm_vc(estudiante_sm_vc.id_sm_vc, 'pdf')"
             accept=".pdf"
             icon="picture_as_pdf"
             accent-color="amber" />
@@ -146,16 +178,53 @@ const deployStore_sm_vc = useDeployStore()
 const estudiante_sm_vc = computed(() => authStore_sm_vc.user_sm_vc?.estudiante_sm_vc)
 const puedeHacerDeploy_sm_vc = computed(() => estudiante_sm_vc.value?.puede_hacer_deploy_sm_vc ?? false)
 
+// ── Estado del flujo de actualización ────────────────────────────────
+// Controla si se muestra el formulario cuando ya hay un deploy previo.
+// El botón "Actualizar mi Deploy" lo activa, lo que también incrementa
+// formKey_sm_vc para forzar el remount completo del <q-form>.
+const mostrarFormularioActualizar_sm_vc = ref(false)
+const formKey_sm_vc = ref(0)
+
+/**
+ * Activa el modo actualización:
+ * 1. Muestra el formulario de subida.
+ * 2. Incrementa la key → Vue destruye y remonta el <q-form> y todos
+ *    sus hijos (DeployUploadZone), limpiando el estado interno.
+ * 3. Pre-carga la URL existente para que el usuario no la pierda.
+ */
+const activarActualizacion_sm_vc = () => {
+  mostrarFormularioActualizar_sm_vc.value = true
+  formKey_sm_vc.value++
+  // Pre-cargar datos existentes para que el usuario no parta de cero
+  if (deployStore_sm_vc.datosDeploy_sm_vc) {
+    const data = deployStore_sm_vc.datosDeploy_sm_vc
+    form_sm_vc.value.url_produccion_sm_vc = data.url_produccion_sm_vc
+    // Limpiamos los archivos locales; el estudiante debe seleccionar nuevos
+    form_sm_vc.value.archivo_zip_sm_vc = null
+    form_sm_vc.value.archivo_pdf_sm_vc = null
+    form_sm_vc.value.archivo_zip_nombre_sm_vc = ''
+    form_sm_vc.value.archivo_pdf_nombre_sm_vc = ''
+  }
+}
+
+/**
+ * Nombres de los archivos ya guardados en el servidor.
+ * Se usan como prop de DeployUploadZone para mostrar el chip previo.
+ */
+const archivosExistentes_sm_vc = computed(() => ({
+  zip: deployStore_sm_vc.datosDeploy_sm_vc?.archivo_codigo_sm_vc?.nombre_sm_vc || '',
+  pdf: deployStore_sm_vc.datosDeploy_sm_vc?.documentacion_sm_vc?.nombre_sm_vc || ''
+}))
+
 onMounted(async () => {
   if (estudiante_sm_vc.value?.id_sm_vc) {
     await deployStore_sm_vc.verificarEstadoDeploy_sm_vc(estudiante_sm_vc.value.id_sm_vc)
     
-    // Si ya existe deploy, pre-cargar el formulario
+    // Si ya existe deploy, pre-cargar solo la URL en el formulario.
+    // Los nombres de archivos se extraen reactivamente de archivosExistentes_sm_vc.
     if (deployStore_sm_vc.deployCompletado_sm_vc && deployStore_sm_vc.datosDeploy_sm_vc) {
       const data = deployStore_sm_vc.datosDeploy_sm_vc
       form_sm_vc.value.url_produccion_sm_vc = data.url_produccion_sm_vc
-      form_sm_vc.value.archivo_zip_nombre_sm_vc = data.archivo_codigo_sm_vc?.nombre_sm_vc || ''
-      form_sm_vc.value.archivo_pdf_nombre_sm_vc = data.documentacion_sm_vc?.nombre_sm_vc || ''
     }
   }
 })
@@ -164,6 +233,7 @@ const form_sm_vc = ref({
   url_produccion_sm_vc: '',
   archivo_zip_sm_vc: null,
   archivo_pdf_sm_vc: null,
+  // Estos campos guardan el nombre NUEVO seleccionado por el usuario (no el del servidor)
   archivo_zip_nombre_sm_vc: '',
   archivo_pdf_nombre_sm_vc: ''
 })
@@ -175,6 +245,8 @@ const preflightChecks_sm_vc = computed(() => [
   },
   {
     label: 'Archivo de código .zip adjunto',
+    // En modo actualización, el check pasa si el usuario seleccionó uno nuevo.
+    // En modo nuevo registro, debe tener el archivo seleccionado.
     ok: !!form_sm_vc.value.archivo_zip_sm_vc
   },
   {
@@ -231,13 +303,31 @@ const registrarDeploy_sm_vc = async () => {
 .locked-desc_sm_vc { font-size: .75rem; color: var(--sn-texto-apagado); margin: 0 0 .75rem; font-family: var(--sn-font-sans); }
 .locked-progress_sm_vc { display: flex; flex-direction: column; gap: .3rem; }
 .lock-mat_sm_vc { display: flex; align-items: center; gap: .4rem; font-size: .68rem; color: var(--sn-texto-terciario); }
-.existing-deploy-banner_sm_vc { display: flex; align-items: flex-start; gap: 0.85rem; padding: 1rem 1.25rem; background: rgba(111,255,233,.04); border: 1px solid rgba(111,255,233,.12); border-radius: 12px; margin-bottom: 2rem; max-width: 650px; }
+.existing-deploy-banner_sm_vc { display: flex; align-items: flex-start; gap: 0.85rem; padding: 1rem 1.25rem; background: rgba(111,255,233,.04); border: 1px solid rgba(111,255,233,.12); border-radius: 12px; margin-bottom: .75rem; max-width: 650px; }
 .banner-content_sm_vc { flex: 1; }
 .banner-title_sm_vc { font-size: .82rem; font-weight: 700; color: var(--sn-primario); margin: 0 0 3px; letter-spacing: 0.02em; }
 .banner-desc_sm_vc { font-size: .72rem; color: var(--sn-texto-terciario); margin: 0; line-height: 1.5; font-family: var(--sn-font-sans); }
 .existing-url_sm_vc { display: flex; align-items: center; gap: .3rem; }
 .url-link_sm_vc { color: var(--sn-primario); text-decoration: none; font-size: .7rem; }
 .url-link_sm_vc:hover { text-decoration: underline; }
+/* ── Botón de actualización ─────────────────────────────────────── */
+.update-deploy-action_sm_vc { margin-bottom: 1.5rem; max-width: 650px; display: flex; justify-content: flex-end; }
+.update-deploy-btn_sm_vc {
+  font-size: .72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: .08em !important;
+  border-radius: 6px !important;
+  padding: .45rem 1rem !important;
+  background: rgba(111,255,233,.12) !important;
+  color: var(--sn-primario) !important;
+  border: 1px solid rgba(111,255,233,.25) !important;
+  transition: all 0.2s;
+}
+.update-deploy-btn_sm_vc:hover {
+  background: rgba(111,255,233,.22) !important;
+  border-color: rgba(111,255,233,.45) !important;
+  box-shadow: 0 0 12px rgba(111,255,233,.15);
+}
 .section-notice_sm_vc { display: flex; align-items: center; gap: .5rem; font-size: .72rem; color: var(--sn-acento-sec); background: rgba(111,255,233,.05); border: 1px solid rgba(111,255,233,.15); border-radius: 8px; padding: .6rem .875rem; margin-bottom: 1.5rem; max-width: 520px; font-family: var(--sn-font-sans); }
 .deploy-form_sm_vc { display: flex; flex-direction: column; gap: 1.25rem; max-width: 520px; }
 .field-group_sm_vc { display: flex; flex-direction: column; gap: .35rem; }

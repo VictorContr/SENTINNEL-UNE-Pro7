@@ -87,6 +87,7 @@ export class DeployService {
             usuario_subida_id_sm_vc: usuarioActorId,
             tipo_sm_vc:              TipoDocumento.CODIGO_ZIP,
             nombre_archivo_sm_vc:    nombreZip_sm_vc,
+            nombre_original_sm_vc:   archivoZip.originalname,
             ruta_archivo_sm_vc:      rutaZip_sm_vc,
             tamanio_bytes_sm_vc:     archivoZip.size,
             mime_type_sm_vc:         archivoZip.mimetype,
@@ -98,6 +99,7 @@ export class DeployService {
             usuario_subida_id_sm_vc: usuarioActorId,
             tipo_sm_vc:              TipoDocumento.DOCUMENTACION_DEPLOY,
             nombre_archivo_sm_vc:    nombrePdf_sm_vc,
+            nombre_original_sm_vc:   archivoPdf.originalname,
             ruta_archivo_sm_vc:      rutaPdf_sm_vc,
             tamanio_bytes_sm_vc:     archivoPdf.size,
             mime_type_sm_vc:         archivoPdf.mimetype,
@@ -177,8 +179,13 @@ export class DeployService {
   // Accesible por ESTUDIANTE (propio), PROFESOR y ADMIN.
   // ─────────────────────────────────────────────────────────────────
   async obtenerDeploy_sm_vc(estudianteId: number) {
-    const deploy_sm_vc = await this.prisma.proyectoDeploy.findUnique({
-      where: { estudiante_id_sm_vc: estudianteId },
+    const deploy_sm_vc = await this.prisma.proyectoDeploy.findFirst({
+      where: {
+        OR: [
+          { estudiante_id_sm_vc: estudianteId },
+          { estudiante: { usuario_id_sm_vc: estudianteId } }
+        ]
+      },
       include: {
         estudiante: {
           include: { usuario: true }
@@ -198,8 +205,13 @@ export class DeployService {
   // Método privado: eliminar rutas de disco de forma silenciosa.
   // ─────────────────────────────────────────────────────────────────
   async descargarArchivo_sm_vc(estudianteId: number, tipo_sm_vc: string): Promise<{ stream: StreamableFile, meta: any }> {
-    const deploy_sm_vc = await this.prisma.proyectoDeploy.findUnique({
-      where: { estudiante_id_sm_vc: estudianteId },
+    const deploy_sm_vc = await this.prisma.proyectoDeploy.findFirst({
+      where: {
+        OR: [
+          { estudiante_id_sm_vc: estudianteId },
+          { estudiante: { usuario_id_sm_vc: estudianteId } }
+        ]
+      },
       include: {
         archivoCodigo: true,
         documentacionTecnica: true,
@@ -240,7 +252,7 @@ export class DeployService {
     return {
       stream: new StreamableFile(fileStream),
       meta: {
-        nombre: documento.nombre_archivo_sm_vc,
+        nombre: documento.nombre_original_sm_vc || documento.nombre_archivo_sm_vc,
         mime: documento.mime_type_sm_vc || 'application/octet-stream',
       }
     };
@@ -271,14 +283,14 @@ export class DeployService {
       fecha_deploy_sm_vc:      deploy.fecha_deploy_sm_vc,
       archivo_codigo_sm_vc: {
         id_sm_vc:             deploy.archivoCodigo?.id_sm_vc,
-        nombre_sm_vc:         deploy.archivoCodigo?.nombre_archivo_sm_vc,
+        nombre_sm_vc:         deploy.archivoCodigo?.nombre_original_sm_vc || deploy.archivoCodigo?.nombre_archivo_sm_vc,
         tamanio_bytes_sm_vc:  deploy.archivoCodigo?.tamanio_bytes_sm_vc,
         ruta_archivo_sm_vc:   deploy.archivoCodigo?.ruta_archivo_sm_vc,
         mock_sm_vc:           deploy.archivoCodigo?.mock_sm_vc,
       },
       documentacion_sm_vc: {
         id_sm_vc:             deploy.documentacionTecnica?.id_sm_vc,
-        nombre_sm_vc:         deploy.documentacionTecnica?.nombre_archivo_sm_vc,
+        nombre_sm_vc:         deploy.documentacionTecnica?.nombre_original_sm_vc || deploy.documentacionTecnica?.nombre_archivo_sm_vc,
         tamanio_bytes_sm_vc:  deploy.documentacionTecnica?.tamanio_bytes_sm_vc,
         ruta_archivo_sm_vc:   deploy.documentacionTecnica?.ruta_archivo_sm_vc,
         mock_sm_vc:           deploy.documentacionTecnica?.mock_sm_vc,

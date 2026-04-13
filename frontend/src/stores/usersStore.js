@@ -81,6 +81,13 @@ export const useUsersStore = defineStore('users', () => {
    */
   const update_usuario_sm_vc = async (datos_sm_vc) => {
     const { id_sm_vc, ...payload_sm_vc } = datos_sm_vc
+    
+    // Saneamiento de payload para evitar error 400
+    delete payload_sm_vc.fecha_creacion_sm_vc
+    if (!payload_sm_vc.clave_sm_vc) {
+      delete payload_sm_vc.clave_sm_vc
+    }
+
     cargando_usuarios_sm_vc.value = true
     error_usuarios_sm_vc.value = null
     try {

@@ -4,6 +4,19 @@
       Falta el parámetro de ruta <code class="traz-code_sm_vc">estudianteId</code>.
     </q-banner>
     <template v-else>
+      <div class="traz-nav-header_sm_vc">
+        <q-btn
+          flat
+          no-caps
+          icon="arrow_back"
+          label="Volver a Usuarios"
+          color="teal-3"
+          size="sm"
+          class="traz-back-btn_sm_vc"
+          @click="irAUsuarios_sm_vc"
+        />
+      </div>
+
       <TrazabilidadLayout
         :estudiante-id="estudianteId_sm_vc"
         :readonly="true"
@@ -17,14 +30,19 @@
 defineOptions({ name: 'AdminTrazabilidadPage' })
 
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import TrazabilidadLayout from 'src/layouts/TrazabilidadLayout.vue'
 
 const route_sm_vc = useRoute()
+const router_sm_vc = useRouter()
 
 const estudianteId_sm_vc = computed(() =>
   String(route_sm_vc.params.estudianteId ?? '')
 )
+
+const irAUsuarios_sm_vc = () => {
+  router_sm_vc.push({ name: 'admin-usuarios' })
+}
 </script>
 
 <style scoped>
@@ -33,6 +51,14 @@ const estudianteId_sm_vc = computed(() =>
   min-height: 100vh;
   font-family: var(--sn-font-mono);
   background: var(--sn-fondo);
+}
+.traz-nav-header_sm_vc {
+  margin-bottom: 1.5rem;
+}
+.traz-back-btn_sm_vc {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 8px;
 }
 .traz-banner_sm_vc {
   background: var(--sn-fondo-panel);

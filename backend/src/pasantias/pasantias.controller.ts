@@ -62,14 +62,14 @@ export class PasantiasController_sm_vc {
 
   @Get('estudiantes/:id/progreso')
   async getProgresoEstudiante_sm_vc(@Param('id') id: string) {
-    return this.pasantiasService.getProgresoEstudiante_sm_vc(parseInt(id));
+    return this.pasantiasService.getProgresoEstudiante_sm_vc(parseInt(id), 'ESTUDIANTE');
   }
 
   @Get('estudiantes/mi-progreso')
   @Roles_sm_vc('ESTUDIANTE')
   async getMiProgreso_sm_vc(@Request() req: RequestWithUser) {
     const estudianteId = req.user.id_sm_vc;
-    return this.pasantiasService.getProgresoEstudiante_sm_vc(estudianteId);
+    return this.pasantiasService.getProgresoEstudiante_sm_vc(estudianteId, 'USUARIO');
   }
 
   @Post('evaluar-entrega')

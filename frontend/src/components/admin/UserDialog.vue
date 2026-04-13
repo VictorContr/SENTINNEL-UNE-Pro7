@@ -15,7 +15,13 @@
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
 
-      <q-card-section class="q-pt-none">
+      <q-card-section class="q-pt-none relative-position">
+        <!-- Estado de carga para sincronización de datos frescos -->
+        <q-inner-loading :showing="loadingData_sm_vc" style="z-index: 10;">
+          <q-spinner-tail color="primary" size="3em" />
+          <div class="q-mt-sm text-subtitle2">Sincronizando datos...</div>
+        </q-inner-loading>
+
         <q-form
           ref="userForm"
           @submit="onSubmit"
@@ -167,6 +173,7 @@
               color="primary"
               class="q-ml-sm"
               :loading="loading"
+              :disabled="loadingData_sm_vc"
             />
           </div>
         </q-form>
@@ -176,7 +183,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch } from 'vue';
+import { defineComponent, ref, reactive, computed, watch } from 'vue';
 import { useUsuariosStore } from 'src/stores/usuariosStore';
 
 export default defineComponent({
@@ -198,12 +205,13 @@ export default defineComponent({
     // Estado local
     const userForm = ref(null);
     const loading = ref(false);
+    const loadingData_sm_vc = ref(false);
     const showPassword = ref(false);
     const showConfirmPassword = ref(false);
     const confirmPassword = ref('');
 
-    // Formulario
-    const form = ref({
+    // Formulario reactivo para mejor sincronización con Quasar
+    const form = reactive({
       nombre_sm_vc: '',
       apellido_sm_vc: '',
       cedula_sm_vc: '',
@@ -265,7 +273,7 @@ export default defineComponent({
 
     // Métodos
     const resetForm = () => {
-      form.value = {
+      Object.assign(form, {
         nombre_sm_vc: '',
         apellido_sm_vc: '',
         cedula_sm_vc: '',
@@ -274,19 +282,33 @@ export default defineComponent({
         rol_sm_vc: '',
         clave_sm_vc: '',
         activo_sm_vc: true,
-      };
+      });
       confirmPassword.value = '';
       showPassword.value = false;
       showConfirmPassword.value = false;
     };
 
-    const loadUserData = () => {
-      if (props.user) {
-        form.value = {
-          ...props.user,
-          clave_sm_vc: '', // No cargar la contraseña existente
-        };
-      } else {
+    const loadUserData = async () => {
+      if (props.user && dialogValue.value) {
+        loadingData_sm_vc.value = true;
+        try {
+          // Cache busting con timestamp para evitar datos viejos del navegador
+          const freshData = await usuariosStore.fetchUserById_sm_vc(`${props.user.id_sm_vc}?t=${Date.now()}`);
+          
+          Object.assign(form, {
+            ...freshData,
+            clave_sm_vc: '', 
+          });
+        } catch (error) {
+          console.error('Error al sincronizar datos del usuario:', error);
+          Object.assign(form, {
+            ...props.user,
+            clave_sm_vc: '',
+          });
+        } finally {
+          loadingData_sm_vc.value = false;
+        }
+      } else if (!dialogValue.value) {
         resetForm();
       }
     };
@@ -294,14 +316,21 @@ export default defineComponent({
     const onSubmit = async () => {
       loading.value = true;
       try {
-        const userData = { ...form.value };
+        // Clonar el estado actual del formulario reactivo
+        const userData = { ...form };
         
-        // Si no se proporciona contraseña en edición, eliminarla del objeto
-        if (isEdit.value && !userData.clave_sm_vc) {
-          delete userData.clave_sm_vc;
-        }
-
+        // Saneamiento de datos para evitar error 400 por campos no permitidos en edición
         if (isEdit.value) {
+          // Eliminar campos de solo lectura o internos que el backend no acepta en el UpdateDTO
+          delete userData.id_sm_vc;
+          delete userData.fecha_creacion_sm_vc;
+          
+          // Si no se proporciona contraseña, eliminarla del objeto para evitar 
+          // fallos de validación de longitud mínima (6 chars) en el backend
+          if (!userData.clave_sm_vc) {
+            delete userData.clave_sm_vc;
+          }
+
           await usuariosStore.updateUser_sm_vc(props.user.id_sm_vc, userData);
         } else {
           await usuariosStore.createUser_sm_vc(userData);
@@ -320,18 +349,19 @@ export default defineComponent({
     };
 
     // Watchers
-    watch(() => props.user, loadUserData, { immediate: true });
-    watch(dialogValue, (val) => {
-      if (val) {
+    // Observar tanto el usuario como la visibilidad del diálogo de forma consolidada
+    watch(
+      [() => props.user, dialogValue],
+      () => {
         loadUserData();
-      } else {
-        resetForm();
-      }
-    });
+      },
+      { immediate: true }
+    );
 
     return {
       userForm,
       loading,
+      loadingData_sm_vc,
       showPassword,
       showConfirmPassword,
       confirmPassword,

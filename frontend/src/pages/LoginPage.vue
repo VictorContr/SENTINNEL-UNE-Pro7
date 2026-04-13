@@ -35,7 +35,7 @@
             <div class="demo-list_sm_vc">
               <span><strong>Admin:</strong> admin@une.edu.ve | Admin@2025!</span>
               <span><strong>Profesor:</strong> ana.torres@une.edu.ve | Prof@2025!</span>
-              <span><strong>Estudiante:</strong> deploy@estudiante.une.edu.ve | Deploy@2025!</span>
+              <span><strong>Estudiante:</strong> deploy@une.edu.ve | Est@2025!</span>
             </div>
           </div>
 

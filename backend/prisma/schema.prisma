@@ -115,6 +115,7 @@ model Documento {
   usuario_subida_id_sm_vc Int
   tipo_sm_vc              TipoDocumento
   nombre_archivo_sm_vc    String          @db.VarChar(255)
+  nombre_original_sm_vc   String?         @db.VarChar(255)
   ruta_archivo_sm_vc      String
   tamanio_bytes_sm_vc     Int?
   mime_type_sm_vc         String?         @db.VarChar(100)

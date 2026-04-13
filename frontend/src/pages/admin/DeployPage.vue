@@ -6,7 +6,7 @@
 <template>
   <q-page class="sntnl-page_sm_vc">
     <q-btn
-      flat no-caps icon="arrow_back" label="Volver a Trazabilidad"
+      flat no-caps icon="arrow_back" label="Volver a Usuarios"
       color="grey-5" size="sm" class="q-mb-md"
       @click="router_sm_vc.back()" />
 
@@ -54,27 +54,21 @@
         <!-- Código fuente .zip -->
         <div class="deploy-field-item_sm_vc">
           <label class="deploy-field-label_sm_vc">Código Fuente (.zip)</label>
-          <div class="deploy-file-chip_sm_vc border-teal-500/20 bg-teal-500/5">
-            <q-icon name="folder_zip" size="14px" color="teal-3" />
-            <span class="truncate">{{ deployEstudiante_sm_vc.archivo_codigo_sm_vc?.nombre_sm_vc }}</span>
-            <q-btn
-              flat dense no-caps label="Descargar"
-              color="teal-3" size="xs"
-              @click="deployStore_sm_vc.descargarArchivo_sm_vc(estudianteId_sm_vc, 'zip')" />
-          </div>
+          <DeployFileViewer
+            :nombre="deployEstudiante_sm_vc.archivo_codigo_sm_vc?.nombre_sm_vc"
+            tipo="zip"
+            etiqueta="Código Fuente (.zip)"
+            :estudiante-id="estudianteId_sm_vc" />
         </div>
 
         <!-- Documentación .pdf -->
         <div class="deploy-field-item_sm_vc">
           <label class="deploy-field-label_sm_vc">Documentación (.pdf)</label>
-          <div class="deploy-file-chip_sm_vc border-amber-500/20 bg-amber-500/5">
-            <q-icon name="picture_as_pdf" size="14px" color="amber-4" />
-            <span class="truncate">{{ deployEstudiante_sm_vc.documentacion_sm_vc?.nombre_sm_vc }}</span>
-            <q-btn
-              flat dense no-caps label="Ver PDF"
-              color="amber-4" size="xs"
-              @click="deployStore_sm_vc.descargarArchivo_sm_vc(estudianteId_sm_vc, 'pdf')" />
-          </div>
+          <DeployFileViewer
+            :nombre="deployEstudiante_sm_vc.documentacion_sm_vc?.nombre_sm_vc"
+            tipo="pdf"
+            etiqueta="Documentación Técnica (.pdf)"
+            :estudiante-id="estudianteId_sm_vc" />
         </div>
 
         <!-- Fecha de registro -->
@@ -93,6 +87,7 @@
 import { onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDeployStore } from 'src/stores/deployStore'
+import DeployFileViewer from 'src/components/shared/deploy/DeployFileViewer.vue'
 
 const route_sm_vc = useRoute()
 const router_sm_vc = useRouter()
