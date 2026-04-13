@@ -271,6 +271,9 @@
           <component :is="Component" :key="currentRoute.fullPath" />
         </transition>
       </router-view>
+      
+      <!-- Componente global para mantener la sesión activa -->
+      <DialogMantenedor />
     </q-page-container>
   </q-layout>
 </template>
@@ -281,8 +284,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/authStore'
 import { useNotificacionesStore } from 'src/stores/notificacionesStore'
 import { useConfigStore } from 'src/stores/configStore'
+import DialogMantenedor from 'src/components/shared/DialogMantenedor.vue'
 
 /* ── Stores & Router ── */
+
 const auth                = useAuthStore()
 const notif_store_sm_vc   = useNotificacionesStore()
 const configStore_sm_vc   = useConfigStore()
