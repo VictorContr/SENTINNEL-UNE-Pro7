@@ -68,7 +68,13 @@ export class UsersService_sm_vc {
         rol_sm_vc:            true,
         activo_sm_vc:         true,
         fecha_creacion_sm_vc: true,
-        estudiante_sm_vc:     true,
+        estudiante_sm_vc: {
+          include: {
+            profesorTutor: {
+              select: { id_sm_vc: true, nombre_sm_vc: true, apellido_sm_vc: true }
+            }
+          }
+        },
       },
     });
 

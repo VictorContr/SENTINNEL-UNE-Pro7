@@ -11,34 +11,45 @@
       </div>
       <div class="traz-ficha-body_sm_vc">
         <h2 class="traz-ficha-nombre_sm_vc">
-          {{ fichaEstudiante_sm_vc?.nombre_sm_vc ?? 'Estudiante' }}
+          {{ fichaEstudiante_sm_vc?.nombre_sm_vc ?? 'Estudiante' }} {{ fichaEstudiante_sm_vc?.apellido_sm_vc ?? '' }}
         </h2>
         <div class="traz-ficha-meta_sm_vc">
           <span class="trz-meta-item_sm_vc">
-            <q-icon name="badge" size="12px" />
-            {{ estudianteId }}
+            <q-icon name="badge" size="15px" />
+            {{ fichaEstudiante_sm_vc?.cedula_sm_vc || estudianteId }}
           </span>
           <span
             v-if="fichaEstudiante_sm_vc?.correo_sm_vc"
             class="trz-meta-item_sm_vc"
           >
-            <q-icon name="email" size="12px" />
+            <q-icon name="email" size="15px" />
             {{ fichaEstudiante_sm_vc.correo_sm_vc }}
-          </span>
-          <span
-            v-if="fichaEstudiante_sm_vc?.cohorte_sm_vc"
-            class="trz-meta-item_sm_vc"
-          >
-            <q-icon name="calendar_month" size="12px" />
-            Periodo {{ fichaEstudiante_sm_vc.cohorte_sm_vc }}
           </span>
           <span
             v-if="fichaEstudiante_sm_vc?.rol_sm_vc"
             class="trz-meta-item_sm_vc"
           >
-            <q-icon name="school" size="12px" />
+            <q-icon name="school" size="15px" />
             {{ fichaEstudiante_sm_vc.rol_sm_vc }}
           </span>
+          <template v-if="fichaEstudiante_sm_vc?.estudiante_sm_vc">
+            <span v-if="fichaEstudiante_sm_vc.estudiante_sm_vc.profesorTutor" class="trz-meta-item_sm_vc">
+              <q-icon name="local_library" size="15px" />
+              Profesor: {{ fichaEstudiante_sm_vc.estudiante_sm_vc.profesorTutor.nombre_sm_vc }} {{ fichaEstudiante_sm_vc.estudiante_sm_vc.profesorTutor.apellido_sm_vc }}
+            </span>
+            <span v-if="fichaEstudiante_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc" class="trz-meta-item_sm_vc">
+              <q-icon name="supervisor_account" size="15px" />
+              Tutor: {{ fichaEstudiante_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc }}
+            </span>
+            <span v-if="fichaEstudiante_sm_vc.estudiante_sm_vc.empresa_sm_vc" class="trz-meta-item_sm_vc">
+              <q-icon name="business" size="15px" />
+              Empresa: {{ fichaEstudiante_sm_vc.estudiante_sm_vc.empresa_sm_vc }}
+            </span>
+            <span v-if="fichaEstudiante_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc" class="trz-meta-item_sm_vc">
+              <q-icon name="work" size="15px" />
+              Proyecto: {{ fichaEstudiante_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc }}
+            </span>
+          </template>
         </div>
       </div>
 
@@ -330,10 +341,11 @@ const abrirSoloConversacion_sm_vc = (materiaId_sm_vc) => {
 .trz-meta-item_sm_vc {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.62rem;
+  gap: 0.4rem;
+  font-size: 15px;
   color: var(--sn-texto-terciario);
   font-family: var(--sn-font-sans);
+  font-weight: 500;
 }
 
 .ficha-global-estado_sm_vc { display: flex; flex-direction: column; align-items: center; gap: .3rem; flex-shrink: 0; }

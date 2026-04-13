@@ -357,14 +357,13 @@ export class PasantiasService_sm_vc {
   /**
    * Obtener el progreso actual de un estudiante
    */
-  async getProgresoEstudiante_sm_vc(usuarioId: number) {
+  async getProgresoEstudiante_sm_vc(id: number, tipo_id: 'ESTUDIANTE' | 'USUARIO' = 'USUARIO') {
+    const whereClause = tipo_id === 'ESTUDIANTE' 
+      ? { id_sm_vc: id } 
+      : { usuario_id_sm_vc: id };
+
     const estudianteBase = await this.prisma.estudiante.findFirst({
-      where: { 
-        OR: [
-          { usuario_id_sm_vc: usuarioId },
-          { id_sm_vc: usuarioId }
-        ]
-      },
+      where: whereClause,
       include: { materiaActiva: true }
     });
 

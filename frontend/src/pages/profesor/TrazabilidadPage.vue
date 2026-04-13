@@ -262,6 +262,8 @@ import { useDeployStore } from "src/stores/deployStore";
 import { useChatStore_sm_vc } from "src/stores/chatStore_sm_vc";
 import MateriaProgressCard from "src/components/shared/MateriaProgressCard.vue";
 import DocumentConversacion from "src/components/shared/DocumentConversacion.vue";
+import { getDetalleEstudiante_sm_vc } from "src/services/estudiantesService";
+
 
 const route_sm_vc = useRoute();
 const router_sm_vc = useRouter();
@@ -311,10 +313,26 @@ const materiasConFases_sm_vc = computed(() =>
 
 onMounted(async () => {
   if (estudianteId_sm_vc.value) {
+    // 1. Resolver la identidad del usuario a partir del ID de Estudiante (Secuencial)
+    try {
+      const detalle_sm_vc = await getDetalleEstudiante_sm_vc(estudianteId_sm_vc.value);
+      if (detalle_sm_vc && detalle_sm_vc.usuario) {
+        // Mapeamos el objeto para que tanto esta página como TrazabilidadLayout sean compatibles.
+        // Hacemos que tenga cohorte_sm_vc y agrupamos la data bajo estudiante_sm_vc.
+        usersStore_sm_vc.usuarioActual_sm_vc = {
+          ...detalle_sm_vc.usuario,
+          cohorte_sm_vc: detalle_sm_vc.materia_activa?.periodo_sm_vc || "N/A",
+          estudiante_sm_vc: detalle_sm_vc
+        };
+      }
+    } catch (error) {
+      console.error("[TrazabilidadPage] Error resolviendo identidad del estudiante:", error);
+      Notify.create({ type: "negative", message: "Error al cargar los datos del estudiante." });
+    }
+
+    // 2. Cargas que sí dependen del ID Estudiante (se dispara después de tener la identidad ok)
     await Promise.all([
       store_sm_vc.fetch_progreso_estudiante_sm_vc(estudianteId_sm_vc.value),
-      usersStore_sm_vc.fetch_usuario_sm_vc(estudianteId_sm_vc.value),
-      // Cargar el estado del deploy del estudiante (accesible para PROFESOR y ADMIN)
       deployStore_sm_vc.verificarEstadoDeploy_sm_vc(
         Number(estudianteId_sm_vc.value),
       ),

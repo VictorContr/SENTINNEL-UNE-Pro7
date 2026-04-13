@@ -832,4 +832,28 @@ frontend/src/
 
 ---
 
+## 13. [CORRECCIÓN] Sincronización de Identidades en Trazabilidad (Vista Profesor)
+
+### 13.1 Diagnóstico del Problema
+En la vista de `EstudiantesPage.vue`, el profesor navega buscando el `id_sm_vc` (PK de la tabla Estudiante). Sin embargo, `TrazabilidadPage.vue` (Profesor) consumía este ID para llamar a `usersStore.fetch_usuario_sm_vc(id)`, el cual espera un ID de Usuario. Esto causaba que si el Estudiante #7 tenía el Usuario #13, la página mostrara los datos del Usuario #7.
+
+### 13.2 Arquitectura de la Solución (Full-Stack Fix)
+Para resolver la colisión de IDs de forma definitiva:
+
+1. **Backend - Disambiguación de Búsqueda**:
+   - Refactorizar `getProgresoEstudiante_sm_vc(id, tipo_id)` para manejar explícitamente `ESTUDIANTE` o `USUARIO`.
+   - El endpoint `/estudiantes/:id/progreso` usará el tipo `ESTUDIANTE`.
+   - El endpoint de "mi-progreso" usará el tipo `USUARIO`.
+
+2. **Frontend - Orden Secuencial**:
+   - Modificar `TrazabilidadPage.vue` para que la carga sea determinista:
+     1. `getDetalleEstudiante_sm_vc` (resuelve identidad).
+     2. `fetch_progreso_estudiante_sm_vc` (usa la identidad resuelta).
+
+### 13.3 Restricciones Específicas
+- **NO TOCAR** `TrazabilidadLayout.vue`.
+- Eliminar la cláusula `OR` en `pasantias.service.ts` por ser un antipatrón de seguridad y consistencia.
+
+---
+
 **Fin del Plan de Implementación Maestro**
