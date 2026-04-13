@@ -502,8 +502,17 @@ const handleAccionArchivo_sm_vc = async (msg_sm_vc, accion_sm_vc) => {
     return
   }
 
-  // ── Guard: necesitamos el documentoId para llamar al backend ──
-  const documentoId_sm_vc = msg_sm_vc.documento_id_sm_vc ?? msg_sm_vc.id_sm_vc
+  // ── Guard: necesitamos el documentoId numérico para llamar al backend ──
+  // Prioridad:
+  //   1. documento_id_sm_vc (campo numérico directo, siempre fiable)
+  //   2. Si el id_sm_vc tiene el prefijo "doc-NN", extraemos NN.
+  //   3. Si id_sm_vc ya es numérico, lo usamos directamente.
+  // Esto garantiza que nunca se envíe el string "doc-NN" al ParseIntPipe.
+  const rawId_sm_vc = msg_sm_vc.documento_id_sm_vc ?? msg_sm_vc.id_sm_vc
+  const documentoId_sm_vc =
+    typeof rawId_sm_vc === 'string' && rawId_sm_vc.startsWith('doc-')
+      ? parseInt(rawId_sm_vc.replace('doc-', ''), 10)
+      : rawId_sm_vc
   if (!documentoId_sm_vc) {
     $q.notify({
       type:    'warning',

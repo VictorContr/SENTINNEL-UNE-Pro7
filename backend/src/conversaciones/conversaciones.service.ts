@@ -218,6 +218,11 @@ export class ConversacionesService {
           nodos_sm_vc.push({
             id_sm_vc: `doc-${doc_sm_vc.id_sm_vc}`,
             tipo_nodo_sm_vc: 'DOCUMENTO',
+            // [FIX] documento_id_sm_vc es el ID numérico real del Documento en BD.
+            // El campo id_sm_vc usa el prefijo "doc-NN" solo para evitar colisiones
+            // de key en el v-for del frontend. Sin este campo, el servicio de
+            // descarga enviaba "doc-NN" al ParseIntPipe → 400 Bad Request.
+            documento_id_sm_vc: doc_sm_vc.id_sm_vc,
             archivo_nombre_sm_vc: doc_sm_vc.nombre_archivo_sm_vc,
             ruta_archivo_sm_vc: doc_sm_vc.ruta_archivo_sm_vc,
             tamanio_sm_vc: doc_sm_vc.tamanio_bytes_sm_vc
