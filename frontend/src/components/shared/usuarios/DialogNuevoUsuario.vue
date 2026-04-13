@@ -12,7 +12,13 @@
         <span>{{ usuarioAEditar ? 'Editar Usuario' : 'Registrar Nuevo Usuario' }}</span>
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section class="relative-position">
+        <!-- Spinner de carga para sincronización -->
+        <q-inner-loading :showing="loadingData_sm_vc" style="z-index: 10;">
+          <q-spinner-tail color="teal-3" size="2.5em" />
+          <div class="q-mt-sm text-caption text-teal-3 font-mono uppercase">Sincronizando...</div>
+        </q-inner-loading>
+
         <div class="dialog-form_sm_vc">
 
           <div class="row q-col-gutter-sm">
@@ -103,14 +109,15 @@
       <q-card-actions align="right" class="dialog-actions_sm_vc">
         <q-btn flat label="Cancelar" color="grey-5" no-caps @click="cancelar_sm_vc" />
         <q-btn unelevated :label="usuarioAEditar ? 'Actualizar Usuario' : 'Guardar Usuario'" icon="save"
-          class="btn-cta_sm_vc" no-caps @click="guardar_sm_vc" />
+          class="btn-cta_sm_vc" no-caps @click="guardar_sm_vc" :disabled="loadingData_sm_vc" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
+import { useUsersStore } from 'src/stores/usersStore'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -126,6 +133,10 @@ const rolOptions_sm_vc = [
   { label: 'Estudiante', value: 'ESTUDIANTE' }
 ]
 
+const usersStore_sm_vc = useUsersStore()
+
+const loadingData_sm_vc = ref(false)
+
 const estadoInicial_sm_vc = () => ({
   nombre_sm_vc: '',
   apellido_sm_vc: '',
@@ -136,24 +147,45 @@ const estadoInicial_sm_vc = () => ({
   profesor_id_sm_vc: null
 })
 
-const form_sm_vc = ref(estadoInicial_sm_vc())
+const form_sm_vc = reactive(estadoInicial_sm_vc())
 
-watch(() => props.usuarioAEditar, (newVal) => {
-  if (newVal) {
-    // Rellenamos el form si es edición
-    form_sm_vc.value = { ...newVal, clave_sm_vc: '' } 
-  } else {
-    form_sm_vc.value = estadoInicial_sm_vc()
+const loadUserData_sm_vc = async () => {
+  if (props.usuarioAEditar && props.modelValue) {
+    loadingData_sm_vc.value = true
+    try {
+      // Sincronizar datos frescos desde la API para evitar inconsistencias
+      const freshData = await usersStore_sm_vc.fetch_usuario_sm_vc(`${props.usuarioAEditar.id_sm_vc}?t=${Date.now()}`)
+      if (freshData) {
+        Object.assign(form_sm_vc, {
+          ...freshData,
+          clave_sm_vc: '' 
+        })
+      } else {
+        // Fallback si falla la sincronización
+        Object.assign(form_sm_vc, { ...props.usuarioAEditar, clave_sm_vc: '' })
+      }
+    } catch (err) {
+      console.error('Error sincronizando usuario:', err)
+      Object.assign(form_sm_vc, { ...props.usuarioAEditar, clave_sm_vc: '' })
+    } finally {
+      loadingData_sm_vc.value = false
+    }
+  } else if (!props.modelValue) {
+    Object.assign(form_sm_vc, estadoInicial_sm_vc())
   }
+}
+
+watch([() => props.usuarioAEditar, () => props.modelValue], () => {
+  loadUserData_sm_vc()
 }, { immediate: true })
 
 const cancelar_sm_vc = () => {
-  form_sm_vc.value = estadoInicial_sm_vc()
+  Object.assign(form_sm_vc, estadoInicial_sm_vc())
   emit('update:modelValue', false)
 }
 
 const guardar_sm_vc = () => {
-  const f = form_sm_vc.value
+  const f = { ...form_sm_vc }
   // Validación básica
   if (!f.nombre_sm_vc || !f.apellido_sm_vc || !f.cedula_sm_vc || !f.correo_sm_vc || !f.rol_sm_vc) {
     return
@@ -161,7 +193,14 @@ const guardar_sm_vc = () => {
   // En creación la clave es obligatoria
   if (!props.usuarioAEditar && !f.clave_sm_vc) return
 
-  emit('guardar', { ...f })
+  // Saneamiento para edición: eliminar campos no permitidos o vacíos
+  if (props.usuarioAEditar) {
+    delete f.fecha_creacion_sm_vc
+    if (!f.clave_sm_vc) delete f.clave_sm_vc
+    if (!f.profesor_id_sm_vc) delete f.profesor_id_sm_vc
+  }
+
+  emit('guardar', f)
 }
 </script>
 

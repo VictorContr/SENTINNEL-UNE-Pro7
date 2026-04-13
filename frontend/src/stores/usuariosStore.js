@@ -78,11 +78,19 @@ export const useUsuariosStore = defineStore('usuarios', {
     },
 
     async updateUser_sm_vc(id, userData) {
+      // Saneamiento de datos para evitar error 400
+      const sanitizedData = { ...userData };
+      delete sanitizedData.id_sm_vc;
+      delete sanitizedData.fecha_creacion_sm_vc;
+      if (!sanitizedData.clave_sm_vc) {
+        delete sanitizedData.clave_sm_vc;
+      }
+
       this.loading_sm_vc = true;
       this.error_sm_vc = null;
 
       try {
-        const response = await api.patch(`/users/${id}`, userData);
+        const response = await api.patch(`/users/${id}`, sanitizedData);
         
         // Actualizar el usuario en el estado local
         const index = this.usuarios_sm_vc.findIndex(user => user.id_sm_vc === parseInt(id));
@@ -137,6 +145,20 @@ export const useUsuariosStore = defineStore('usuarios', {
         return response.data;
       } catch (error) {
         this.error_sm_vc = error.response?.data?.message || 'Error al cambiar estado del usuario';
+        throw error;
+      } finally {
+        this.loading_sm_vc = false;
+      }
+    },
+
+    async fetchUserById_sm_vc(id) {
+      this.loading_sm_vc = true;
+      this.error_sm_vc = null;
+      try {
+        const response = await api.get(`/users/${id}`);
+        return response.data;
+      } catch (error) {
+        this.error_sm_vc = error.response?.data?.message || 'Error al obtener detalles del usuario';
         throw error;
       } finally {
         this.loading_sm_vc = false;

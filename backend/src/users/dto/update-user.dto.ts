@@ -37,4 +37,7 @@ export class UpdateUserDto_sm_vc {
   @IsEnum(RolUsuario)
   @IsOptional()
   rol_sm_vc?: RolUsuario;
+
+  @IsOptional()
+  activo_sm_vc?: boolean;
 }

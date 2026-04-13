@@ -6,7 +6,7 @@
 <template>
   <q-page class="sntnl-page_sm_vc">
     <q-btn
-      flat no-caps icon="arrow_back" label="Volver a Trazabilidad"
+      flat no-caps icon="arrow_back" label="Volver a Usuarios"
       color="grey-5" size="sm" class="q-mb-md"
       @click="router_sm_vc.back()" />
 
