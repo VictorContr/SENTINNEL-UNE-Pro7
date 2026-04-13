@@ -186,18 +186,27 @@ const cancelar_sm_vc = () => {
 
 const guardar_sm_vc = () => {
   const f = { ...form_sm_vc }
+  
   // Validación básica
   if (!f.nombre_sm_vc || !f.apellido_sm_vc || !f.cedula_sm_vc || !f.correo_sm_vc || !f.rol_sm_vc) {
     return
   }
+  
   // En creación la clave es obligatoria
   if (!props.usuarioAEditar && !f.clave_sm_vc) return
 
-  // Saneamiento para edición: eliminar campos no permitidos o vacíos
+  // Saneamiento general: profesor_id_sm_vc solo es válido para ESTUDIANTE
+  if (f.rol_sm_vc !== 'ESTUDIANTE') {
+    delete f.profesor_id_sm_vc
+  }
+  
+  // Saneamiento específico para edición
   if (props.usuarioAEditar) {
     delete f.fecha_creacion_sm_vc
-    if (!f.clave_sm_vc) delete f.clave_sm_vc
-    if (!f.profesor_id_sm_vc) delete f.profesor_id_sm_vc
+    // Si la clave está vacía, no se intenta actualizar
+    if (!f.clave_sm_vc) {
+      delete f.clave_sm_vc
+    }
   }
 
   emit('guardar', f)
