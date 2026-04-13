@@ -84,6 +84,15 @@ export class PasantiasController_sm_vc {
   ) {
     const profesorId = req.user.id_sm_vc;
     const entregaId = parseInt(body.entrega_id_sm_vc);
+
+    // [FIX] Validación defensiva: Prisma lanza PrismaClientValidationError
+    // si recibe NaN en un campo Int. Capturamos esto en la capa de Controlador.
+    if (isNaN(entregaId) || entregaId <= 0) {
+      throw new BadRequestException(
+        'El campo entrega_id_sm_vc es obligatorio y debe ser un número válido.',
+      );
+    }
+
     const decision = body.decision_sm_vc;
     const nota = body.nota_sm_dec ? parseFloat(body.nota_sm_dec) : undefined;
     const observaciones = body.observaciones_sm_vc;

@@ -226,10 +226,21 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     cargando_sm_vc.value = true
     try {
       const formData = new FormData()
-      formData.append('entrega_id_sm_vc',    payload_sm_vc.entrega_id_sm_vc)
-      formData.append('decision_sm_vc',      payload_sm_vc.estado_evaluacion_sm_vc)
-      formData.append('nota_sm_dec',         payload_sm_vc.nota_sm_dec || '')
-      formData.append('observaciones_sm_vc', payload_sm_vc.comentario_sm_vc || '')
+      formData.append('entrega_id_sm_vc',        payload_sm_vc.entrega_id_sm_vc ?? '')
+      formData.append('decision_sm_vc',           payload_sm_vc.estado_evaluacion_sm_vc)
+      formData.append('nota_sm_dec',              payload_sm_vc.nota_sm_dec || '')
+      formData.append('observaciones_sm_vc',      payload_sm_vc.comentario_sm_vc || '')
+
+      // TAREA 2: ID de la entrega específica vinculada por el profesor
+      if (payload_sm_vc.id_entrega_sm_vc) {
+        formData.append('id_entrega_sm_vc', payload_sm_vc.id_entrega_sm_vc)
+      }
+
+      // TAREA 3: Flag de reprobación global (sin documento específico)
+      formData.append(
+        'es_reprobacion_global_sm_vc',
+        payload_sm_vc.es_reprobacion_global_sm_vc ? 'true' : 'false'
+      )
       
       if (payload_sm_vc.archivo_correccion_sm_vc) {
         formData.append('archivo_correccion_sm_vc', payload_sm_vc.archivo_correccion_sm_vc)

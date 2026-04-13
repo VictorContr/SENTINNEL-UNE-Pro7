@@ -564,12 +564,34 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
     import("src/stores/conversacionStore")
       .then(({ useConversacionStore_sm_vc }) => {
         const store_sm_vc = useConversacionStore_sm_vc();
-        // Asegurar reactividad con desempaquetado de array
-        if (Array.isArray(payload_sm_vc)) {
-          store_sm_vc.conversaciones_sm_vc.push(...payload_sm_vc);
-        } else {
-          store_sm_vc.conversaciones_sm_vc.push(payload_sm_vc);
+
+        /**
+         * [FIX] De-duplicado automático por id_sm_vc.
+         *
+         * El emisor recibe el mismo mensaje por DOS vías:
+         *   1. `message_received_sm_vc` — Broadcast global a la sala (incluye al emisor).
+         *   2. `message_ack_sm_vc`       — ACK privado de confirmación de persistencia en BD.
+         *
+         * Sin este guard, el mensaje aparece duplicado en la UI del que envió.
+         * El receptor (estudiante) solo recibe el Broadcast, por lo que no sufre duplicados.
+         *
+         * Estrategia: antes de empujar, extraemos los IDs existentes en el store
+         * y descartamos cualquier nodo cuyo id_sm_vc ya esté presente.
+         */
+        const idsExistentes_sm_vc = new Set(
+          store_sm_vc.conversaciones_sm_vc.map((m) => m.id_sm_vc)
+        );
+
+        const nodosNuevos_sm_vc = Array.isArray(payload_sm_vc)
+          ? payload_sm_vc.filter((n) => !idsExistentes_sm_vc.has(n.id_sm_vc))
+          : (!idsExistentes_sm_vc.has(payload_sm_vc?.id_sm_vc) ? [payload_sm_vc] : []);
+
+        if (nodosNuevos_sm_vc.length === 0) {
+          console.log("🔁 [WS] Mensaje duplicado ignorado (id ya existe en store).");
+          return;
         }
+
+        store_sm_vc.conversaciones_sm_vc.push(...nodosNuevos_sm_vc);
         console.log(
           "✅ Inyección exitosa. Total:",
           store_sm_vc.conversaciones_sm_vc.length,
@@ -579,6 +601,7 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
         console.error("❌ ERROR FATAL EN PINIA:", err_sm_vc);
       });
   };
+
 
   /**
    * manejarSesionExpirada_sm_vc — Limpieza de emergencia cuando el JWT expira.

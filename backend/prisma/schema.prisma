@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model PeriodoAcademico {
@@ -43,6 +44,7 @@ model Usuario {
   evaluacionesRealizadas      Evaluacion[]   @relation("ProfesorEvalua")
   notificacionesEnviadas      Notificacion[] @relation("NotificacionesEnviadas")
   notificacionesRecibidas     Notificacion[] @relation("NotificacionesRecibidas")
+  mensajesEnviados            Mensaje[]      @relation("RemitenteUsuario")
 
   @@map("tdusuario_sm_vc")
 }
@@ -174,9 +176,14 @@ model Mensaje {
   /// Segmentación por materia: null = log global (deploy, inicio de ciclo, etc.)
   materia_id_sm_vc      Int?
   documento_id_sm_vc    Int?
+  /// Identificador del usuario que envió el mensaje (null para mensajes de sistema)
+  remitente_id_sm_vc    Int?
+  /// Rol del remitente al momento del envío (ESTUDIANTE | PROFESOR). Denormalizado para auditoría.
+  remitente_rol_sm_vc   String?      @db.VarChar(20)
   conversacion          Conversacion @relation(fields: [conversacion_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
   materia               Materia?     @relation(fields: [materia_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
   documento_sm_vc       Documento?   @relation(fields: [documento_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
+  remitente             Usuario?     @relation("RemitenteUsuario", fields: [remitente_id_sm_vc], references: [id_sm_vc], onDelete: SetNull)
 
   @@map("tdmensaje_sm_vc")
 }

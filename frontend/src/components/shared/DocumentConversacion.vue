@@ -172,12 +172,15 @@
           />
 
           <!-- Formulario del Profesor (solo en modo CHAT activo) -->
+          <!-- TAREA 2: Se pasa :mensajes para que el modal de vinculación
+               pueda filtrar los documentos del alumno sin evaluar. -->
           <ConvFormProfesor
             v-else-if="userRol_sm_vc === 'PROFESOR'"
             :requisitos="requisitos_sm_vc"
             :materia-id="props.materiaId"
             :estudiante-id="idEstudianteFinal_sm_vc"
             :requisitos-aprobados-iniciales="requisitosAprobadosIniciales_sm_vc"
+            :mensajes="mensajesOrdenados_sm_vc"
             :bloqueado_sm_vc="!chatStore_sm_vc.conectado_sm_vc"
             @responder="handleResponderCorreccion_sm_vc"
             @guardar-requisitos="handleGuardarRequisitos_sm_vc"
