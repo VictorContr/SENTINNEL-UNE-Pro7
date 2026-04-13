@@ -140,4 +140,26 @@ export class AuthService_sm_vc {
     const { clave_sm_vc: _, ...result_sm_vc } = usuario_sm_vc;
     return result_sm_vc;
   }
+
+  async refreshToken_sm_vc(userId_sm_vc: number) {
+    const usuario_sm_vc = await this.validateUser_sm_vc(userId_sm_vc);
+
+    const payload_sm_vc = {
+      sub: usuario_sm_vc.id_sm_vc,
+      correo: usuario_sm_vc.correo_sm_vc,
+      rol: usuario_sm_vc.rol_sm_vc,
+    };
+
+    const token_sm_vc = this.jwtService.sign(payload_sm_vc);
+    const session_sm_vc = {
+      user: usuario_sm_vc,
+      token: token_sm_vc,
+    };
+
+    return {
+      access_token_sm_vc: token_sm_vc,
+      user_sm_vc: usuario_sm_vc,
+      session_encrypted_sm_vc: encryptSession_sm_vc(session_sm_vc),
+    };
+  }
 }
