@@ -26,12 +26,8 @@ export const obtenerUbicacionUNE_sm_vc = async () => {
         q: 'Universidad Nueva Esparta, Caracas, Venezuela',
         format: 'json',
         limit: 1,
-      },
-      headers: {
-        // Nominatim requiere identificar el cliente en el User-Agent
-        'User-Agent': 'SENTINNEL-App/1.0 (sentinnel.une.edu.ve)',
-      },
-    },
+      }
+    }
   );
 
   // Nominatim devuelve un arreglo; tomamos el primer resultado

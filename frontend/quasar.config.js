@@ -50,7 +50,7 @@ export default defineConfig((/* ctx */) => {
         SESSION_ENCRYPTION_KEY:
           process.env.SESSION_ENCRYPTION_KEY ||
           "SENTINNEL-SESSION-ENCRYPTION-KEY-2026-PRO7-VICTOR-SANTIAGO",
-        API_URL: process.env.API_URL || "http://localhost:4000/api",
+        API_URL: process.env.API_URL || "http://localhost:3000/api",
       },
       // rawDefine: {}
       // ignorePublicFolder: true,

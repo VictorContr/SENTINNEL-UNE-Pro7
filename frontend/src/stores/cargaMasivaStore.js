@@ -9,6 +9,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useQuasar } from 'quasar'
 import XlsxPopulate from 'xlsx-populate/browser/xlsx-populate'
+import { api } from 'src/boot/axios'
 
 /* ── Fuente de Verdad: columnas oficiales del schema.prisma ── */
 export const COLS_USUARIOS_vc   = ['Nombre', 'Apellido', 'Cedula', 'Correo', 'Telefono', 'Clave', 'Rol']
@@ -20,7 +21,6 @@ export const OPCIONES_CARGA_vc = [
   { label: 'Continuar registros',           value: 'continuar' }
 ]
 
-const DELAY_MOCK_vc = 1500
 
 export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
   const $q_vc = useQuasar()
@@ -156,13 +156,41 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
     }
   }
 
-  /* ── Acción: notificar descarga de datos actuales (Mock) ── */
-  const descargarDatos_vc = (tipo_vc) => {
+  /* ── Acción: descarga de datos actuales (Backup en DB viva) ── */
+  const descargarDatos_vc = async (tipo_vc) => {
     $q_vc.notify({
       type: 'info',
-      message: `Iniciando descarga de datos actuales (${tipo_vc})…`,
-      position: 'top-right', icon: 'download', timeout: 2500
+      message: `Extrayendo datos de la base de datos (${tipo_vc})...`,
+      position: 'top-right', icon: 'hourglass_empty', timeout: 2000
     })
+
+    try {
+      const response = await api.get(`/admin/descargar-datos/${tipo_vc}`, {
+        responseType: 'blob'
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `SENTINNEL_Backup_${tipo_vc}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      $q_vc.notify({
+        type: 'positive',
+        message: 'Backup descargado exitosamente.',
+        position: 'top-right', icon: 'download_done', timeout: 3000
+      })
+    } catch {
+      $q_vc.notify({
+        type: 'negative',
+        message: 'Error al extraer los datos.',
+        caption: 'No se pudo generar el Excel desde la base de datos.',
+        position: 'top-right', icon: 'error', timeout: 4000
+      })
+    }
   }
 
   /* ── Acción: ejecutar la importación completa ── */
@@ -172,10 +200,16 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
 
     importando_vc.value = true
     try {
-      // Mock: simular latencia de red
-      // TODO: reemplazar con la llamada Axios real al endpoint de importación
-      // Ej: await axios.post('/api/admin/carga-masiva', formData)
-      await new Promise((r) => setTimeout(r, DELAY_MOCK_vc))
+      const formData = new FormData()
+      formData.append('usuarios', archivos_vc.value[1])
+      formData.append('requisitos', archivos_vc.value[2])
+      formData.append('modo', opcionCarga_vc.value)
+
+      await api.post('/admin/carga-masiva', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
 
       $q_vc.notify({
         type: 'positive',
@@ -187,11 +221,11 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
       // Resetear estado tras importación exitosa
       resetear_vc()
       return true
-    } catch {
+    } catch (error) {
       $q_vc.notify({
         type: 'negative',
         message: 'Error durante la importación.',
-        caption: 'Verifica los archivos e inténtalo de nuevo.',
+        caption: error.response?.data?.message || 'Verifica los archivos e inténtalo de nuevo.',
         icon: 'error', position: 'top-right', timeout: 5000
       })
       return false

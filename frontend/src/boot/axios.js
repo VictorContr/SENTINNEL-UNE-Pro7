@@ -7,7 +7,7 @@ import { LocalStorage } from 'quasar'
  * Composition API only: import { api } from 'src/boot/axios' en stores/composables.
  */
 const api = axios.create({
-  baseURL: process.env.API_URL || 'http://localhost:4000/api',
+  baseURL: process.env.API_URL || 'http://localhost:3000/api',
 })
 
 export default defineBoot(({ router: router_sm_vc }) => {
