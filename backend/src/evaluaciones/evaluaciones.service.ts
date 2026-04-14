@@ -141,7 +141,7 @@ export class EvaluacionesService {
           estudianteId,
           materiaId,
           entrega.requisito.materia.posicion_sm_vc,
-          entrega.requisito.materia.periodo_sm_vc,
+          entrega.requisito.materia.periodo_id_sm_vc,
           materiaNombre,
           entrega.estudiante.usuario_id_sm_vc,
           profesorId,
@@ -184,7 +184,7 @@ export class EvaluacionesService {
     estudianteId:        number,
     materiaId:           number,
     materiaPos:          number,
-    materiaPeriodo:      string,
+    materiaPeriodo:      number,
     materiaNombre:       string,
     usuarioEstudianteId: number,
     actorId:             number,
@@ -211,7 +211,7 @@ export class EvaluacionesService {
 
     // Buscar la siguiente materia
     const siguienteMateria = await this.prisma.materia.findFirst({
-      where: { posicion_sm_vc: materiaPos + 1, periodo_sm_vc: materiaPeriodo },
+      where: { posicion_sm_vc: materiaPos + 1, periodo_id_sm_vc: materiaPeriodo },
     });
 
     if (!siguienteMateria) {

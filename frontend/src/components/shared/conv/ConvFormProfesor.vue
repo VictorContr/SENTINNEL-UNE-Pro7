@@ -1,4 +1,4 @@
-﻿<!-- ══════════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════════════
      ConvFormProfesor.vue — Formulario de corrección y evaluación.
      Incluye el modal de aprobación granular de requisitos.
 
@@ -38,6 +38,24 @@
     </div>
 
     <div class="action-form_sm_vc">
+      <!-- Módulo Completado -->
+      <q-banner
+        v-if="materiaCompletada_sm_vc"
+        dense
+        rounded
+        class="empty-banner-evaluar_sm_vc q-mb-sm text-center"
+      >
+        <template #avatar>
+          <q-icon name="verified" color="teal-3" size="md" />
+        </template>
+        <strong style="color: var(--sn-texto-principal); font-size: 0.9rem;">Módulo Aprobado</strong>
+        <div class="q-mt-xs">
+          Todos los requisitos de esta fase han sido aprobados.<br/>
+          Ya no es posible realizar nuevas correcciones.
+        </div>
+      </q-banner>
+
+      <template v-else>
       <!-- Botones de Acción Masiva / Granular -->
       <div class="bulk-actions_sm_vc">
         <q-btn
@@ -212,6 +230,7 @@
         "
         @click="handleClickEnvio_sm_vc"
       />
+      </template>
     </div>
   </div>
 
@@ -599,6 +618,10 @@ const documentosPendientesEvaluar_vc = computed(() => {
     const pendienteDeEvaluar_sm_vc = nodo_sm_vc.estado_sm_vc === 'ENTREGADO';
     return pendienteDeEvaluar_sm_vc;
   });
+});
+
+const materiaCompletada_sm_vc = computed(() => {
+  return props.requisitos.length > 0 && props.requisitosAprobadosIniciales.length === props.requisitos.length;
 });
 
 /* ── Computed: label e icono del botón de envío dinámico ── */

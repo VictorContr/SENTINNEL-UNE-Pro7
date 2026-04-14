@@ -106,6 +106,10 @@ export class AdminService {
         clave: string;
         rol: string;
         claveHash?: string;
+        profesor_asignado_id: number | null;
+        tutor_empresarial: string | null;
+        empresa: string | null;
+        titulo_proyecto: string | null;
       }[] = [];
       wsUsuarios.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // Saltamos la cabecera
@@ -122,6 +126,10 @@ export class AdminService {
           telefono: row.getCell(5).value ? String(row.getCell(5).value) : null,
           clave: String(row.getCell(6).value || ''),
           rol: String(row.getCell(7).value || 'ESTUDIANTE').toUpperCase(),
+          profesor_asignado_id: Number(row.getCell(8).value) || null,
+          tutor_empresarial: row.getCell(9).value ? String(row.getCell(9).value) : null,
+          empresa: row.getCell(10).value ? String(row.getCell(10).value) : null,
+          titulo_proyecto: row.getCell(11).value ? String(row.getCell(11).value) : null,
         });
       });
 
@@ -165,9 +173,10 @@ export class AdminService {
         }
 
         // Obtener la primera materia para asignársela a los nuevos estudiantes
-        const materia1 = await tx.materia.findFirst({
-           where: { posicion_sm_vc: 1, periodo_sm_vc: PERIODO }
-        });
+        const periodoObj = await tx.periodoAcademico.findFirst({ where: { nombre_sm_vc: PERIODO } });
+        const materia1 = periodoObj ? await tx.materia.findFirst({
+           where: { posicion_sm_vc: 1, periodo_id_sm_vc: periodoObj.id_sm_vc }
+        }) : null;
 
         for (const u of rowsUsuarios) {
           const rolClean = ['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(u.rol) ? (u.rol as RolUsuario) : RolUsuario.ESTUDIANTE;
@@ -193,9 +202,10 @@ export class AdminService {
             const perfil = await tx.estudiante.create({
               data: {
                 usuario_id_sm_vc: userCreate.id_sm_vc,
-                empresa_sm_vc: 'Pendiente por definir',
-                tutor_empresarial_sm_vc: 'Pendiente por definir',
-                titulo_proyecto_sm_vc: 'Pendiente por definir',
+                empresa_sm_vc: u.empresa || null,
+                tutor_empresarial_sm_vc: u.tutor_empresarial || null,
+                titulo_proyecto_sm_vc: u.titulo_proyecto || null,
+                profesor_id_sm_vc: u.profesor_asignado_id || null,
                 materia_activa_id_sm_vc: materia1.id_sm_vc,
               }
             });
@@ -248,7 +258,7 @@ export class AdminService {
     const ws = wb.addWorksheet(tipo === 'usuarios' ? 'Usuarios' : 'Requisitos');
 
     if (tipo === 'usuarios') {
-      ws.addRow(['Nombre', 'Apellido', 'Cedula', 'Correo', 'Telefono', 'Clave', 'Rol']);
+      ws.addRow(['Nombre', 'Apellido', 'Cedula', 'Correo', 'Telefono (Opcional)', 'Clave', 'Rol', 'Profesor_Asignado_ID (Opcional)', 'Tutor_Empresarial (Opcional)', 'Empresa (Opcional)', 'Titulo_Proyecto (Opcional)']);
       const usuarios = await this.prisma.usuario.findMany();
       for (const u of usuarios) {
         ws.addRow([
@@ -258,7 +268,10 @@ export class AdminService {
           u.correo_sm_vc,
           u.telefono_sm_vc || '',
           '[ENCRIPTADA]', // No exponer el hash real por seguridad
-          u.rol_sm_vc
+          u.rol_sm_vc,
+          // Dejar campos opcionales vacíos en la descarga de usuarios directos,
+          // ya que el Estudiante reside en otra tabla (se podría extender a futuro)
+          '', '', '', ''
         ]);
       }
     } else {

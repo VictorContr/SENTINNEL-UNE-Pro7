@@ -169,19 +169,7 @@ export class ChatGateway_sm_vc
     try {
       const user_sm_vc = this.obtenerUserAutenticado_sm_vc(client_sm_vc);
 
-      if (
-        !this.verificarPermisoSala_sm_vc(
-          user_sm_vc,
-          payload_sm_vc.estudianteId_sm_vc,
-        )
-      ) {
-        this.emitirError_sm_vc(
-          client_sm_vc,
-          'FORBIDDEN',
-          'No tienes permiso para acceder a esta conversación.',
-        );
-        return;
-      }
+
 
       const roomId_sm_vc = this.buildRoomId_sm_vc(
         payload_sm_vc.estudianteId_sm_vc,
@@ -474,34 +462,7 @@ export class ChatGateway_sm_vc
     return `conv:${estudianteId_sm_vc}:${materiaId_sm_vc ?? 'global'}`;
   }
 
-  /**
-   * verificarPermisoSala_sm_vc — Verificación de sala para el handler leave.
-   *
-   * [SPRINT 4 COMPLETADO]: La validación granular de acceso al unirse a salas
-   * la gestiona ChatRoomGuard_sm_vc (Guards de NestJS), no este método.
-   * Este helper se mantiene únicamente para handleLeave_sm_vc donde no aplica
-   * el guard de sala (salir es siempre un acto permitido si ya estás dentro).
-   *
-   *   ESTUDIANTE → solo puede salir de su propia sala.
-   *   PROFESOR   → puede salir de cualquier sala a la que accedió.
-   *   ADMIN      → puede salir de cualquier sala (oyente universal).
-   */
-  private verificarPermisoSala_sm_vc(
-    user_sm_vc: JwtPayloadWs_sm_vc,
-    estudianteId_sm_vc: number,
-  ): boolean {
-    switch (user_sm_vc.rol) {
-      case 'ESTUDIANTE':
-        return user_sm_vc.sub === estudianteId_sm_vc;
-      case 'PROFESOR':
-        // Al salir no re-validamos BD: si entró, fue porque tenía permiso.
-        return true;
-      case 'ADMIN':
-        return true;
-      default:
-        return false;
-    }
-  }
+
 
   /** Obtiene el payload del usuario autenticado desde socket.data. */
   private obtenerUserAutenticado_sm_vc(

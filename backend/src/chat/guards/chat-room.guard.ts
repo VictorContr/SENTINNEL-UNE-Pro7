@@ -75,7 +75,7 @@ export class ChatRoomGuard_sm_vc implements CanActivate {
 
     switch (user_sm_vc.rol) {
       case 'ESTUDIANTE':
-        return this.verificarEstudiante_sm_vc(user_sm_vc, estudianteId_sm_vc);
+        return await this.verificarEstudiante_sm_vc(user_sm_vc, estudianteId_sm_vc);
 
       case 'PROFESOR':
         return await this.verificarProfesor_sm_vc(user_sm_vc, estudianteId_sm_vc);
@@ -112,24 +112,37 @@ export class ChatRoomGuard_sm_vc implements CanActivate {
    *
    * IMPORTANTE: Comparamos como números para evitar fallos de tipo ('5' !== 5).
    */
-  private verificarEstudiante_sm_vc(
+  private async verificarEstudiante_sm_vc(
     user_sm_vc: JwtPayloadWs_sm_vc,
     estudianteId_sm_vc: number,
-  ): boolean {
-    const tieneAcceso_sm_vc = Number(user_sm_vc.sub) === Number(estudianteId_sm_vc);
+  ): Promise<boolean> {
+    try {
+      const estudianteAutenticado_sm_vc = await this.prisma_sm_vc.estudiante.findUnique({
+        where: { usuario_id_sm_vc: Number(user_sm_vc.sub) },
+        select: { id_sm_vc: true }
+      });
 
-    if (!tieneAcceso_sm_vc) {
-      this.logger_sm_vc.warn(
-        `[ChatRoomGuard] ESTUDIANTE (userId=${user_sm_vc.sub}) intentó acceder ` +
-        `a sala de estudianteId=${estudianteId_sm_vc}. Acceso DENEGADO.`,
-      );
+      const tieneAcceso_sm_vc = estudianteAutenticado_sm_vc?.id_sm_vc === Number(estudianteId_sm_vc);
+
+      if (!tieneAcceso_sm_vc) {
+        this.logger_sm_vc.warn(
+          `[ChatRoomGuard] ESTUDIANTE (userId=${user_sm_vc.sub}) intentó acceder ` +
+          `a sala de estudianteId=${estudianteId_sm_vc}. Acceso DENEGADO.`,
+        );
+        throw new WsException({
+          code_sm_vc:    'FORBIDDEN',
+          message_sm_vc: 'Solo puedes acceder a tu propia conversación.',
+        });
+      }
+
+      return true;
+    } catch (err_sm_vc) {
+      if (err_sm_vc instanceof WsException) throw err_sm_vc;
       throw new WsException({
-        code_sm_vc:    'FORBIDDEN',
-        message_sm_vc: 'Solo puedes acceder a tu propia conversación.',
+        code_sm_vc:    'INTERNAL_ERROR',
+        message_sm_vc: 'Error al verificar id de estudiante.',
       });
     }
-
-    return true;
   }
 
   /**

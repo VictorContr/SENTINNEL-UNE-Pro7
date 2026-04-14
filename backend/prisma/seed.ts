@@ -46,12 +46,22 @@ async function main() {
     prisma.materia.deleteMany(),
     prisma.usuario.deleteMany(),
     prisma.configuracionSistema.deleteMany(),
+    prisma.periodoAcademico.deleteMany(),
   ]);
   console.log('✔ Base de datos limpiada');
 
-  // ── 2. Configuración del sistema ──
+  // ── 2. Configuración del sistema y Periodos ──
+  const periodo = await prisma.periodoAcademico.create({
+    data: {
+      nombre_sm_vc: 'P-165',
+      fecha_inicio_sm_vc: new Date('2025-01-01'),
+      fecha_fin_sm_vc: new Date('2025-06-30'),
+      estado_activo_sm_vc: true,
+    }
+  });
+
   await prisma.configuracionSistema.create({
-    data: { id_sm_vc: 1, periodo_actual_sm_vc: 'P-165' },
+    data: { id_sm_vc: 1, periodo_actual_sm_vc: periodo.nombre_sm_vc },
   });
 
   // ── 3. Materias secuenciales ──
@@ -60,7 +70,7 @@ async function main() {
       data: {
         nombre_sm_vc: nombre,
         posicion_sm_vc: posicion,
-        periodo_sm_vc: 'P-165',
+        periodo_id_sm_vc: periodo.id_sm_vc,
         descripcion_sm_vc: `Materia secuencial ${posicion} del ciclo de pasantías.`,
         requisitos: {
           create: requisitos.map((r, i) => ({

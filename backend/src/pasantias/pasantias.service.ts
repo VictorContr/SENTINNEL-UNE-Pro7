@@ -13,14 +13,21 @@ export class PasantiasService_sm_vc {
   ) {}
 
   async getMaterias_sm_vc() {
-    return this.prisma.materia.findMany({
+    const materias = await this.prisma.materia.findMany({
       include: { 
+        periodo: true,
         requisitos: { 
           orderBy: { posicion_sm_vc: 'asc' } 
         } 
       },
       orderBy: { posicion_sm_vc: 'asc' },
     });
+
+    return materias.map(m => ({
+      ...m,
+      // Retrocompatibilidad con frontend que espera el string directo:
+      periodo_sm_vc: m.periodo?.nombre_sm_vc || 'Sin Periodo'
+    }));
   }
 
   /**
@@ -54,7 +61,7 @@ export class PasantiasService_sm_vc {
     const materiaAnterior = await this.prisma.materia.findFirst({
       where: { 
         posicion_sm_vc: materiaActual.posicion_sm_vc - 1,
-        periodo_sm_vc: materiaActual.periodo_sm_vc 
+        periodo_id_sm_vc: materiaActual.periodo_id_sm_vc 
       }
     });
 
@@ -372,7 +379,7 @@ export class PasantiasService_sm_vc {
     }
 
     const materias = await this.prisma.materia.findMany({
-      include: { requisitos: true },
+      include: { requisitos: true, periodo: true },
       orderBy: { posicion_sm_vc: 'asc' }
     });
 
@@ -422,7 +429,7 @@ export class PasantiasService_sm_vc {
         nombre_sm_vc: materia.nombre_sm_vc,
         orden_sm_int: materia.posicion_sm_vc,
         posicion_sm_vc: materia.posicion_sm_vc,
-        periodo_sm_vc: materia.periodo_sm_vc,
+        periodo_sm_vc: materia.periodo.nombre_sm_vc,
         estado_aprobacion_sm_vc: estadoAprobacion,
         progreso_decimal: progresoDecimal,
         requisitos_aprobados_sm_int: aprobados,

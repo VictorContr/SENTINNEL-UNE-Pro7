@@ -123,6 +123,11 @@ export class BulkUploadController {
         Correo: 'juan.perez@ejemplo.com',
         Teléfono: '04141234567',
         Rol: 'ESTUDIANTE',
+        Materia_Activa_ID: '1',
+        Profesor_Asignado_ID: '',
+        Empresa: 'Tech Corp',
+        Tutor_Empresarial: 'Ing. López',
+        Titulo_Proyecto: 'Sistema Pasantías'
       },
       {
         Nombre: 'María',
@@ -131,6 +136,11 @@ export class BulkUploadController {
         Correo: 'maria.gonzalez@ejemplo.com',
         Teléfono: '04142345678',
         Rol: 'PROFESOR',
+        Materia_Activa_ID: '',
+        Profesor_Asignado_ID: '',
+        Empresa: '',
+        Tutor_Empresarial: '',
+        Titulo_Proyecto: ''
       },
     ];
 

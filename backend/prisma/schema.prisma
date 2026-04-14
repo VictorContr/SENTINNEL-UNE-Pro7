@@ -14,6 +14,7 @@ model PeriodoAcademico {
   fecha_inicio_sm_vc  DateTime
   fecha_fin_sm_vc     DateTime
   estado_activo_sm_vc Boolean  @default(false)
+  materias            Materia[]
 
   @@map("tdperiodoacademico_sm_vc")
 }
@@ -53,9 +54,9 @@ model Estudiante {
   id_sm_vc                 Int             @id @default(autoincrement())
   usuario_id_sm_vc         Int             @unique
   profesor_id_sm_vc        Int?
-  empresa_sm_vc            String          @db.VarChar(150)
-  tutor_empresarial_sm_vc  String          @db.VarChar(100)
-  titulo_proyecto_sm_vc    String          @db.VarChar(255)
+  empresa_sm_vc            String?         @db.VarChar(150)
+  tutor_empresarial_sm_vc  String?         @db.VarChar(100)
+  titulo_proyecto_sm_vc    String?         @db.VarChar(255)
   materia_activa_id_sm_vc  Int
   puede_hacer_deploy_sm_vc Boolean         @default(false)
   conversacion             Conversacion?
@@ -72,13 +73,14 @@ model Materia {
   id_sm_vc          Int          @id @default(autoincrement())
   nombre_sm_vc      String       @db.VarChar(100)
   posicion_sm_vc    Int
-  periodo_sm_vc     String       @db.VarChar(10)
+  periodo_id_sm_vc  Int
   descripcion_sm_vc String?
   estudiantes       Estudiante[]
   requisitos        Requisito[]
   mensajes          Mensaje[]
+  periodo           PeriodoAcademico @relation(fields: [periodo_id_sm_vc], references: [id_sm_vc])
 
-  @@unique([posicion_sm_vc, periodo_sm_vc])
+  @@unique([posicion_sm_vc, periodo_id_sm_vc])
   @@map("tdmateria_sm_vc")
 }
 

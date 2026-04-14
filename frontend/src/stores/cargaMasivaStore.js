@@ -12,7 +12,7 @@ import XlsxPopulate from 'xlsx-populate/browser/xlsx-populate'
 import { api } from 'src/boot/axios'
 
 /* ── Fuente de Verdad: columnas oficiales del schema.prisma ── */
-export const COLS_USUARIOS_vc   = ['Nombre', 'Apellido', 'Cedula', 'Correo', 'Telefono', 'Clave', 'Rol']
+export const COLS_USUARIOS_vc   = ['Nombre', 'Apellido', 'Cedula', 'Correo', 'Telefono (Opcional)', 'Clave', 'Rol', 'Profesor_Asignado_ID (Opcional)', 'Tutor_Empresarial (Opcional)', 'Empresa (Opcional)', 'Titulo_Proyecto (Opcional)']
 export const COLS_REQUISITOS_vc = ['MateriaId', 'Nombre', 'Descripcion', 'Posicion']
 
 /* ── Opciones del Radio Group de importación ── */
