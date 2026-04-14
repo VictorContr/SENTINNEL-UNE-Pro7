@@ -312,7 +312,16 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     }
   }
   const registrarDeploy            = () => {}
-  const procesarCambioPeriodo_sm_vc = () => {}
+  // ✅ FIX: Rehidratación real tras cambio de período.
+  // Antes era un stub vacío `() => {}`. Ahora vacía el estado stale y
+  // recarga el catálogo de materias del nuevo período desde el backend.
+  const procesarCambioPeriodo_sm_vc = async () => {
+    materias_sm_vc.value    = []
+    progreso_sm_vc.value    = []
+    misEntregas_sm_vc.value = []
+    await fetch_materias_sm_vc()
+    console.log('[pasantiasStore] Rehidratación completada tras cambio de período.')
+  }
 
   return {
     /* State */

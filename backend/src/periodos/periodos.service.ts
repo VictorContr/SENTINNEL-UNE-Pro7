@@ -40,8 +40,12 @@ export class PeriodosAcademicosService {
 
   // ─────────────────────────────────────────────────────────────────
   // POST /periodos
-  // Crea un nuevo período académico con nombre auto-generado y lo
+  // Crea un nuevo período académico con nombre AUTO-GENERADO y lo
   // activa automáticamente, desactivando todos los anteriores.
+  //
+  // El frontend solo envía fechas. El backend deduce:
+  //   • nombre_sm_vc → incrementa el código del período activo (P-N+1)
+  //   • descripcion_sm_vc → construye "Mes Año - Mes Año" desde las fechas
   // ─────────────────────────────────────────────────────────────────
   async create_sm_vc(createPeriodoDto: CreatePeriodoDto_sm_vc) {
     const fechaInicio_sm_vc = new Date(createPeriodoDto.fecha_inicio_sm_vc);
@@ -52,19 +56,50 @@ export class PeriodosAcademicosService {
       throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
     }
 
-    // El nombre ahora es el código universitario (ej. "P-165") provisto por el DTO.
-    // La descripción legible (ej. "Enero 2026 - Abril 2026") también viene del DTO.
-    const nombre_sm_vc      = createPeriodoDto.nombre_sm_vc.trim();
-    const descripcion_sm_vc = createPeriodoDto.descripcion_sm_vc.trim();
+    // ─────────────────────────────────────────────────────────────────
+    // AUTO-GENERACIÓN DEL CÓDIGO DE PERÍODO (P-N+1)
+    //
+    // Busca el período activo actual y extrae su número.
+    // Ej: "P-165" → 165 → 165+1 = 166 → "P-166"
+    // Si no hay período previo (primer período del sistema), inicia en "P-1".
+    // ─────────────────────────────────────────────────────────────────
+    const periodoActivo_sm_vc = await this.prisma.periodoAcademico.findFirst({
+      where:   { estado_activo_sm_vc: true },
+      orderBy: { fecha_inicio_sm_vc: 'desc' },
+    });
 
-    // Verificar que no exista ya un período con el mismo código
+    let nombre_sm_vc: string;
+    if (periodoActivo_sm_vc) {
+      // Extraer el número del código actual (tolera formatos como "P-165", "P-001", "165")
+      const match_sm_vc = periodoActivo_sm_vc.nombre_sm_vc.match(/(\d+)/);
+      const numActual_sm_vc = match_sm_vc ? parseInt(match_sm_vc[1], 10) : 0;
+      nombre_sm_vc = `P-${numActual_sm_vc + 1}`;
+    } else {
+      // Fallback: primer período del sistema
+      nombre_sm_vc = 'P-1';
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // AUTO-GENERACIÓN DE LA DESCRIPCIÓN LEGIBLE
+    //
+    // Construye "Mes Año - Mes Año" en español a partir de las fechas.
+    // Ej: fechaInicio=2026-05-01, fechaFin=2026-08-31 → "Mayo 2026 - Agosto 2026"
+    // Se usa UTC explícito para evitar desfases de timezone.
+    // ─────────────────────────────────────────────────────────────────
+    const descripcion_sm_vc = this.generarDescripcionPeriodo_sm_vc(
+      fechaInicio_sm_vc,
+      fechaFin_sm_vc,
+    );
+
+    // Verificar que no exista ya un período con el mismo código (colisión improbable pero segura)
     const periodoExistente_sm_vc = await this.prisma.periodoAcademico.findFirst({
       where: { nombre_sm_vc },
     });
 
     if (periodoExistente_sm_vc) {
       throw new BadRequestException(
-        `Ya existe un período con el código: "${nombre_sm_vc}"`,
+        `Ya existe un período con el código auto-generado: "${nombre_sm_vc}". ` +
+        'Verifique que no se haya creado un período concurrentemente.',
       );
     }
 
@@ -282,8 +317,16 @@ export class PeriodosAcademicosService {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // Método privado: genera el nombre del período a partir de las fechas.
-  // Ejemplo de salida: "Enero 2026 - Julio 2026"
+  // Genera la descripción legible del período (ej. "Mayo 2026 - Agosto 2026").
+  // Usado por create_sm_vc para auto-construir descripcion_sm_vc desde las fechas.
+  // Utiliza UTC explícito para evitar desfases de zona horaria.
+  // ─────────────────────────────────────────────────────────────────
+  private generarDescripcionPeriodo_sm_vc(inicio_sm_vc: Date, fin_sm_vc: Date): string {
+    return this.generarNombrePeriodo_sm_vc(inicio_sm_vc, fin_sm_vc);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Helper interno: formatea una fecha como "Mes YYYY" en español (UTC).
   // ─────────────────────────────────────────────────────────────────
   private generarNombrePeriodo_sm_vc(inicio_sm_vc: Date, fin_sm_vc: Date): string {
     const formatMesAnio_sm_vc = (fecha_sm_vc: Date): string => {

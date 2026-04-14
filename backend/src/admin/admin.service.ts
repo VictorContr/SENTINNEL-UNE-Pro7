@@ -65,12 +65,12 @@ export class AdminService {
   async actualizarPeriodo(dto: ActualizarPeriodoDto) {
     try {
       // Mapeamos el DTO del módulo Admin al DTO de creación de períodos.
-      // El admin es responsable de definir el código (nombre) y la descripción legible.
+      // NOTA: nombre_sm_vc y descripcion_sm_vc son ahora AUTO-GENERADOS por
+      // PeriodosAcademicosService.create_sm_vc a partir del período activo y las fechas.
+      // El admin solo necesita proveer las fechas.
       const createDto = {
-        nombre_sm_vc:       dto.nombre_sm_vc,
-        descripcion_sm_vc:  dto.descripcion_sm_vc,
         fecha_inicio_sm_vc: dto.fecha_inicio_sm_vc,
-        fecha_fin_sm_vc:    dto.fecha_cierre_sm_vc,  // NOTA: cierre → fin (mapeo de campo)
+        fecha_fin_sm_vc:    dto.fecha_cierre_sm_vc, // NOTA: cierre → fin (mapeo de campo)
       };
 
       // Delegamos al servicio especializado para crear y activar el periodo
@@ -211,8 +211,16 @@ export class AdminService {
                 materia_activa_id_sm_vc: materia1.id_sm_vc,
               }
             });
+            // ✅ FIX (Opción B): La conversación inicial se crea en el slot
+            // de la primera materia (posición 1, intento 1), no en el slot global (posición 0).
+            // Esto garantiza que el chat del estudiante recién cargado sea localizable
+            // por el mismo upsert que usan conversaciones.service.ts y el chatStore.
             const conv = await tx.conversacion.create({
-              data: { estudiante_id_sm_vc: perfil.id_sm_vc }
+              data: {
+                estudiante_id_sm_vc:    perfil.id_sm_vc,
+                posicion_materia_sm_vc: 1, // posición de la primera materia
+                intento_sm_vc:          1, // primer intento
+              }
             });
             await tx.mensaje.create({
               data: {

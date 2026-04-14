@@ -61,6 +61,7 @@ export const usePeriodoStore = defineStore('periodo', () => {
   }
 
   /* ── PUT /admin/configuracion/periodo ── */
+  // El frontend solo envía las fechas. El backend auto-genera el código y descripción.
   const actualizarPeriodo_sm_vc = async ({ fechaInicio, fechaCierre }) => {
     // Validación de presencia
     if (!fechaInicio || !fechaCierre) {
@@ -84,7 +85,7 @@ export const usePeriodoStore = defineStore('periodo', () => {
 
     loading_sm_vc.value = true
     try {
-      // DTO que espera el NestJS admin endpoint
+      // DTO simplificado: solo fechas. El backend auto-genera nombre y descripción.
       const dto_sm_vc = {
         fecha_inicio_sm_vc: fechaInicio,
         fecha_cierre_sm_vc: fechaCierre

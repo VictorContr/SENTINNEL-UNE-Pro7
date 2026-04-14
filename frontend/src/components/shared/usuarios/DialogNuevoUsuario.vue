@@ -201,7 +201,10 @@ const loadMaterias_sm_vc = async () => {
   try {
     const res = await api.get('/pasantias/materias')
     materiasOpc_sm_vc.value = res.data.map(m => ({
-      label: `${m.nombre_sm_vc} (${m.periodo_sm_vc})`,
+      // ✅ FIX: periodo_sm_vc (string legacy) ya no existe tras la refactorización.
+      // Ahora navegamos por la relación anidada: periodo?.nombre_sm_vc.
+      // El operador ?. previene crashes si el endpoint no incluye el join.
+      label: `${m.nombre_sm_vc} (${m.periodo?.nombre_sm_vc ?? m.periodo_id_sm_vc})`,
       value: m.id_sm_vc
     }))
   } catch(e) {
