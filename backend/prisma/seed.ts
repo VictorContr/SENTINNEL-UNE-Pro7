@@ -53,9 +53,10 @@ async function main() {
   // DEBE crearse primero: Materia y ConfiguracionSistema dependen de su ID.
   const periodoActivo = await prisma.periodoAcademico.create({
     data: {
-      nombre_sm_vc:        'Enero 2025 - Julio 2025',
-      fecha_inicio_sm_vc:  new Date('2025-01-15'),
-      fecha_fin_sm_vc:     new Date('2025-07-15'),
+      nombre_sm_vc:        'P-165',
+      descripcion_sm_vc:   'Enero 2026 - Abril 2026',
+      fecha_inicio_sm_vc:  new Date('2026-01-15T00:00:00Z'),
+      fecha_fin_sm_vc:     new Date('2026-04-15T00:00:00Z'),
       estado_activo_sm_vc: true,
     },
   });

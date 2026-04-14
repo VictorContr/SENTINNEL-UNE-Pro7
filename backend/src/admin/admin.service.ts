@@ -60,16 +60,17 @@ export class AdminService {
    * Delega la lógica de generación de nombre y desactivación masiva al PeriodosAcademicosService.
    * 
    * @param dto - DTO con las fechas de inicio y cierre.
-   * @returns Promise<ConfiguracionSistema> - Configuración actualizada.
+   * @returns La configuración actualizada con el nuevo período.
    */
-  async actualizarPeriodo(dto: ActualizarPeriodoDto): Promise<ConfiguracionSistema> {
+  async actualizarPeriodo(dto: ActualizarPeriodoDto) {
     try {
-      // Mapeamos el DTO de administración al DTO de creación de periodos
-      // (En este caso, CreatePeriodoDto_sm_vc espera {fecha_inicio_sm_vc, fecha_fin_sm_vc})
-      // NOTA: El frontend envía fecha_cierre_sm_vc, así que lo mapeamos correctamente.
+      // Mapeamos el DTO del módulo Admin al DTO de creación de períodos.
+      // El admin es responsable de definir el código (nombre) y la descripción legible.
       const createDto = {
+        nombre_sm_vc:       dto.nombre_sm_vc,
+        descripcion_sm_vc:  dto.descripcion_sm_vc,
         fecha_inicio_sm_vc: dto.fecha_inicio_sm_vc,
-        fecha_fin_sm_vc:    dto.fecha_cierre_sm_vc,
+        fecha_fin_sm_vc:    dto.fecha_cierre_sm_vc,  // NOTA: cierre → fin (mapeo de campo)
       };
 
       // Delegamos al servicio especializado para crear y activar el periodo

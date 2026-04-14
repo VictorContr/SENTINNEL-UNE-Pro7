@@ -52,18 +52,19 @@ export class PeriodosAcademicosService {
       throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
     }
 
-    // Generar nombre dinámicamente desde las fechas del período.
-    // Resultado esperado: "Enero 2026 - Julio 2026"
-    const nombre_sm_vc = this.generarNombrePeriodo_sm_vc(fechaInicio_sm_vc, fechaFin_sm_vc);
+    // El nombre ahora es el código universitario (ej. "P-165") provisto por el DTO.
+    // La descripción legible (ej. "Enero 2026 - Abril 2026") también viene del DTO.
+    const nombre_sm_vc      = createPeriodoDto.nombre_sm_vc.trim();
+    const descripcion_sm_vc = createPeriodoDto.descripcion_sm_vc.trim();
 
-    // Verificar que no exista ya un período con el mismo nombre generado
+    // Verificar que no exista ya un período con el mismo código
     const periodoExistente_sm_vc = await this.prisma.periodoAcademico.findFirst({
       where: { nombre_sm_vc },
     });
 
     if (periodoExistente_sm_vc) {
       throw new BadRequestException(
-        `Ya existe un período con el rango de fechas equivalente: "${nombre_sm_vc}"`,
+        `Ya existe un período con el código: "${nombre_sm_vc}"`,
       );
     }
 
@@ -87,6 +88,7 @@ export class PeriodosAcademicosService {
         const nuevoPeriodo = await tx.periodoAcademico.create({
           data: {
             nombre_sm_vc,
+            descripcion_sm_vc,
             fecha_inicio_sm_vc: fechaInicio_sm_vc,
             fecha_fin_sm_vc:    fechaFin_sm_vc,
             estado_activo_sm_vc: true,

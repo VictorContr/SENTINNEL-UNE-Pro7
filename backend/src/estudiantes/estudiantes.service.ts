@@ -86,7 +86,11 @@ export class EstudiantesService {
               documentacionTecnica: true,
             },
           },
-          conversacion: {
+          // Con el nuevo modelo Opción-B, un estudiante tiene múltiples conversaciones.
+          // Cargamos solo la más reciente (materia activa, intento actual) para el panel.
+          conversaciones: {
+            orderBy: { fecha_creacion_sm_vc: 'desc' },
+            take: 1,
             include: { mensajes: { take: 5, orderBy: { fecha_creacion_sm_vc: 'desc' } } }
           }
         },

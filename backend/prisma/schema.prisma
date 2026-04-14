@@ -15,7 +15,10 @@ datasource db {
 // ─────────────────────────────────────────────────────────────────────────────
 model PeriodoAcademico {
   id_sm_vc            Int       @id @default(autoincrement())
-  nombre_sm_vc        String    @db.VarChar(100)
+  /// Código único del período según el estándar universitario (ej. "P-165").
+  nombre_sm_vc        String    @unique @db.VarChar(50)
+  /// Descripción legible del rango de fechas (ej. "Enero 2026 - Abril 2026").
+  descripcion_sm_vc   String    @db.VarChar(100)
   fecha_inicio_sm_vc  DateTime
   fecha_fin_sm_vc     DateTime
   estado_activo_sm_vc Boolean   @default(false)
