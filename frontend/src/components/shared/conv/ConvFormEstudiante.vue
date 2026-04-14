@@ -26,99 +26,127 @@
     </div>
 
     <div class="action-form_sm_vc">
-      <div class="form-row_sm_vc">
-        <div class="field-group_sm_vc">
-          <label class="field-label_sm_vc">
-            Requisito / Capítulo <span class="req-mark_sm_vc">*</span>
-          </label>
-          <q-select
-            v-model="form_sm_vc.requisito_id_sm_vc"
-            :options="requisitos"
-            option-value="id_sm_vc"
-            option-label="nombre_sm_vc"
-            emit-value
-            map-options
-            dense
-            outlined
-            color="teal-3"
-            class="sntnl-select_sm_vc"
-            behavior="menu"
-            label="Seleccionar requisito"
-          />
+      <!-- ══ ESTADO DERIVADO: Estado Vacío ══
+           Se muestra cuando requisitosDisponibles_vc.length === 0.
+           Bloquea la UI entera: no tiene sentido mostrar el formulario
+           si no hay nada que el estudiante pueda entregar ahora mismo. -->
+      <q-banner
+        v-if="requisitosDisponibles_vc.length === 0"
+        dense
+        rounded
+        class="empty-banner-requis_sm_vc"
+      >
+        <template #avatar>
+          <q-icon name="check_circle" color="teal-3" size="sm" />
+        </template>
+        No hay requisitos pendientes por entregar en esta fase.
+        Los que fueron <strong>Aprobados</strong> o están
+        <strong>pendientes de revisión</strong> no requieren nueva entrega.
+      </q-banner>
+
+      <!-- Formulario completo: solo visible cuando hay requisitos disponibles -->
+      <template v-else>
+        <div class="form-row_sm_vc">
+          <div class="field-group_sm_vc">
+            <label class="field-label_sm_vc">
+              Requisito / Capítulo <span class="req-mark_sm_vc">*</span>
+            </label>
+            <!-- q-select reactivo: filtra los requisitos por estado derivado -->
+            <q-select
+              v-model="form_sm_vc.requisito_id_sm_vc"
+              :options="requisitosDisponibles_vc"
+              option-value="id_sm_vc"
+              option-label="nombre_sm_vc"
+              emit-value
+              map-options
+              dense
+              outlined
+              color="teal-3"
+              class="sntnl-select_sm_vc"
+              behavior="menu"
+              label="Seleccionar requisito"
+            />
+          </div>
+
+          <div class="field-group_sm_vc">
+            <label class="field-label_sm_vc">Versión</label>
+            <q-input
+              v-model="form_sm_vc.version_sm_vc"
+              dense
+              outlined
+              color="teal-3"
+              class="sntnl-input_sm_vc"
+              placeholder="ej: v1.0"
+            />
+          </div>
         </div>
 
         <div class="field-group_sm_vc">
-          <label class="field-label_sm_vc">Versión</label>
+          <label class="field-label_sm_vc"
+            >Documento PDF <span class="req-mark_sm_vc">*</span></label
+          >
+          <div class="mini-upload_sm_vc" @click="fileInput_sm_vc?.click()">
+            <q-icon name="attach_file" size="16px" color="teal-3" />
+            <span>{{
+              form_sm_vc.archivo_nombre_sm_vc || "Seleccionar archivo .pdf"
+            }}</span>
+            <input
+              ref="fileInput_sm_vc"
+              type="file"
+              accept=".pdf"
+              hidden
+              @change="handleFileSelect_sm_vc"
+            />
+          </div>
+        </div>
+
+        <div class="field-group_sm_vc">
+          <label class="field-label_sm_vc">Comentario (opcional)</label>
           <q-input
-            v-model="form_sm_vc.version_sm_vc"
+            v-model="form_sm_vc.comentario_sm_vc"
             dense
             outlined
             color="teal-3"
             class="sntnl-input_sm_vc"
-            placeholder="ej: v1.0"
+            placeholder="Describe los cambios realizados…"
+            type="textarea"
+            :rows="2"
+            autogrow
           />
         </div>
-      </div>
 
-      <div class="field-group_sm_vc">
-        <label class="field-label_sm_vc"
-          >Documento PDF <span class="req-mark_sm_vc">*</span></label
-        >
-        <div class="mini-upload_sm_vc" @click="fileInput_sm_vc?.click()">
-          <q-icon name="attach_file" size="16px" color="teal-3" />
-          <span>{{
-            form_sm_vc.archivo_nombre_sm_vc || "Seleccionar archivo .pdf"
-          }}</span>
-          <input
-            ref="fileInput_sm_vc"
-            type="file"
-            accept=".pdf"
-            hidden
-            @change="handleFileSelect_sm_vc"
-          />
-        </div>
-      </div>
-
-      <div class="field-group_sm_vc">
-        <label class="field-label_sm_vc">Comentario (opcional)</label>
-        <q-input
-          v-model="form_sm_vc.comentario_sm_vc"
-          dense
-          outlined
-          color="teal-3"
-          class="sntnl-input_sm_vc"
-          placeholder="Describe los cambios realizados…"
-          type="textarea"
-          :rows="2"
-          autogrow
+        <q-btn
+          unelevated
+          no-caps
+          label="Enviar Informe"
+          icon="send"
+          class="send-btn_sm_vc"
+          :loading="enviando_sm_vc"
+          :disable="
+            props.bloqueado_sm_vc ||
+            !form_sm_vc.requisito_id_sm_vc ||
+            !archivo_sm_vc ||
+            enviando_sm_vc
+          "
+          @click="enviarDatos_sm_vc"
         />
-      </div>
-
-      <q-btn
-        unelevated
-        no-caps
-        label="Enviar Informe"
-        icon="send"
-        class="send-btn_sm_vc"
-        :loading="enviando_sm_vc"
-        :disable="
-          props.bloqueado_sm_vc ||
-          !form_sm_vc.requisito_id_sm_vc ||
-          !archivo_sm_vc ||
-          enviando_sm_vc
-        "
-        @click="enviarDatos_sm_vc"
-      />
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { getRequisitoSeleccionado_sm_vc } from "src/stores/requisitoContextoStore";
 
 const props = defineProps({
   requisitos: { type: Array, default: () => [] },
+  /**
+   * mensajes: Timeline de la conversación activa (ya filtrada por materia).
+   * Fuente de verdad para el Estado Derivado de requisitosDisponibles_vc.
+   * Cada nodo DOCUMENTO carga estado_sm_vc (EstadoAprobacion de la Entrega).
+   */
+  mensajes: { type: Array, default: () => [] },
   /**
    * materiaId: clave de indexación en localStorage.
    * Necesario para recuperar el requisito pre-seleccionado correcto
@@ -162,6 +190,69 @@ const handleFileSelect_sm_vc = (e_sm_vc) => {
   }
 };
 
+/* ═══════════════════════════════════════════════════════════════════
+   ESTADO DERIVADO — requisitosDisponibles_vc
+
+   Fuente de verdad: props.mensajes (timeline ya filtrado por materia).
+   Compara el catálogo de requisitos exigidos contra el historial del
+   estudiante para construir el subconjunto accionable.
+
+   Regla de negocio:
+
+     INCLUIR en el q-select:
+       - Requisitos que NO aparecen en el timeline (nunca entregados)
+       - Requisitos con estado_sm_vc === 'REPROBADO' (debe corregir y reenviar)
+
+     EXCLUIR del q-select:
+       - estado_sm_vc === 'ENTREGADO'  → esperando revisión, no debe re-enviar
+       - estado_sm_vc === 'APROBADO'   → ya evaluado positivamente, cerrado
+
+   Algoritmo:
+     1. Construir un mapa {requisito_id → estado} desde los nodos DOCUMENTO
+        del timeline (solo del estudiante, no del profesor).
+     2. Para cada requisito del catálogo, verificar si existe en el mapa
+        y cuál es su estado.
+   ═══════════════════════════════════════════════════════════════════ */
+const requisitosDisponibles_vc = computed(() => {
+  // Paso 1: construir mapa {requisito_id_sm_vc (string) → ultimo_estado_sm_vc}
+  // Iteramos TODOS los nodos DOCUMENTO del estudiante en el timeline.
+  // Si un mismo requisito tiene múiltiples entregas, el último nodo gana
+  // (el array viene ordenado por fecha_creacion ASC desde el backend).
+  const mapaEstados_sm_vc = new Map();
+
+  props.mensajes.forEach((nodo_sm_vc) => {
+    // Solo nodos de tipo DOCUMENTO del estudiante (no correcciones del profesor)
+    if (
+      nodo_sm_vc.tipo_nodo_sm_vc !== 'DOCUMENTO' ||
+      nodo_sm_vc.es_sistema_sm_vc ||
+      nodo_sm_vc.remitente_rol_sm_vc === 'PROFESOR'
+    ) return;
+
+    // Indexar por requisito_id. Si hay duplicados, el último estado prevalece.
+    if (nodo_sm_vc.requisito_id_sm_vc != null) {
+      mapaEstados_sm_vc.set(
+        String(nodo_sm_vc.requisito_id_sm_vc),
+        nodo_sm_vc.estado_sm_vc,
+      );
+    }
+  });
+
+  // Paso 2: filtrar el catálogo de requisitos
+  return props.requisitos.filter((req_sm_vc) => {
+    const ultimoEstado_sm_vc = mapaEstados_sm_vc.get(String(req_sm_vc.id_sm_vc));
+
+    // Caso A: nunca fue entregado → disponible
+    if (ultimoEstado_sm_vc === undefined) return true;
+
+    // Caso B: REPROBADO → debe reenviar corrección → disponible
+    if (ultimoEstado_sm_vc === 'REPROBADO') return true;
+
+    // Caso C: ENTREGADO → esperando revisión → NO disponible
+    // Caso D: APROBADO  → ya solucionado → NO disponible
+    return false;
+  });
+});
+
 /* ══════════════════════════════════════════════════════════════
  *  FLUJO PRINCIPAL DE ENVÍO — Dumb Component Pattern
  *  El padre (DocumentConversacion) implementa el patrón de 2 pasos.
@@ -202,20 +293,28 @@ const resetForm_sm_vc = () => {
   if (fileInput_sm_vc.value) fileInput_sm_vc.value.value = "";
 };
 
-/* ══════════════════════════════════════════════════════════════
- *  FEATURE: Pre-selección desde contexto persistido en localStorage.
+/* ══════════════════════════════════════════════════════════════════════
+ *  PRE-SELECCIÓN desde contexto persistido en localStorage.
  *
- * Al montar el componente, leemos el ID del requisito que el usuario
- * tenía la intención de subir (guardado antes de navegar aquí).
- * getRequisitoSeleccionado_sm_vc hace consumo único: borra el dato
- * después de leerlo para no contaminar sesiones futuras.
- * ══════════════════════════════════════════════════════════════ */
+ *  Al montar el componente leemos el ID del requisito que el usuario
+ *  tenía la intención de subir (guardado antes de navegar aquí).
+ *  getRequisitoSeleccionado_sm_vc hace consumo único: borra el dato
+ *  después de leerlo para no contaminar sesiones futuras.
+ *
+ *  INTEGRACIÓN CON ESTADO DERIVADO:
+ *  La búsqueda se hace sobre requisitosDisponibles_vc (no el catálogo completo)
+ *  para garantizar que el requisito pre-seleccionado sea accionable.
+ *  Si el requisito está en estado ENTREGADO o APROBADO, no se pre-selecciona.
+ * ══════════════════════════════════════════════════════════════════════ */
 onMounted(() => {
   const idContexto_sm_vc = getRequisitoSeleccionado_sm_vc(props.materiaId);
   if (idContexto_sm_vc === null) return;
 
   const idStr_sm_vc = String(idContexto_sm_vc);
-  const requisito_sm_vc = props.requisitos.find(
+
+  // Buscar en el arreglo DERIVADO (filtrado), no en el catálogo completo.
+  // Garantiza que no se pre-seleccione un requisito bloqueado (ENTREGADO/APROBADO).
+  const requisito_sm_vc = requisitosDisponibles_vc.value.find(
     (r_sm_vc) => String(r_sm_vc.id_sm_vc) === idStr_sm_vc,
   );
   if (requisito_sm_vc) {
@@ -303,5 +402,13 @@ onMounted(() => {
   font-weight: 600 !important;
   border-radius: 6px !important;
   align-self: flex-start;
+}
+/* Estado Vacío — q-banner de "Sin requisitos pendientes" */
+.empty-banner-requis_sm_vc {
+  background: rgba(111, 255, 233, 0.06) !important;
+  border: 1px solid rgba(111, 255, 233, 0.18) !important;
+  border-radius: 8px !important;
+  color: var(--sn-texto-secundario) !important;
+  font-size: 0.75rem !important;
 }
 </style>

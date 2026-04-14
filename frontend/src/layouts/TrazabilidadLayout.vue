@@ -237,7 +237,7 @@ watch(
     if (newId) {
       await Promise.all([
         pasantiasStore_sm_vc.fetch_progreso_estudiante_sm_vc(newId),
-        usersStore_sm_vc.fetch_usuario_sm_vc(newId)
+        usersStore_sm_vc.fetch_perfil_estudiante_sm_vc(newId)
       ])
     }
   },

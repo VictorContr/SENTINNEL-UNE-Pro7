@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Notify } from 'quasar'
 import { findAll_sm_vc, findOne_sm_vc, toggleBan_sm_vc, create_sm_vc, update_sm_vc } from 'src/services/usersService'
+import { getDetalleEstudiante_sm_vc } from 'src/services/estudiantesService'
 
 /**
  * SENTINNEL - usersStore
@@ -132,6 +133,42 @@ export const useUsersStore = defineStore('users', () => {
     }
   }
 
+  /**
+   * Obtiene el perfil completo de un estudiante (incluyendo datos de usuario)
+   * basado en el ID de la tabla Estudiante. Aplica Adapter Pattern para
+   * aplanar la respuesta y mantener compatibilidad con usuarioActual_sm_vc.
+   * @param {string|number} estudianteId_sm_vc
+   */
+  const fetch_perfil_estudiante_sm_vc = async (estudianteId_sm_vc) => {
+    cargando_usuarios_sm_vc.value = true
+    error_usuarios_sm_vc.value = null
+    try {
+      const data_sm_vc = await getDetalleEstudiante_sm_vc(estudianteId_sm_vc)
+      
+      // ADAPTER PATTERN: Aplanamos la estructura { usuario, ...estudiante }
+      // para que consumible sea el mismo que usuarioActual_sm_vc.
+      usuarioActual_sm_vc.value = {
+        ...data_sm_vc.usuario,             // id_sm_vc, nombre, apellido, correo, rol
+        estudiante_id_sm_vc: data_sm_vc.id_sm_vc,
+        empresa_sm_vc:       data_sm_vc.empresa_sm_vc,
+        profesor_id_sm_vc:   data_sm_vc.profesor_id_sm_vc,
+        estudiante_sm_vc: {                // Metadatos adicionales para el header de trazabilidad
+          profesorTutor:          data_sm_vc.profesor_tutor,
+          tutor_empresarial_sm_vc: data_sm_vc.tutor_empresarial_sm_vc,
+          empresa_sm_vc:           data_sm_vc.empresa_sm_vc,
+          titulo_proyecto_sm_vc:   data_sm_vc.titulo_proyecto_sm_vc
+        }
+      }
+      return usuarioActual_sm_vc.value
+    } catch (err_sm_vc) {
+      error_usuarios_sm_vc.value = err_sm_vc.response?.data?.message || err_sm_vc.message || 'Error al cargar perfil del estudiante.'
+      Notify.create({ message: error_usuarios_sm_vc.value, color: 'negative', icon: 'error' })
+      return null
+    } finally {
+      cargando_usuarios_sm_vc.value = false
+    }
+  }
+
   return {
     usuarios_sm_vc,
     usuarioActual_sm_vc,
@@ -140,6 +177,7 @@ export const useUsersStore = defineStore('users', () => {
 
     fetch_usuarios_sm_vc,
     fetch_usuario_sm_vc,
+    fetch_perfil_estudiante_sm_vc,
     create_usuario_sm_vc,
     update_usuario_sm_vc,
     ban_usuario_sm_vc

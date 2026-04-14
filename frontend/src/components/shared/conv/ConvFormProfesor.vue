@@ -1,4 +1,4 @@
-<!-- ══════════════════════════════════════════════════════════════════
+﻿<!-- ══════════════════════════════════════════════════════════════════
      ConvFormProfesor.vue — Formulario de corrección y evaluación.
      Incluye el modal de aprobación granular de requisitos.
 
@@ -174,6 +174,25 @@
         </q-btn>
       </div>
 
+      <!-- Aviso de Estado Vacío: sin documentos pendientes y el estado elegido
+           requiere vincular (no es REPROBADO, que es acción global) -->
+      <q-banner
+        v-if="
+          form_sm_vc.estado_evaluacion_sm_vc &&
+          form_sm_vc.estado_evaluacion_sm_vc !== 'REPROBADO' &&
+          documentosPendientesEvaluar_vc.length === 0
+        "
+        dense
+        rounded
+        class="empty-banner-evaluar_sm_vc q-mb-sm"
+      >
+        <template #avatar>
+          <q-icon name="task_alt" color="teal-3" size="sm" />
+        </template>
+        Todos los documentos de esta fase han sido evaluados. No hay
+        entregas pendientes para vincular.
+      </q-banner>
+
       <q-btn
         unelevated
         no-caps
@@ -185,7 +204,11 @@
           props.bloqueado_sm_vc ||
           !form_sm_vc.estado_evaluacion_sm_vc ||
           !form_sm_vc.comentario_sm_vc ||
-          enviandoRespuesta_sm_vc
+          enviandoRespuesta_sm_vc ||
+          (
+            form_sm_vc.estado_evaluacion_sm_vc !== 'REPROBADO' &&
+            documentosPendientesEvaluar_vc.length === 0
+          )
         "
         @click="handleClickEnvio_sm_vc"
       />
@@ -193,11 +216,15 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════════
-       TAREA 2: Modal de Vinculación de Entregas
-       Lista los mensajes de tipo DOCUMENTO enviados por el alumno
-       que aún NO han sido evaluados (!evaluacion_estado_sm_vc).
-       Funciona como radio: solo se puede seleccionar uno a la vez.
-       Al confirmar, adjunta id_entrega_sm_vc al payload.
+       ESTADO DERIVADO: Modal de Vinculación de Entregas
+       Fuente de verdad: documentosPendientesEvaluar_vc (computed)
+
+       Un documento es "pendiente de evaluar" cuando:
+         • tipo_nodo_sm_vc === 'DOCUMENTO'
+         • remitente_rol_sm_vc !== 'PROFESOR' && !es_sistema_sm_vc
+         • estado_sm_vc === 'ENTREGADO'  (esperando revisión académica)
+
+       Si no hay pendientes → q-banner informativo + botón deshabilitado.
        ══════════════════════════════════════════════════════════════════ -->
   <q-dialog v-model="mostrarModalEntregas_sm_vc" persistent>
     <q-card class="modal-card_sm_vc modal-entregas-card_sm_vc">
@@ -219,25 +246,33 @@
           <strong style="color: var(--sn-texto-principal)">
             {{ form_sm_vc.estado_evaluacion_sm_vc === 'APROBADO' ? 'Aprobación' : 'Observación' }}
           </strong>.
-          Solo aparecen los documentos pendientes de evaluación.
+          Solo aparecen documentos del estudiante en estado <code>ENTREGADO</code>.
         </div>
 
-        <!-- ── Estado vacío: no hay documentos pendientes ── -->
-        <div v-if="documentosPendientes_sm_vc.length === 0" class="empty-entregas_sm_vc">
-          <q-icon name="inbox" size="28px" color="blue-grey-7" />
-          <span>No hay documentos pendientes de evaluación.</span>
-        </div>
+        <!-- ══ Estado Vacío: todos los documentos ya fueron evaluados ══ -->
+        <q-banner
+          v-if="documentosPendientesEvaluar_vc.length === 0"
+          dense
+          rounded
+          class="empty-banner-evaluar_sm_vc q-mb-sm"
+          icon="inbox"
+        >
+          <template #avatar>
+            <q-icon name="task_alt" color="teal-3" size="sm" />
+          </template>
+          Todos los documentos de esta fase han sido evaluados.
+        </q-banner>
 
-        <!-- ── Lista de documentos pendientes ── -->
+        <!-- ── Lista reactiva: solo documentos con estado ENTREGADO ── -->
         <q-list v-else dark bordered separator class="rounded-borders">
           <q-item
-            v-for="doc in documentosPendientes_sm_vc"
-            :key="doc.id_sm_vc"
+            v-for="doc in documentosPendientesEvaluar_vc"
+            :key="doc.documento_id_sm_vc"
             tag="label"
             v-ripple
-            :class="{ 'doc-item--seleccionado_sm_vc': entregaSeleccionadaTemp_sm_vc?.id_sm_vc === doc.id_sm_vc }"
+            :class="{ 'doc-item--seleccionado_sm_vc': entregaSeleccionadaTemp_sm_vc?.documento_id_sm_vc === doc.documento_id_sm_vc }"
           >
-            <!-- Radio: solo uno seleccionable -->
+            <!-- Radio: selección exclusiva (un documento a la vez) -->
             <q-item-section avatar>
               <q-radio
                 v-model="entregaSeleccionadaTemp_sm_vc"
@@ -246,7 +281,6 @@
               />
             </q-item-section>
 
-            <!-- Icono de tipo de documento -->
             <q-item-section avatar>
               <q-avatar size="32px" color="blue-grey-9" text-color="blue-grey-4">
                 <q-icon name="description" size="16px" />
@@ -266,7 +300,8 @@
             </q-item-section>
 
             <q-item-section side>
-              <q-badge color="blue-7" label="SIN EVALUAR" style="font-size: 0.52rem;" />
+              <!-- Badge refleja el estado real de la Entrega en BD -->
+              <q-badge color="amber-9" text-color="dark" label="ENTREGADO" style="font-size: 0.52rem;" />
             </q-item-section>
           </q-item>
         </q-list>
@@ -526,23 +561,43 @@ watch(() => form_sm_vc.value.estado_evaluacion_sm_vc, (nuevoEstado_sm_vc) => {
   }
 });
 
-/* ═══════════════════════════════════════════════════════════
-   TAREA 2: Computed — Documentos del alumno pendientes de evaluación
-   Filtra el array de mensajes por:
-     1. tipo_nodo_sm_vc === 'DOCUMENTO'
-     2. remitente_rol_sm_vc === 'ESTUDIANTE' (o sin rol, asume estudiante)
-     3. !evaluacion_estado_sm_vc (aún no evaluado)
-   ═══════════════════════════════════════════════════════════ */
-const documentosPendientes_sm_vc = computed(() => {
-  return props.mensajes.filter((msg_sm_vc) => {
-    const esDocumento_sm_vc = msg_sm_vc.tipo_nodo_sm_vc === 'DOCUMENTO';
-    // Solo documentos del alumno (no correcciones del profesor)
-    const esDeAlumno_sm_vc =
-      !msg_sm_vc.es_sistema_sm_vc &&
-      msg_sm_vc.remitente_rol_sm_vc !== 'PROFESOR';
-    // Sin evaluación registrada
-    const sinEvaluar_sm_vc = !msg_sm_vc.evaluacion_estado_sm_vc;
-    return esDocumento_sm_vc && esDeAlumno_sm_vc && sinEvaluar_sm_vc;
+/* ═══════════════════════════════════════════════════════════════════
+   ESTADO DERIVADO — documentosPendientesEvaluar_vc
+
+   Fuente de verdad: props.mensajes (timeline de la materia activa).
+   Un documento está "pendiente de evaluar" cuando cumple las 3 reglas:
+
+     R1. tipo_nodo_sm_vc === 'DOCUMENTO'
+         → Solo nodos de documento (no texto, no sistema)
+
+     R2. !es_sistema_sm_vc && remitente_rol_sm_vc !== 'PROFESOR'
+         → Excluye correcciones del profesor y mensajes automáticos
+
+     R3. estado_sm_vc === 'ENTREGADO'
+         → El estado proviene de Entrega.estado_sm_vc (EstadoAprobacion).
+           'ENTREGADO' = el estudiante subió pero el profesor aún no evaluó.
+           'APROBADO' o 'REPROBADO' = ya existe una Evaluacion en BD → excluir.
+           'PENDIENTE' = nunca fue entregado → excluir.
+
+   Resultado: arreglo reactivo que se actualiza automáticamente cada vez
+   que el store/prop mensajes cambia (ej: al recibir un nuevo WS event).
+   ═══════════════════════════════════════════════════════════════════ */
+const documentosPendientesEvaluar_vc = computed(() => {
+  return props.mensajes.filter((nodo_sm_vc) => {
+    // R1: Solo nodos de tipo DOCUMENTO
+    const esNodoDocumento_sm_vc = nodo_sm_vc.tipo_nodo_sm_vc === 'DOCUMENTO';
+    if (!esNodoDocumento_sm_vc) return false;
+
+    // R2: Excluir correcciones del profesor y mensajes de sistema
+    const esEntregaEstudiante_sm_vc =
+      !nodo_sm_vc.es_sistema_sm_vc &&
+      nodo_sm_vc.remitente_rol_sm_vc !== 'PROFESOR';
+    if (!esEntregaEstudiante_sm_vc) return false;
+
+    // R3: Solo documentos en estado ENTREGADO (esperando revisión académica)
+    // APROBADO y REPROBADO ya tienen Evaluacion en BD → no mostrar
+    const pendienteDeEvaluar_sm_vc = nodo_sm_vc.estado_sm_vc === 'ENTREGADO';
+    return pendienteDeEvaluar_sm_vc;
   });
 });
 
@@ -577,36 +632,44 @@ const handleFileProf_sm_vc = (e_sm_vc) => {
   }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   TAREA 2: handleClickEnvio_sm_vc — Punto de entrada del botón
-   Decide si abrir el modal de vinculación o enviar directamente:
-     - OBSERVACIONES / APROBADO → abrir modal de entregas
-     - REPROBADO                → envío directo (acción global)
-   ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   ESTADO DERIVADO — handleClickEnvio_sm_vc
+
+   Árbol de decisión de acción al presionar "Enviar Evaluación":
+
+     REPROBADO  → emitirRespuesta_sm_vc(null)  [acción global, sin vínculo]
+     APROBADO/
+     OBSERV.    → verificar si hay docs pendientes ANTES de abrir modal.
+                  Si documentosPendientesEvaluar_vc.length === 0 → abort
+                  (el botón ya estará disabled, esta es una segunda capa de protección)
+   ═══════════════════════════════════════════════════════════════════ */
 const handleClickEnvio_sm_vc = () => {
   if (!form_sm_vc.value.estado_evaluacion_sm_vc || !form_sm_vc.value.comentario_sm_vc) return;
 
   const estado_sm_vc = form_sm_vc.value.estado_evaluacion_sm_vc;
 
   if (estado_sm_vc === 'REPROBADO') {
-    // TAREA 3: Acción Global — no necesita vinculación de documento
+    // Acción Global: reprobar materia no requiere vincular documento
     emitirRespuesta_sm_vc(null);
     return;
   }
 
-  // OBSERVACIONES o APROBADO → requieren vincular una entrega
+  // OBSERVACIONES o APROBADO → requieren vincular una entrega del estudiante
+  // Guard: prevenir apertura de modal vacío (segunda capa de protección)
+  if (documentosPendientesEvaluar_vc.value.length === 0) return;
+
   // Si ya hay una entrega vinculada confirmada, enviar directamente
   if (entregaVinculada_sm_vc.value) {
     emitirRespuesta_sm_vc(entregaVinculada_sm_vc.value);
     return;
   }
 
-  // Sin entrega vinculada → abrir modal de selección
+  // Sin entrega vinculada → abrir modal de selección de documentos
   entregaSeleccionadaTemp_sm_vc.value = null;
   mostrarModalEntregas_sm_vc.value = true;
 };
 
-/* ── TAREA 2: Confirmar vinculación desde el modal ── */
+/* ── Confirmar vinculación desde el modal ── */
 const confirmarVinculacion_sm_vc = () => {
   if (!entregaSeleccionadaTemp_sm_vc.value) return;
 
@@ -682,9 +745,12 @@ const emitirRespuesta_sm_vc = async (entrega_sm_vc) => {
       ...form_sm_vc.value,
       archivo_correccion_sm_vc: form_sm_vc.value.archivo_raw_sm_vc,
       // Contrato de datos con el backend:
+      // documento_id_sm_vc es el ID numérico real (INTEGER) del registro Documento en BD.
+      // El campo id_sm_vc del nodo usa el formato 'doc-NN' (solo para evitar colisiones
+      // en el v-for del frontend). El backend requiere el INT → usamos documento_id_sm_vc.
       id_entrega_sm_vc: esReprobacionGlobal_sm_vc
         ? null
-        : (entrega_sm_vc?.id_sm_vc ?? null),
+        : (entrega_sm_vc?.documento_id_sm_vc ?? null),
       // Flag para que el backend diferencie la acción global
       es_reprobacion_global_sm_vc: esReprobacionGlobal_sm_vc,
     });
@@ -961,16 +1027,15 @@ onMounted(() => {
   max-width: 640px;
 }
 
-/* Estado vacío del modal de entregas */
-.empty-entregas_sm_vc {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--sn-texto-apagado);
+/* -- Estado vacio: q-banner de Estado Derivado --
+   Usado en el panel principal (cuando estado !== REPROBADO y no hay pendientes)
+   y dentro del modal de vinculacion de entregas si no hay documentos ENTREGADO. */
+.empty-banner-evaluar_sm_vc {
+  background: rgba(111, 255, 233, 0.06) !important;
+  border: 1px solid rgba(111, 255, 233, 0.18) !important;
+  border-radius: 8px !important;
+  color: var(--sn-texto-secundario) !important;
+  font-size: 0.75rem !important;
 }
 
 /* Item seleccionado del modal de entregas */
@@ -978,14 +1043,14 @@ onMounted(() => {
   background: rgba(111, 255, 233, 0.06) !important;
 }
 
-/* ── TAREA 4: Estilos del modal de requisitos (estado consolidado) ── */
+/* Estilos del modal de requisitos (estado consolidado) */
 /* Item de requisito ya aprobado: fondo verde muy sutil */
 .req-item--aprobado_sm_vc {
   background: rgba(111, 255, 233, 0.04) !important;
   border-left: 2px solid rgba(111, 255, 233, 0.3) !important;
 }
 
-/* Badge de "Aprobado + Consolidado" */
+/* Badge de Aprobado + Consolidado */
 .req-aprobado-badge_sm_vc {
   display: flex;
   align-items: center;
