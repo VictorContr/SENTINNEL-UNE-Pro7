@@ -124,10 +124,20 @@ export class UsersService_sm_vc {
         });
 
         if (nuevoUsuario.rol_sm_vc === 'ESTUDIANTE' && nuevoUsuario.estudiante_sm_vc) {
-          // Asegurar que si el estudiante fue creado y no tiene conversacion, se le cree una
+          // Crear la conversación global (posicion=0) para logs de inicio de ciclo
           await tx.conversacion.upsert({
-            where: { estudiante_id_sm_vc: nuevoUsuario.estudiante_sm_vc.id_sm_vc },
-            create: { estudiante_id_sm_vc: nuevoUsuario.estudiante_sm_vc.id_sm_vc },
+            where: {
+              estudiante_id_sm_vc_posicion_materia_sm_vc_intento_sm_vc: {
+                estudiante_id_sm_vc:    nuevoUsuario.estudiante_sm_vc.id_sm_vc,
+                posicion_materia_sm_vc: 0,
+                intento_sm_vc:          1,
+              },
+            },
+            create: {
+              estudiante_id_sm_vc:    nuevoUsuario.estudiante_sm_vc.id_sm_vc,
+              posicion_materia_sm_vc: 0,
+              intento_sm_vc:          1,
+            },
             update: {}
           });
 
@@ -187,10 +197,20 @@ export class UsersService_sm_vc {
         });
 
         if (usuarioAct.rol_sm_vc === 'ESTUDIANTE' && usuarioAct.estudiante_sm_vc) {
-          // Aseguramos existencia conversacion para logs
+          // Aseguramos existencia conversacion global (posicion=0) para logs
           await tx.conversacion.upsert({
-            where: { estudiante_id_sm_vc: usuarioAct.estudiante_sm_vc.id_sm_vc },
-            create: { estudiante_id_sm_vc: usuarioAct.estudiante_sm_vc.id_sm_vc },
+            where: {
+              estudiante_id_sm_vc_posicion_materia_sm_vc_intento_sm_vc: {
+                estudiante_id_sm_vc:    usuarioAct.estudiante_sm_vc.id_sm_vc,
+                posicion_materia_sm_vc: 0,
+                intento_sm_vc:          1,
+              },
+            },
+            create: {
+              estudiante_id_sm_vc:    usuarioAct.estudiante_sm_vc.id_sm_vc,
+              posicion_materia_sm_vc: 0,
+              intento_sm_vc:          1,
+            },
             update: {}
           });
 
@@ -230,19 +250,24 @@ export class UsersService_sm_vc {
     
     if (!materiaActual) return;
 
-    // Buscar materias previas ordenadas (usando posicion que es equivalente a orden de prelacion)
+    // Buscar materias previas usando FK real (periodo_id_sm_vc)
     const materiasPrevias = await tx.materia.findMany({
       where: {
-        periodo_sm_vc: materiaActual.periodo_sm_vc,
-        posicion_sm_vc: { lt: materiaActual.posicion_sm_vc }
+        periodo_id_sm_vc: materiaActual.periodo_id_sm_vc,
+        posicion_sm_vc:   { lt: materiaActual.posicion_sm_vc }
       },
       include: { requisitos: true }
     });
 
     if (materiasPrevias.length === 0) return;
 
-    const conversacion = await tx.conversacion.findUnique({
-      where: { estudiante_id_sm_vc: estudianteId }
+    // Resolver la conversación global del estudiante (posicion=0, intento=1)
+    const conversacion = await tx.conversacion.findFirst({
+      where: {
+        estudiante_id_sm_vc:    estudianteId,
+        posicion_materia_sm_vc: 0,
+        intento_sm_vc:          1,
+      },
     });
 
     for (const mat of materiasPrevias) {

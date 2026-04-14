@@ -14,27 +14,34 @@ export class ConversacionesService {
 
   @OnEvent('materia.aprobada_sm_vc')
   async manejarMateriaAprobada_sm_vc(payload: {
-    estudianteId: number;
+    estudianteId:     number;
     descripcion_sm_vc: string;
-    materiaId?: number;
+    materiaId?:       number;
+    // Opción B: posición de la materia para resolver la conversación correcta
+    posicionMateria?: number;
+    intento?:         number;
   }) {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
 
   @OnEvent('documento.subido_sm_vc')
   async manejarDocumentoSubido_sm_vc(payload: {
-    estudianteId: number;
+    estudianteId:     number;
     descripcion_sm_vc: string;
-    materiaId?: number;
+    materiaId?:       number;
+    posicionMateria?: number;
+    intento?:         number;
   }) {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
 
   @OnEvent('deploy.completado_sm_vc')
   async manejarDeployCompletado_sm_vc(payload: {
-    estudianteId: number;
+    estudianteId:     number;
     descripcion_sm_vc: string;
-    materiaId?: number;
+    materiaId?:       number;
+    posicionMateria?: number;
+    intento?:         number;
   }) {
     await this.registrarMensajeSistema_sm_vc(payload);
   }
@@ -42,39 +49,50 @@ export class ConversacionesService {
   // ─── Persistencia de mensajes de sistema ───────────────────────
 
   private async registrarMensajeSistema_sm_vc(payload: {
-    estudianteId: number;
+    estudianteId:     number;
     descripcion_sm_vc: string;
-    materiaId?: number;
+    materiaId?:       number;
+    // posicionMateria: 0 = log global, 1-4 = materia específica
+    posicionMateria?: number;
+    intento?:         number;
   }) {
     try {
-      const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.findFirst(
-        {
-          where: { estudiante_id_sm_vc: payload.estudianteId },
-        },
-      );
+      // Resolver la conversación por la clave (estudiante, posicion, intento)
+      // Si no se provee posicion, usamos el slot global (posicion=0).
+      const posicion_sm_vc = payload.posicionMateria ?? 0;
+      const intento_sm_vc  = payload.intento ?? 1;
 
-      if (!conversacion_sm_vc) {
-        console.error(
-          `[ConversacionesService] Conversación no encontrada para estudianteId: ${payload.estudianteId}`,
-        );
-        return;
-      }
+      const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.upsert({
+        where: {
+          estudiante_id_sm_vc_posicion_materia_sm_vc_intento_sm_vc: {
+            estudiante_id_sm_vc:    payload.estudianteId,
+            posicion_materia_sm_vc: posicion_sm_vc,
+            intento_sm_vc:          intento_sm_vc,
+          },
+        },
+        update: {},
+        create: {
+          estudiante_id_sm_vc:    payload.estudianteId,
+          posicion_materia_sm_vc: posicion_sm_vc,
+          intento_sm_vc:          intento_sm_vc,
+        },
+      });
 
       const mensajeGuardado_sm_vc = await this.prisma_sm_vc.mensaje.create({
         data: {
           conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
-          contenido_sm_vc: payload.descripcion_sm_vc,
-          es_sistema_sm_vc: true,
-          materia_id_sm_vc: payload.materiaId ?? null,
+          contenido_sm_vc:       payload.descripcion_sm_vc,
+          es_sistema_sm_vc:      true,
+          materia_id_sm_vc:      payload.materiaId ?? null,
         },
       });
 
       // ── Broadcast WS: notificar a clientes de la sala ──────────
       this.eventEmitter_sm_vc.emit('mensaje.creado_sm_vc', {
-        estudianteId_sm_vc: payload.estudianteId,
-        materiaId_sm_vc: payload.materiaId ?? null,
-        conversacion_id_sm_vc: conversacion_sm_vc.id_sm_vc,
-        mensaje_sm_vc: this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
+        estudianteId_sm_vc:     payload.estudianteId,
+        materiaId_sm_vc:        payload.materiaId ?? null,
+        conversacion_id_sm_vc:  conversacion_sm_vc.id_sm_vc,
+        mensaje_sm_vc:          this.formatearNodoTimeline_sm_vc(mensajeGuardado_sm_vc),
       });
     } catch (error_sm_vc) {
       console.error(
@@ -98,12 +116,16 @@ export class ConversacionesService {
    *           → ChatGateway_sm_vc.handleMensajeCreado_sm_vc (broadcast a sala)
    */
   async registrarMensajeManual_sm_vc(payload: {
-    estudianteId: number;
+    estudianteId:   number;
     contenido_sm_vc: string;
-    materiaId?: number;
-    documentoId?: number;
-    remitenteId?: number;   // ID del usuario que escribe (no el estudiante-contexto)
-    remitenteRol?: string;  // Rol del remitente: 'ESTUDIANTE' | 'PROFESOR'
+    materiaId?:     number;
+    documentoId?:   number;
+    remitenteId?:   number;  // ID del usuario que escribe (no el estudiante-contexto)
+    remitenteRol?:  string;  // Rol del remitente: 'ESTUDIANTE' | 'PROFESOR'
+    // Opción B: identificar la conversación por posición + intento.
+    // Si no se provee, se usan los valores del estudiante actual.
+    posicionMateria?: number;
+    intento?:         number;
   }) {
     try {
       // Resolver ID real del estudiante (acepta usuario_id o estudiante_id)
@@ -111,10 +133,11 @@ export class ConversacionesService {
         await this.prisma_sm_vc.estudiante.findFirst({
           where: {
             OR: [
-              { id_sm_vc: payload.estudianteId },
+              { id_sm_vc:         payload.estudianteId },
               { usuario_id_sm_vc: payload.estudianteId },
             ],
           },
+          include: { materiaActiva: true },
         });
 
       if (!estudianteVinculado_sm_vc) {
@@ -124,10 +147,29 @@ export class ConversacionesService {
         return;
       }
 
+      // Determinar posición e intento para resolver el hilo correcto.
+      // Si el caller no los provee, usamos la materia activa del estudiante.
+      const posicion_sm_vc = payload.posicionMateria
+        ?? estudianteVinculado_sm_vc.materiaActiva?.posicion_sm_vc
+        ?? 0;
+      const intento_sm_vc  = payload.intento
+        ?? estudianteVinculado_sm_vc.intentos_materia_sm_vc
+        ?? 1;
+
       const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.upsert({
-        where: { estudiante_id_sm_vc: estudianteVinculado_sm_vc.id_sm_vc },
+        where: {
+          estudiante_id_sm_vc_posicion_materia_sm_vc_intento_sm_vc: {
+            estudiante_id_sm_vc:    estudianteVinculado_sm_vc.id_sm_vc,
+            posicion_materia_sm_vc: posicion_sm_vc,
+            intento_sm_vc:          intento_sm_vc,
+          },
+        },
         update: {},
-        create: { estudiante_id_sm_vc: estudianteVinculado_sm_vc.id_sm_vc },
+        create: {
+          estudiante_id_sm_vc:    estudianteVinculado_sm_vc.id_sm_vc,
+          posicion_materia_sm_vc: posicion_sm_vc,
+          intento_sm_vc:          intento_sm_vc,
+        },
       });
 
       const mensajeGuardado_sm_vc = await this.prisma_sm_vc.mensaje.create({
@@ -164,31 +206,61 @@ export class ConversacionesService {
 
   // ─── Consulta del historial ─────────────────────────────────────
 
-  async obtenerMensajes_sm_vc(estudianteId: number, materiaId?: number) {
+  /**
+   * Obtiene los mensajes de un estudiante.
+   * Con el nuevo modelo Opción-B, la conversación se identifica por
+   * (estudiante, posicionMateria, intento). Si no se proveen, se usan
+   * los valores actuales del estudiante (materia activa + intentos).
+   */
+  async obtenerMensajes_sm_vc(
+    estudianteId:   number,
+    materiaId?:     number,
+    posicionMateria?: number,
+    intento?:       number,
+  ) {
     try {
       // Resolución de IDs
       let idRealEstudiante_sm_vc = estudianteId;
-      let idRealUsuario_sm_vc = estudianteId;
+      let idRealUsuario_sm_vc    = estudianteId;
 
       const estudianteVinculado_sm_vc =
         await this.prisma_sm_vc.estudiante.findFirst({
           where: {
             OR: [
-              { id_sm_vc: estudianteId },
+              { id_sm_vc:         estudianteId },
               { usuario_id_sm_vc: estudianteId },
             ],
           },
+          include: { materiaActiva: true },
         });
 
       if (estudianteVinculado_sm_vc) {
         idRealEstudiante_sm_vc = estudianteVinculado_sm_vc.id_sm_vc;
-        idRealUsuario_sm_vc = estudianteVinculado_sm_vc.usuario_id_sm_vc;
+        idRealUsuario_sm_vc    = estudianteVinculado_sm_vc.usuario_id_sm_vc;
       }
 
+      // Resolver posición e intento para el hilo correcto
+      const posicion_sm_vc = posicionMateria
+        ?? estudianteVinculado_sm_vc?.materiaActiva?.posicion_sm_vc
+        ?? 0;
+      const intento_sm_vc  = intento
+        ?? estudianteVinculado_sm_vc?.intentos_materia_sm_vc
+        ?? 1;
+
       const conversacion_sm_vc = await this.prisma_sm_vc.conversacion.upsert({
-        where: { estudiante_id_sm_vc: idRealEstudiante_sm_vc },
+        where: {
+          estudiante_id_sm_vc_posicion_materia_sm_vc_intento_sm_vc: {
+            estudiante_id_sm_vc:    idRealEstudiante_sm_vc,
+            posicion_materia_sm_vc: posicion_sm_vc,
+            intento_sm_vc:          intento_sm_vc,
+          },
+        },
         update: {},
-        create: { estudiante_id_sm_vc: idRealEstudiante_sm_vc },
+        create: {
+          estudiante_id_sm_vc:    idRealEstudiante_sm_vc,
+          posicion_materia_sm_vc: posicion_sm_vc,
+          intento_sm_vc:          intento_sm_vc,
+        },
       });
 
       const mensajesRaw_sm_vc = await this.prisma_sm_vc.mensaje.findMany({

@@ -37,18 +37,18 @@ export class EstudiantesService {
         orderBy: { usuario: { apellido_sm_vc: 'asc' } },
       });
 
-      // Obtener todos los periodos únicos de los estudiantes para traer sus materias
-      const periodos_sm_vc = [...new Set(estudiantes.map(e => e.materiaActiva.periodo_sm_vc))];
+      // Obtener todos los periodos únicos de los estudiantes (por ID de FK, no string)
+      const periodosIds_sm_vc = [...new Set(estudiantes.map(e => e.materiaActiva.periodo_id_sm_vc))];
       
       const todasLasMaterias_sm_vc = await this.prisma.materia.findMany({
-        where: { periodo_sm_vc: { in: periodos_sm_vc } },
+        where: { periodo_id_sm_vc: { in: periodosIds_sm_vc } },
         include: { requisitos: true },
         orderBy: { posicion_sm_vc: 'asc' },
       });
 
       return estudiantes.map((e) => {
         const materiasDelPeriodo_sm_vc = todasLasMaterias_sm_vc.filter(
-          m => m.periodo_sm_vc === e.materiaActiva.periodo_sm_vc
+          m => m.periodo_id_sm_vc === e.materiaActiva.periodo_id_sm_vc
         );
         return this.mapearEstudianteConProgresoExtendido_sm_vc(e, materiasDelPeriodo_sm_vc);
       });
@@ -115,9 +115,9 @@ export class EstudiantesService {
       if (!estudiante)
         throw new NotFoundException(`Estudiante ${estudianteId} no encontrado.`);
 
-      // Obtener todas las materias del periodo activo
+      // Obtener todas las materias del período activo usando FK real (ID del período)
       const materias = await this.prisma.materia.findMany({
-        where: { periodo_sm_vc: estudiante.materiaActiva.periodo_sm_vc },
+        where: { periodo_id_sm_vc: estudiante.materiaActiva.periodo_id_sm_vc },
         include: { requisitos: { orderBy: { posicion_sm_vc: 'asc' } } },
         orderBy: { posicion_sm_vc: 'asc' },
       });
@@ -143,7 +143,8 @@ export class EstudiantesService {
           nombre_sm_vc:                materia.nombre_sm_vc,
           descripcion_sm_vc:           materia.descripcion_sm_vc,
           posicion_sm_vc:              materia.posicion_sm_vc,
-          periodo_sm_vc:               materia.periodo_sm_vc,
+          // Exponemos el ID del período (FK real) en lugar del string eliminado
+          periodo_id_sm_vc:            materia.periodo_id_sm_vc,
           bloqueada_sm_vc:             bloqueada,
           es_activa_sm_vc:             materia.id_sm_vc === estudiante.materia_activa_id_sm_vc,
           total_requisitos_sm_vc:      reqsMateria.length,
@@ -239,7 +240,8 @@ export class EstudiantesService {
       titulo_proyecto_sm_vc:   e.titulo_proyecto_sm_vc,
       tutor_empresarial_sm_vc: e.tutor_empresarial_sm_vc,
       materia_activa_id_sm_vc: e.materia_activa_id_sm_vc,
-      periodo_sm_vc:           e.materiaActiva.periodo_sm_vc,
+      // Exponemos el ID del período (FK real) en lugar del string eliminado
+      periodo_id_sm_vc:        e.materiaActiva.periodo_id_sm_vc,
       materias_sm_vc,
     };
   }

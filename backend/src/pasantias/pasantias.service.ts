@@ -50,11 +50,12 @@ export class PasantiasService_sm_vc {
       return true;
     }
 
-    // Buscar la materia anterior
+    // Buscar la materia anterior usando FK real
     const materiaAnterior = await this.prisma.materia.findFirst({
       where: { 
         posicion_sm_vc: materiaActual.posicion_sm_vc - 1,
-        periodo_sm_vc: materiaActual.periodo_sm_vc 
+        // Usa periodo_id_sm_vc (FK real) en lugar del string obsoleto
+        periodo_id_sm_vc: materiaActual.periodo_id_sm_vc,
       }
     });
 
@@ -418,11 +419,12 @@ export class PasantiasService_sm_vc {
       }
 
       return {
-        id_sm_vc: materia.id_sm_vc,
-        nombre_sm_vc: materia.nombre_sm_vc,
-        orden_sm_int: materia.posicion_sm_vc,
-        posicion_sm_vc: materia.posicion_sm_vc,
-        periodo_sm_vc: materia.periodo_sm_vc,
+        id_sm_vc:        materia.id_sm_vc,
+        nombre_sm_vc:    materia.nombre_sm_vc,
+        orden_sm_int:    materia.posicion_sm_vc,
+        posicion_sm_vc:  materia.posicion_sm_vc,
+        // Exponemos el ID del período (FK real) en lugar del string obsoleto
+        periodo_id_sm_vc: materia.periodo_id_sm_vc,
         estado_aprobacion_sm_vc: estadoAprobacion,
         progreso_decimal: progresoDecimal,
         requisitos_aprobados_sm_int: aprobados,

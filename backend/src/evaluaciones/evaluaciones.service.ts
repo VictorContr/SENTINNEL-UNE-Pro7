@@ -37,7 +37,8 @@ export class EvaluacionesService {
         where: { id_sm_vc: dto.entrega_id_sm_vc },
         include: {
           estudiante: { include: { usuario: true, materiaActiva: true } },
-          requisito:  { include: { materia: true } },
+          // Incluir el periodo de la materia para acceder a su ID (FK real)
+          requisito:  { include: { materia: { include: { periodo: true } } } },
           evaluacion: true,
         },
       });
@@ -141,7 +142,8 @@ export class EvaluacionesService {
           estudianteId,
           materiaId,
           entrega.requisito.materia.posicion_sm_vc,
-          entrega.requisito.materia.periodo_sm_vc,
+          // Usamos el periodo_id_sm_vc (FK real) en lugar del string eliminado
+          entrega.requisito.materia.periodo_id_sm_vc,
           materiaNombre,
           entrega.estudiante.usuario_id_sm_vc,
           profesorId,
@@ -184,7 +186,8 @@ export class EvaluacionesService {
     estudianteId:        number,
     materiaId:           number,
     materiaPos:          number,
-    materiaPeriodo:      string,
+    // Cambiado de string a number: ahora recibe el ID del período (FK real)
+    periodoId:           number,
     materiaNombre:       string,
     usuarioEstudianteId: number,
     actorId:             number,
@@ -209,9 +212,9 @@ export class EvaluacionesService {
 
     if (!todasAprobadas) return null;
 
-    // Buscar la siguiente materia
+    // Buscar la siguiente materia usando FK real (periodo_id_sm_vc) en lugar del string
     const siguienteMateria = await this.prisma.materia.findFirst({
-      where: { posicion_sm_vc: materiaPos + 1, periodo_sm_vc: materiaPeriodo },
+      where: { posicion_sm_vc: materiaPos + 1, periodo_id_sm_vc: periodoId },
     });
 
     if (!siguienteMateria) {
