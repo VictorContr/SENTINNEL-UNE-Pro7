@@ -83,11 +83,11 @@ export class PeriodosAcademicosService {
       },
     });
 
-    // Sincronizar la tabla de configuración del sistema con el nuevo período activo
+    // Sincronizar la tabla de configuración del sistema con el ID del nuevo período activo (FK real)
     try {
       await this.prisma.configuracionSistema.update({
         where: { id_sm_vc: 1 },
-        data:  { periodo_actual_sm_vc: nombre_sm_vc },
+        data:  { periodo_id_sm_vc: nuevoPeriodo_sm_vc.id_sm_vc },
       });
     } catch {
       // No bloqueante: si la tabla de configuración no existe, continuamos.
@@ -150,11 +150,11 @@ export class PeriodosAcademicosService {
 
     const periodo_sm_vc = await this.findOne_sm_vc(id);
 
-    // Actualizar configuración del sistema con el nuevo período activo
+    // Actualizar configuración del sistema con el ID del nuevo período activo (FK real)
     try {
       await this.prisma.configuracionSistema.update({
         where: { id_sm_vc: 1 },
-        data:  { periodo_actual_sm_vc: periodo_sm_vc.nombre_sm_vc },
+        data:  { periodo_id_sm_vc: id },
       });
     } catch {
       console.warn('[PeriodosService] No se pudo actualizar configuracionSistema.');
@@ -183,10 +183,11 @@ export class PeriodosAcademicosService {
     });
 
     if (periodoSucesor_sm_vc) {
+      // Actualizar config con el ID del período sucesor (FK real)
       try {
         await this.prisma.configuracionSistema.update({
           where: { id_sm_vc: 1 },
-          data:  { periodo_actual_sm_vc: periodoSucesor_sm_vc.nombre_sm_vc },
+          data:  { periodo_id_sm_vc: periodoSucesor_sm_vc.id_sm_vc },
         });
       } catch {
         console.warn('[PeriodosService] No se pudo actualizar configuracionSistema.');

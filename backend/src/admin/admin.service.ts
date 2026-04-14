@@ -1,6 +1,6 @@
-import { Injectable, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ConfiguracionSistema, RolUsuario } from '@prisma/client';
+import { RolUsuario } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
 import * as bcrypt from 'bcryptjs';
 import { ActualizarPeriodoDto } from './dto/actualizar-periodo.dto';
@@ -21,26 +21,36 @@ export class AdminService {
   ) {}
 
   /**
-   * Obtiene el periodo académico actual desde la configuración del sistema.
-   * @returns Promise<ConfiguracionSistema> - Configuración con id_sm_vc = 1
+   * Obtiene la configuración del sistema incluyendo el período activo mediante FK real.
+   * Si no existe la config, la crea apuntando al período más reciente activo.
    */
-  async obtenerPeriodoActual(): Promise<ConfiguracionSistema> {
+  async obtenerPeriodoActual() {
     try {
       let config = await this.prisma.configuracionSistema.findUnique({
-        where: { id_sm_vc: 1 }
+        where:   { id_sm_vc: 1 },
+        include: { periodo: true }, // FK real: trae el objeto PeriodoAcademico completo
       });
 
       if (!config) {
+        // Fallback: buscar el período activo más reciente para crear la config
+        const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+          where:   { estado_activo_sm_vc: true },
+          orderBy: { fecha_inicio_sm_vc: 'desc' },
+        });
+
+        if (!periodoActivo) {
+          throw new NotFoundException('No hay ningún período académico activo para inicializar la configuración.');
+        }
+
         config = await this.prisma.configuracionSistema.create({
-          data: {
-            id_sm_vc: 1,
-            periodo_actual_sm_vc: 'P-165'
-          }
+          data:    { id_sm_vc: 1, periodo_id_sm_vc: periodoActivo.id_sm_vc },
+          include: { periodo: true },
         });
       }
 
       return config;
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Error al obtener el periodo académico actual.');
     }
   }
@@ -87,7 +97,8 @@ export class AdminService {
   ) {
     try {
       const periodoCfg = await this.obtenerPeriodoActual();
-      const PERIODO = periodoCfg.periodo_actual_sm_vc;
+      // Usamos el objeto periodo relacionado (incluido via FK) para obtener el ID real
+      const PERIODO_ID = periodoCfg.periodo.id_sm_vc;
       
       const wbUsuarios = new ExcelJS.Workbook();
       await wbUsuarios.xlsx.load(fileUsuarios.buffer as any);
@@ -164,9 +175,9 @@ export class AdminService {
           });
         }
 
-        // Obtener la primera materia para asignársela a los nuevos estudiantes
+        // Obtener la primera materia del período activo usando FK real (periodo_id)
         const materia1 = await tx.materia.findFirst({
-           where: { posicion_sm_vc: 1, periodo_sm_vc: PERIODO }
+           where: { posicion_sm_vc: 1, periodo_id_sm_vc: PERIODO_ID }
         });
 
         for (const u of rowsUsuarios) {
