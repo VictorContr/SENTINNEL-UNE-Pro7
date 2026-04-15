@@ -5,10 +5,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EstadoAprobacion } from '@prisma/client';
+import { ConversacionesService } from '../conversaciones/conversaciones.service';
 
 @Injectable()
 export class EstudiantesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    // Inyectamos ConversacionesService para reutilizar la lógica
+    // de búsqueda por posicion + intento (Arquitectura Opción-B)
+    private readonly conversacionesService: ConversacionesService,
+  ) {}
 
   // ─────────────────────────────────────────────────────────────────
   // GET /api/estudiantes
@@ -64,6 +70,11 @@ export class EstudiantesService {
   // ─────────────────────────────────────────────────────────────────
   async obtenerDetalleEstudiante_sm_vc(estudianteId: number) {
     try {
+      // ─── Consulta principal: SIN el include de conversaciones ───────────────
+      // La razón: el include antiguo traía un array "conversaciones" pero el
+      // mapper accedía a "e.conversacion" (singular) → siempre undefined.
+      // La nueva arquitectura (Opción-B) busca por posicion + intento,
+      // no por fecha. Sólo ConversacionesService sabe cómo hacerlo correctamente.
       const estudiante = await this.prisma.estudiante.findUnique({
         where: { id_sm_vc: estudianteId },
         include: {
@@ -86,20 +97,28 @@ export class EstudiantesService {
               documentacionTecnica: true,
             },
           },
-          // Con el nuevo modelo Opción-B, un estudiante tiene múltiples conversaciones.
-          // Cargamos solo la más reciente (materia activa, intento actual) para el panel.
-          conversaciones: {
-            orderBy: { fecha_creacion_sm_vc: 'desc' },
-            take: 1,
-            include: { mensajes: { take: 5, orderBy: { fecha_creacion_sm_vc: 'desc' } } }
-          }
+          // ✅ FIX: 'conversaciones' eliminado del include.
+          // Se consultará separadamente usando posicion_materia y el intento actual.
         },
       });
 
       if (!estudiante)
         throw new NotFoundException(`Estudiante ${estudianteId} no encontrado.`);
 
-      return this.mapearDetalleEstudiante_sm_vc(estudiante);
+      // ─── FIX: Historial Unificado por Posición (Opción B Pura) ───────────────
+      // Se pasa SIEMPRE undefined como materiaId para evitar el punto ciego:
+      // el materiaId cambia cada semestre, pero la posicion_sm_vc (1,2,3,4)
+      // es la identidad estable de la fase. ConversacionesService activará
+      // el Caso A del resolver (param explícito) → camino más eficiente.
+      const posicionActiva_sm_vc = estudiante.materiaActiva?.posicion_sm_vc ?? 0;
+
+      const historial_sm_vc = await this.conversacionesService.obtenerMensajes_sm_vc(
+        estudianteId,
+        undefined,             // materiaId → ignorado deliberadamente (evita punto ciego)
+        posicionActiva_sm_vc,  // posicionMateria → identidad estable de la fase
+      );
+
+      return this.mapearDetalleEstudiante_sm_vc(estudiante, historial_sm_vc);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Error al obtener el detalle.');
@@ -250,7 +269,10 @@ export class EstudiantesService {
     };
   }
 
-  private mapearDetalleEstudiante_sm_vc(e: any) {
+  // ─── FIX: El mapper ahora recibe el historial ya resuelto por ConversacionesService ───
+  // Se elimina la dependencia de "e.conversacion" (que siempre era undefined
+  // porque Prisma devuelve "conversaciones" — plural).
+  private mapearDetalleEstudiante_sm_vc(e: any, historial_sm_vc?: any) {
     return {
       id_sm_vc:                e.id_sm_vc,
       usuario:                 e.usuario,
@@ -261,9 +283,11 @@ export class EstudiantesService {
       materia_activa:          e.materiaActiva,
       entregas:                e.entregas,
       proyecto_deploy:         e.proyectoDeploy,
+      // ✅ FIX: Ahora tomamos los mensajes del historial resuelto (objeto ya mapeado),
+      // NO del include incorrecto de Prisma. "mensajes_sm_vc" viene de obtenerMensajes_sm_vc.
       conversacion_sm_vc: {
-        id_sm_vc: e.conversacion?.id_sm_vc,
-        ultimos_mensajes_sm_vc: e.conversacion?.mensajes ?? [],
+        id_sm_vc:               historial_sm_vc?.id_sm_vc ?? null,
+        ultimos_mensajes_sm_vc: historial_sm_vc?.mensajes_sm_vc ?? [],
       },
     };
   }

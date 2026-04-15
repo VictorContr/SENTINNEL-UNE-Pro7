@@ -38,31 +38,14 @@ export class PeriodosAcademicosService {
     return periodo_sm_vc;
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // POST /periodos
-  // Crea un nuevo período académico con nombre AUTO-GENERADO y lo
-  // activa automáticamente, desactivando todos los anteriores.
-  //
-  // El frontend solo envía fechas. El backend deduce:
-  //   • nombre_sm_vc → incrementa el código del período activo (P-N+1)
-  //   • descripcion_sm_vc → construye "Mes Año - Mes Año" desde las fechas
-  // ─────────────────────────────────────────────────────────────────
   async create_sm_vc(createPeriodoDto: CreatePeriodoDto_sm_vc) {
     const fechaInicio_sm_vc = new Date(createPeriodoDto.fecha_inicio_sm_vc);
     const fechaFin_sm_vc    = new Date(createPeriodoDto.fecha_fin_sm_vc);
 
-    // Validación de rango de fechas
     if (fechaInicio_sm_vc >= fechaFin_sm_vc) {
       throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // AUTO-GENERACIÓN DEL CÓDIGO DE PERÍODO (P-N+1)
-    //
-    // Busca el período activo actual y extrae su número.
-    // Ej: "P-165" → 165 → 165+1 = 166 → "P-166"
-    // Si no hay período previo (primer período del sistema), inicia en "P-1".
-    // ─────────────────────────────────────────────────────────────────
     const periodoActivo_sm_vc = await this.prisma.periodoAcademico.findFirst({
       where:   { estado_activo_sm_vc: true },
       orderBy: { fecha_inicio_sm_vc: 'desc' },
@@ -70,28 +53,18 @@ export class PeriodosAcademicosService {
 
     let nombre_sm_vc: string;
     if (periodoActivo_sm_vc) {
-      // Extraer el número del código actual (tolera formatos como "P-165", "P-001", "165")
       const match_sm_vc = periodoActivo_sm_vc.nombre_sm_vc.match(/(\d+)/);
       const numActual_sm_vc = match_sm_vc ? parseInt(match_sm_vc[1], 10) : 0;
       nombre_sm_vc = `P-${numActual_sm_vc + 1}`;
     } else {
-      // Fallback: primer período del sistema
       nombre_sm_vc = 'P-1';
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // AUTO-GENERACIÓN DE LA DESCRIPCIÓN LEGIBLE
-    //
-    // Construye "Mes Año - Mes Año" en español a partir de las fechas.
-    // Ej: fechaInicio=2026-05-01, fechaFin=2026-08-31 → "Mayo 2026 - Agosto 2026"
-    // Se usa UTC explícito para evitar desfases de timezone.
-    // ─────────────────────────────────────────────────────────────────
     const descripcion_sm_vc = this.generarDescripcionPeriodo_sm_vc(
       fechaInicio_sm_vc,
       fechaFin_sm_vc,
     );
 
-    // Verificar que no exista ya un período con el mismo código (colisión improbable pero segura)
     const periodoExistente_sm_vc = await this.prisma.periodoAcademico.findFirst({
       where: { nombre_sm_vc },
     });
@@ -103,23 +76,14 @@ export class PeriodosAcademicosService {
       );
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // TRANSACCIÓN ATÓMICA: Creación del período + Reasignación de estudiantes.
-    //
-    // Si la reasignación del estudiante N falla (ej. FK rota, materia faltante),
-    // toda la operación se revierte: el período NO queda creado en BD.
-    // Timeout extendido a 60s porque puede haber muchos estudiantes activos.
-    // ─────────────────────────────────────────────────────────────────────
     try {
       return await this.prisma.$transaction(async (tx) => {
 
-        // 1. Desactivar todos los períodos anteriores
         await tx.periodoAcademico.updateMany({
           where: { estado_activo_sm_vc: true },
           data:  { estado_activo_sm_vc: false },
         });
 
-        // 2. Crear el nuevo período como ACTIVO
         const nuevoPeriodo = await tx.periodoAcademico.create({
           data: {
             nombre_sm_vc,
@@ -130,17 +94,12 @@ export class PeriodosAcademicosService {
           },
         });
 
-        // 3. Crear las materias del nuevo período (clonadas con FK al nuevo período)
-        //    Obtener las materias del período anterior como plantilla
         const materiasAnteriores = await tx.materia.findMany({
           where:   { periodo_id_sm_vc: { not: nuevoPeriodo.id_sm_vc } },
           orderBy: { posicion_sm_vc: 'asc' },
-          // Tomamos las más recientes (del período que acabamos de desactivar)
           distinct: ['posicion_sm_vc'],
         });
 
-        // Pre-carga de requisitos: se hace ANTES del Promise.all para evitar
-        // el anti-patrón de await dentro de un callback .map() no-async.
         const requisitosParaClonar = await Promise.all(
           materiasAnteriores.map((m) =>
             tx.requisito.findMany({
@@ -150,7 +109,6 @@ export class PeriodosAcademicosService {
           ),
         );
 
-        // Ahora el create es completamente síncrono en su estructura
         const nuevasMaterias = await Promise.all(
           materiasAnteriores.map((m, idx) =>
             tx.materia.create({
@@ -158,7 +116,6 @@ export class PeriodosAcademicosService {
                 nombre_sm_vc:      m.nombre_sm_vc,
                 posicion_sm_vc:    m.posicion_sm_vc,
                 descripcion_sm_vc: m.descripcion_sm_vc,
-                // FK real al nuevo período
                 periodo_id_sm_vc:  nuevoPeriodo.id_sm_vc,
                 requisitos: {
                   create: requisitosParaClonar[idx],
@@ -168,10 +125,8 @@ export class PeriodosAcademicosService {
           ),
         );
 
-        // 4. Reasignar estudiantes al nuevo período (lógica de negocio completa)
         await this.reasignarEstudiantes_sm_vc(tx, nuevasMaterias);
 
-        // 5. Sincronizar configuración del sistema con el ID del nuevo período (FK real)
         await tx.configuracionSistema.upsert({
           where:  { id_sm_vc: 1 },
           update: { periodo_id_sm_vc: nuevoPeriodo.id_sm_vc },
@@ -180,7 +135,7 @@ export class PeriodosAcademicosService {
 
         return nuevoPeriodo;
 
-      }, { timeout: 60000 }); // 60s — operación masiva, necesita tiempo extra
+      }, { timeout: 60000 }); 
 
     } catch (error) {
       if (
@@ -199,7 +154,6 @@ export class PeriodosAcademicosService {
   async update_sm_vc(id: number, updatePeriodoDto: UpdatePeriodoDto_sm_vc) {
     await this.findOne_sm_vc(id);
 
-    // Si se están actualizando ambas fechas, regenerar el nombre automáticamente
     const data_sm_vc: Record<string, unknown> = {};
 
     if (updatePeriodoDto.fecha_inicio_sm_vc) {
@@ -209,8 +163,6 @@ export class PeriodosAcademicosService {
       data_sm_vc.fecha_fin_sm_vc = new Date(updatePeriodoDto.fecha_fin_sm_vc);
     }
 
-    // Si viene explícitamente un nombre, lo respetamos; si no, lo regeneramos
-    // cuando se actualizan las dos fechas a la vez.
     if (updatePeriodoDto.nombre_sm_vc) {
       data_sm_vc.nombre_sm_vc = updatePeriodoDto.nombre_sm_vc;
     } else if (updatePeriodoDto.fecha_inicio_sm_vc && updatePeriodoDto.fecha_fin_sm_vc) {
@@ -227,7 +179,6 @@ export class PeriodosAcademicosService {
       data_sm_vc.descripcion_sm_vc = updatePeriodoDto.descripcion_sm_vc;
     }
 
-    // Validar rango si vienen ambas fechas
     if (data_sm_vc.fecha_inicio_sm_vc && data_sm_vc.fecha_fin_sm_vc) {
       if ((data_sm_vc.fecha_inicio_sm_vc as Date) >= (data_sm_vc.fecha_fin_sm_vc as Date)) {
         throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
@@ -241,7 +192,6 @@ export class PeriodosAcademicosService {
   }
 
   async activar_sm_vc(id: number) {
-    // Desactivar todos los períodos activos primero
     await this.prisma.periodoAcademico.updateMany({
       where: { estado_activo_sm_vc: true },
       data:  { estado_activo_sm_vc: false },
@@ -249,7 +199,6 @@ export class PeriodosAcademicosService {
 
     const periodo_sm_vc = await this.findOne_sm_vc(id);
 
-    // Actualizar configuración del sistema con el ID del nuevo período activo (FK real)
     try {
       await this.prisma.configuracionSistema.update({
         where: { id_sm_vc: 1 },
@@ -272,7 +221,6 @@ export class PeriodosAcademicosService {
       throw new BadRequestException('El período ya está inactivo');
     }
 
-    // Buscar el período más reciente para activarlo como sucesor
     const periodoSucesor_sm_vc = await this.prisma.periodoAcademico.findFirst({
       where: {
         id_sm_vc:            { not: id },
@@ -282,7 +230,6 @@ export class PeriodosAcademicosService {
     });
 
     if (periodoSucesor_sm_vc) {
-      // Actualizar config con el ID del período sucesor (FK real)
       try {
         await this.prisma.configuracionSistema.update({
           where: { id_sm_vc: 1 },
@@ -316,18 +263,10 @@ export class PeriodosAcademicosService {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // Genera la descripción legible del período (ej. "Mayo 2026 - Agosto 2026").
-  // Usado por create_sm_vc para auto-construir descripcion_sm_vc desde las fechas.
-  // Utiliza UTC explícito para evitar desfases de zona horaria.
-  // ─────────────────────────────────────────────────────────────────
   private generarDescripcionPeriodo_sm_vc(inicio_sm_vc: Date, fin_sm_vc: Date): string {
     return this.generarNombrePeriodo_sm_vc(inicio_sm_vc, fin_sm_vc);
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // Helper interno: formatea una fecha como "Mes YYYY" en español (UTC).
-  // ─────────────────────────────────────────────────────────────────
   private generarNombrePeriodo_sm_vc(inicio_sm_vc: Date, fin_sm_vc: Date): string {
     const formatMesAnio_sm_vc = (fecha_sm_vc: Date): string => {
       const mes_sm_vc = fecha_sm_vc.toLocaleDateString('es-ES', {
@@ -335,53 +274,30 @@ export class PeriodosAcademicosService {
         timeZone: 'UTC',
       });
       const anio_sm_vc = fecha_sm_vc.getUTCFullYear();
-      // Capitalizar primera letra del mes
       return `${mes_sm_vc.charAt(0).toUpperCase()}${mes_sm_vc.slice(1)} ${anio_sm_vc}`;
     };
 
     return `${formatMesAnio_sm_vc(inicio_sm_vc)} - ${formatMesAnio_sm_vc(fin_sm_vc)}`;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // MOTOR DE REASIGNACIÓN ACADÉMICA
-  //
-  // Este método es el corazón del "Cambio de Período". Se ejecuta DENTRO de
-  // la transacción de create_sm_vc, por lo que cualquier fallo hace rollback total.
-  //
-  // LÓGICA DE NEGOCIO:
-  //   - APROBADO:        posición +1, intento = 1 (avanza al siguiente nivel).
-  //   - REPROBADO        posición igual, intento++ (repite el nivel actual).
-  //   - EN_CURSO/NINGUNO posición igual, intento++ (no terminó; se queda y reintenta).
-  //
-  // PERSISTENCIA DE MENSAJES (Opción B):
-  //   La consulta de conversaciones ya NO usa materia_id, sino:
-  //     WHERE estudiante_id = :id AND posicion_materia = :posicion AND intento = :intento
-  //   Esto garantiza que el historial de chat de "Investigación y Desarrollo" (posición 1)
-  //   en el período A (intento 1) quede aislado del intento 2 en el período B.
-  //   El alumno siempre ve el historial del intento ACTUAL de su posición actual.
-  // ─────────────────────────────────────────────────────────────────────────────
   private async reasignarEstudiantes_sm_vc(
     tx:           Prisma.TransactionClient,
     nuevasMaterias: { id_sm_vc: number; posicion_sm_vc: number }[],
   ): Promise<void> {
 
-    // Índice posición → nueva materia para O(1) lookup
     const mapPosicion = new Map(
       nuevasMaterias.map((m) => [m.posicion_sm_vc, m.id_sm_vc]),
     );
     const maxPosicion = Math.max(...nuevasMaterias.map((m) => m.posicion_sm_vc));
 
-    // Traer todos los estudiantes activos con su materia actual y sus entregas
-    // para determinar si aprobaron o no el período anterior.
     const estudiantes = await tx.estudiante.findMany({
       include: {
         materiaActiva: {
           include: {
-            // Traemos los requisitos de la materia para evaluar si todos están aprobados
             requisitos: {
               include: {
                 entregas: {
-                  where:   { estudiante_id_sm_vc: undefined }, // se filtra por estudiante más abajo
+                  where:   { estudiante_id_sm_vc: undefined }, 
                   orderBy: { fecha_actualizacion_sm_vc: 'desc' },
                   take:    1,
                 },
@@ -389,7 +305,6 @@ export class PeriodosAcademicosService {
             },
           },
         },
-        // Traemos TODAS las entregas del estudiante para evaluar aprobación
         entregas: {
           include: { requisito: true },
         },
@@ -397,9 +312,11 @@ export class PeriodosAcademicosService {
     });
 
     for (const estudiante of estudiantes) {
+      // Si por alguna razón la data está corrupta y no tiene materia, saltar
+      if (!estudiante.materiaActiva) continue;
+
       const posicionActual = estudiante.materiaActiva.posicion_sm_vc;
 
-      // ── Determinar si el alumno APROBÓ todos los requisitos de su materia actual ──
       const requisitosDeMateria = estudiante.materiaActiva.requisitos;
       const todosAprobados = requisitosDeMateria.length > 0 &&
         requisitosDeMateria.every((req) => {
@@ -409,50 +326,44 @@ export class PeriodosAcademicosService {
           return entrega?.estado_sm_vc === EstadoAprobacion.APROBADO;
         });
 
-      let nuevaPosicion: number;
+let nuevaPosicion: number;
       let nuevosIntentos: number;
+      let habilitarDeploy = estudiante.puede_hacer_deploy_sm_vc; // Mantenemos su estado actual
 
       if (todosAprobados) {
-        // ── CAMINO FELIZ: Alumno aprobó → avanza al siguiente nivel ──
         nuevaPosicion = posicionActual + 1;
-        nuevosIntentos = 1; // Primer intento en la nueva posición
+        nuevosIntentos = 1; 
 
-        // Guard: si ya está en la última posición, lo dejamos ahí (graduado pendiente)
+        // ✅ FIX: Si el tesista aprobó la última fase (Pos 4)
         if (nuevaPosicion > maxPosicion) {
-          nuevaPosicion = posicionActual; // No hay siguiente nivel
-          nuevosIntentos = estudiante.intentos_materia_sm_vc; // Mantener intentos
+          nuevaPosicion = maxPosicion; // Lo anclamos en la 4
+          nuevosIntentos = estudiante.intentos_materia_sm_vc; // Mantiene su intento final
+          habilitarDeploy = true; // ✅ Le damos luz verde para graduarse (Deploy)
         }
       } else {
-        // ── CAMINO DE REPETICIÓN: Reprobado o en curso → misma posición, intento++ ──
         nuevaPosicion  = posicionActual;
         nuevosIntentos = estudiante.intentos_materia_sm_vc + 1;
       }
 
-      // Obtener el ID de la materia en el NUEVO período para la posición determinada
       const nuevaMateriaId = mapPosicion.get(nuevaPosicion);
 
       if (!nuevaMateriaId) {
-        // Situación anómala: no existe la materia en el nuevo período para esa posición.
-        // Lanzamos error para que la transacción haga rollback completo.
         throw new InternalServerErrorException(
           `[Reasignación] No se encontró materia en posición ${nuevaPosicion} para el nuevo período. ` +
           `Estudiante ID: ${estudiante.id_sm_vc}. Operación cancelada.`,
         );
       }
 
-      // Actualizar el registro del estudiante en la BD
+      // ✅ FIX: Actualizamos la BD usando SOLO las columnas que de verdad existen
       await tx.estudiante.update({
         where: { id_sm_vc: estudiante.id_sm_vc },
         data: {
           materia_activa_id_sm_vc: nuevaMateriaId,
           intentos_materia_sm_vc:  nuevosIntentos,
+          puede_hacer_deploy_sm_vc: habilitarDeploy, // El flag real para los que aprueban todo
         },
       });
 
-      // ── Registro de log en conversación (Opción B) ──────────────────────────────
-      // La conversación del nuevo intento se identifica por (estudiante, posición, intento).
-      // upsert: si el alumno ya tenía esta combinación (raro), no duplica.
-      // El alumno puede ver su historial anterior con el mismo posicion + intento anterior.
       const nuevaConversacion = await tx.conversacion.upsert({
         where: {
           estudiante_id_sm_vc_posicion_materia_sm_vc_intento_sm_vc: {
@@ -469,11 +380,11 @@ export class PeriodosAcademicosService {
         },
       });
 
-      // Mensaje amigable del bot que el estudiante verá al abrir su chat del nuevo ciclo.
-      // Se registra como es_sistema_sm_vc: true (sin remitente) para que el frontend
-      // lo renderice con el ícono del bot (/robot) en lugar de burbuja de usuario.
+// ✅ FIX: Actualizamos el mensaje del bot para que lea la variable correcta
       const accion_sm_vc = todosAprobados
-        ? `✅ Has avanzado al siguiente nivel (Posición ${nuevaPosicion}).`
+        ? (habilitarDeploy) 
+          ? `✅ Felicitaciones, has culminado tus pasantías. Ya tienes habilitado el módulo de Deploy en Producción.` 
+          : `✅ Has avanzado al siguiente nivel (Posición ${nuevaPosicion}).`
         : `🔄 Repetirás este nivel (Posición ${nuevaPosicion}, Intento #${nuevosIntentos}).`;
 
       await tx.mensaje.create({
@@ -483,7 +394,7 @@ export class PeriodosAcademicosService {
             `🤖 [Aviso Automático del Sistema]: Se ha efectuado el cambio de período académico. ` +
             `Este es tu nuevo espacio de trabajo y correcciones para este ciclo.\n\n${accion_sm_vc}`
           ),
-          es_sistema_sm_vc: true,       // Sin remitente → frontend renderiza como bot
+          es_sistema_sm_vc: true,      
           materia_id_sm_vc: nuevaMateriaId,
         },
       });
