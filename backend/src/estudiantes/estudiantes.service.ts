@@ -221,34 +221,59 @@ export class EstudiantesService {
   }
 
   private mapearEstudianteConProgresoExtendido_sm_vc(e: any, materiasDelPeriodo_sm_vc: any[]) {
+    const posicionActiva_sm_vc = e.materiaActiva?.posicion_sm_vc ?? 0;
+
     const materias_sm_vc = materiasDelPeriodo_sm_vc.map((materia) => {
       const reqsMateria_sm_vc = materia.requisitos || [];
-      const entregasMateria_sm_vc = e.entregas.filter((ent: any) =>
-        ent.requisito.materia_id_sm_vc === materia.id_sm_vc
-      );
-      
-      const aprobados_sm_vc = entregasMateria_sm_vc.filter(
-        (ent: any) => ent.estado_sm_vc === EstadoAprobacion.APROBADO,
-      ).length;
+      const totalRequisitos_sm_vc = reqsMateria_sm_vc.length;
 
-      const bloqueada_sm_vc = materia.posicion_sm_vc > e.materiaActiva.posicion_sm_vc;
+      let aprobados_sm_vc = 0;
+      let progreso_decimal_sm_vc = 0;
+      let estado_sm_vc: EstadoAprobacion = EstadoAprobacion.PENDIENTE;
+      let bloqueada_sm_vc = false;
+
+      // REGLA DE SOBRESCRITURA HISTÓRICA
+      if (materia.posicion_sm_vc < posicionActiva_sm_vc) {
+        // Fase Pasada: Forzar 100% y Desbloqueada
+        aprobados_sm_vc = totalRequisitos_sm_vc;
+        progreso_decimal_sm_vc = 1;
+        estado_sm_vc = EstadoAprobacion.APROBADO;
+        bloqueada_sm_vc = false;
+      } else if (materia.posicion_sm_vc === posicionActiva_sm_vc) {
+        // Fase Actual: Conteo riguroso desde Prisma
+        const entregasMateria_sm_vc = e.entregas.filter((ent: any) =>
+          ent.requisito.materia_id_sm_vc === materia.id_sm_vc
+        );
+        aprobados_sm_vc = entregasMateria_sm_vc.filter(
+          (ent: any) => ent.estado_sm_vc === EstadoAprobacion.APROBADO,
+        ).length;
+        bloqueada_sm_vc = false;
+        progreso_decimal_sm_vc = totalRequisitos_sm_vc > 0
+          ? parseFloat((aprobados_sm_vc / totalRequisitos_sm_vc).toFixed(2))
+          : 0;
+        estado_sm_vc = this.calcularEstadoMateria_sm_vc(
+          entregasMateria_sm_vc,
+          aprobados_sm_vc,
+          totalRequisitos_sm_vc,
+          bloqueada_sm_vc,
+        );
+      } else {
+        // Fase Futura: Valores 0, Pendiente y Bloqueada
+        aprobados_sm_vc = 0;
+        progreso_decimal_sm_vc = 0;
+        estado_sm_vc = EstadoAprobacion.PENDIENTE;
+        bloqueada_sm_vc = true;
+      }
 
       return {
         materia_id_sm_vc: materia.id_sm_vc,
         nombre_sm_vc: materia.nombre_sm_vc,
         posicion_sm_vc: materia.posicion_sm_vc,
         bloqueada_sm_vc,
-        total_requisitos_sm_vc: reqsMateria_sm_vc.length,
+        total_requisitos_sm_vc: totalRequisitos_sm_vc,
         aprobados_sm_vc,
-        progreso_decimal_sm_vc: reqsMateria_sm_vc.length > 0
-          ? parseFloat((aprobados_sm_vc / reqsMateria_sm_vc.length).toFixed(2))
-          : 0,
-        estado_sm_vc: this.calcularEstadoMateria_sm_vc(
-          entregasMateria_sm_vc,
-          aprobados_sm_vc,
-          reqsMateria_sm_vc.length,
-          bloqueada_sm_vc,
-        ),
+        progreso_decimal_sm_vc,
+        estado_sm_vc,
       };
     });
 
