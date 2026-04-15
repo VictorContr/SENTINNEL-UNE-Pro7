@@ -13,11 +13,26 @@ export class PasantiasService_sm_vc {
   ) {}
 
   async getMaterias_sm_vc() {
+    // ✅ FIX: Filtrar por el período ACTIVO.
+    // Sin este filtro, el endpoint devuelve materias de todos los períodos históricos,
+    // causando que el frontend del DialogNuevoUsuario y el selector muestren
+    // materias obsoletas de semestres anteriores.
+    const config_sm_vc = await this.prisma.configuracionSistema.findFirst({
+      where: { id_sm_vc: 1 },
+      select: { periodo_id_sm_vc: true },
+    });
+
+    if (!config_sm_vc) {
+      return []; // Sistema no inicializado aún
+    }
+
     return this.prisma.materia.findMany({
-      include: { 
-        requisitos: { 
-          orderBy: { posicion_sm_vc: 'asc' } 
-        } 
+      where: { periodo_id_sm_vc: config_sm_vc.periodo_id_sm_vc },
+      include: {
+        requisitos: { orderBy: { posicion_sm_vc: 'asc' } },
+        // Incluir el período en la respuesta para que el frontend
+        // pueda construir el label correctamente (ej. "P-165")
+        periodo: { select: { nombre_sm_vc: true, descripcion_sm_vc: true } },
       },
       orderBy: { posicion_sm_vc: 'asc' },
     });
@@ -372,10 +387,29 @@ export class PasantiasService_sm_vc {
       throw new NotFoundException('Estudiante o materia activa no encontrados');
     }
 
+    // ✅ FIX: Filtrar materias estrictamente por el período ACTIVO.
+    // El bug de duplicación ocurre cuando el estudiante cambia de período:
+    // la consulta sin filtro devuelve las 4 materias del período VIEJO y las 4 del NUEVO
+    // juntas (8 registros), rompiendo el stepper del dashboard.
+    //
+    // Estrategia: leemos el periodo_id de la materia activa del estudiante.
+    // Esto garantiza que aunque ConfiguracionSistema haya cambiado ya,
+    // mostramos las materias del período al que pertenece su materia activa actual.
+    const periodoDeLaMateria_sm_vc = estudianteBase.materiaActiva.periodo_id_sm_vc;
+
     const materias = await this.prisma.materia.findMany({
-      include: { requisitos: true },
-      orderBy: { posicion_sm_vc: 'asc' }
+      where:    { periodo_id_sm_vc: periodoDeLaMateria_sm_vc },
+      include:  { requisitos: true },
+      orderBy:  { posicion_sm_vc: 'asc' },
     });
+
+    // Validación de integridad: en un período saludable siempre deben existir
+    // exactamente las posiciones configuradas (generalmente 4).
+    if (materias.length === 0) {
+      throw new NotFoundException(
+        `No se encontraron materias para el período activo del estudiante (periodo_id=${periodoDeLaMateria_sm_vc}).`,
+      );
+    }
 
     const entregas = await this.prisma.entrega.findMany({
       where: { estudiante_id_sm_vc: estudianteBase.id_sm_vc },

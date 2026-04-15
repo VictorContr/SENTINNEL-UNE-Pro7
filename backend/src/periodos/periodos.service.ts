@@ -469,17 +469,22 @@ export class PeriodosAcademicosService {
         },
       });
 
-      // Mensaje de sistema que queda registrado en el nuevo hilo de conversación
-      const accion = todosAprobados ? '✅ Avanzó al siguiente nivel' : '🔄 Repite este nivel';
+      // Mensaje amigable del bot que el estudiante verá al abrir su chat del nuevo ciclo.
+      // Se registra como es_sistema_sm_vc: true (sin remitente) para que el frontend
+      // lo renderice con el ícono del bot (/robot) en lugar de burbuja de usuario.
+      const accion_sm_vc = todosAprobados
+        ? `✅ Has avanzado al siguiente nivel (Posición ${nuevaPosicion}).`
+        : `🔄 Repetirás este nivel (Posición ${nuevaPosicion}, Intento #${nuevosIntentos}).`;
+
       await tx.mensaje.create({
         data: {
           conversacion_id_sm_vc: nuevaConversacion.id_sm_vc,
           contenido_sm_vc: (
-            `Log de Sistema — Cambio de Período Académico: ${accion}. ` +
-            `Intento #${nuevosIntentos} en la posición ${nuevaPosicion}.`
+            `🤖 [Aviso Automático del Sistema]: Se ha efectuado el cambio de período académico. ` +
+            `Este es tu nuevo espacio de trabajo y correcciones para este ciclo.\n\n${accion_sm_vc}`
           ),
-          es_sistema_sm_vc:  true,
-          materia_id_sm_vc:  nuevaMateriaId,
+          es_sistema_sm_vc: true,       // Sin remitente → frontend renderiza como bot
+          materia_id_sm_vc: nuevaMateriaId,
         },
       });
     }
