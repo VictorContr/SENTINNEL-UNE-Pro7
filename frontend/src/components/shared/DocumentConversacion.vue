@@ -217,7 +217,7 @@ const esAdmin_sm_vc = computed(
 const idEstudianteFinal_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
   if (rol_sm_vc === "ESTUDIANTE")
-    return auth_sm_vc.user_sm_vc?.id_sm_vc ?? null;
+    return auth_sm_vc.user_sm_vc?.estudiante_sm_vc?.id_sm_vc ?? null;
   if (
     rol_sm_vc === "PROFESOR" ||
     rol_sm_vc === "ADMINISTRADOR" ||
@@ -225,7 +225,7 @@ const idEstudianteFinal_sm_vc = computed(() => {
   ) {
     return props.estudianteId ?? null;
   }
-  return props.estudianteId ?? auth_sm_vc.user_sm_vc?.id_sm_vc ?? null;
+  return props.estudianteId ?? auth_sm_vc.user_sm_vc?.estudiante_sm_vc?.id_sm_vc ?? null;
 });
 
 /* ── Computed: Control de escritura ── */

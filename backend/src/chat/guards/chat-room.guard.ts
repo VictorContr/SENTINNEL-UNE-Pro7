@@ -75,7 +75,7 @@ export class ChatRoomGuard_sm_vc implements CanActivate {
 
     switch (user_sm_vc.rol) {
       case 'ESTUDIANTE':
-        return this.verificarEstudiante_sm_vc(user_sm_vc, estudianteId_sm_vc);
+        return await this.verificarEstudiante_sm_vc(user_sm_vc, estudianteId_sm_vc);
 
       case 'PROFESOR':
         return await this.verificarProfesor_sm_vc(user_sm_vc, estudianteId_sm_vc);
@@ -112,24 +112,41 @@ export class ChatRoomGuard_sm_vc implements CanActivate {
    *
    * IMPORTANTE: Comparamos como números para evitar fallos de tipo ('5' !== 5).
    */
-  private verificarEstudiante_sm_vc(
+  private async verificarEstudiante_sm_vc(
     user_sm_vc: JwtPayloadWs_sm_vc,
     estudianteId_sm_vc: number,
-  ): boolean {
-    const tieneAcceso_sm_vc = Number(user_sm_vc.sub) === Number(estudianteId_sm_vc);
+  ): Promise<boolean> {
+    try {
+      const estudiante_sm_vc = await this.prisma_sm_vc.estudiante.findFirst({
+        where: {
+          id_sm_vc: Number(estudianteId_sm_vc),
+          usuario_id_sm_vc: Number(user_sm_vc.sub),
+        },
+        select: { id_sm_vc: true },
+      });
 
-    if (!tieneAcceso_sm_vc) {
-      this.logger_sm_vc.warn(
-        `[ChatRoomGuard] ESTUDIANTE (userId=${user_sm_vc.sub}) intentó acceder ` +
-        `a sala de estudianteId=${estudianteId_sm_vc}. Acceso DENEGADO.`,
+      if (!estudiante_sm_vc) {
+        this.logger_sm_vc.warn(
+          `[ChatRoomGuard] ESTUDIANTE (userId=${user_sm_vc.sub}) intentó acceder ` +
+          `a sala de estudianteId=${estudianteId_sm_vc} que NO le pertenece. Acceso DENEGADO.`,
+        );
+        throw new WsException({
+          code_sm_vc:    'FORBIDDEN',
+          message_sm_vc: 'Solo puedes acceder a tu propia conversación.',
+        });
+      }
+
+      return true;
+    } catch (err_sm_vc) {
+      if (err_sm_vc instanceof WsException) throw err_sm_vc;
+      this.logger_sm_vc.error(
+        `[ChatRoomGuard] Error validando ESTUDIANTE (userId=${user_sm_vc.sub}): ${(err_sm_vc as Error).message}`,
       );
       throw new WsException({
-        code_sm_vc:    'FORBIDDEN',
-        message_sm_vc: 'Solo puedes acceder a tu propia conversación.',
+        code_sm_vc:    'INTERNAL_ERROR',
+        message_sm_vc: 'Error al verificar permisos de acceso a la sala. Intenta de nuevo.',
       });
     }
-
-    return true;
   }
 
   /**
