@@ -596,6 +596,21 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
           "✅ Inyección exitosa. Total:",
           store_sm_vc.conversaciones_sm_vc.length,
         );
+
+        // [FIX] MISSION 1: REFETCH para actualizar estado global y requisitos.
+        // Cuando llega un mensaje (especialmente evaluaciones del profesor), 
+        // necesitamos refrescar la fuente de verdad (progreso) para bloquear el formulario pertinentemente.
+        if (salaActual_sm_vc.value) {
+          const partes_sm_vc = salaActual_sm_vc.value.split(":"); // formato: conv:{estudianteId}:{materiaId}
+          if (partes_sm_vc.length >= 2) {
+            const estId_sm_vc = partes_sm_vc[1];
+            import("src/stores/pasantiasStore").then(({ usePasantiasStore }) => {
+              usePasantiasStore()
+                .fetch_progreso_estudiante_sm_vc(estId_sm_vc)
+                .catch((e) => console.warn("[WS Refetch] Error refrescando progreso:", e));
+            });
+          }
+        }
       })
       .catch((err_sm_vc) => {
         console.error("❌ ERROR FATAL EN PINIA:", err_sm_vc);

@@ -1,23 +1,3 @@
-<!-- ══════════════════════════════════════════════════════════════════
-     ConvFormEstudiante.vue — Formulario de envío de informe.
-
-     SPRINT 3: Flujo de Subida en 2 Pasos
-     ─────────────────────────────────────
-     1. POST /api/documentos (multipart) → obtiene documentoId
-     2. chatStore_sm_vc.enviarMensaje_sm_vc(contenido, materiaId, documentoId)
-        → emite por WebSocket a todos los participantes de la sala
-
-     Este patrón garantiza que el archivo ya esté persistido en el
-     servidor ANTES de que los demás participantes intenten descargarlo.
-
-     CASO DE USO: Sin requisito seleccionado → Caso A (adjunto libre).
-                  Con requisito seleccionado → Caso B (upsert de entrega).
-
-     FEATURE (2026-04-07): Pre-selección de requisito desde localStorage.
-     Si antes de navegar a esta vista se llamó a setRequisitoSeleccionado_sm_vc,
-     el q-select aparecerá pre-seleccionado al montar el componente.
-     Consumo único: el dato se auto-destruye tras ser leído.
-     ══════════════════════════════════════════════════════════════════ -->
 <template>
   <div class="action-panel_sm_vc">
     <div class="panel-header_sm_vc">
@@ -26,10 +6,6 @@
     </div>
 
     <div class="action-form_sm_vc">
-      <!-- ══ ESTADO DERIVADO: Estado Vacío ══
-           Se muestra cuando requisitosDisponibles_vc.length === 0.
-           Bloquea la UI entera: no tiene sentido mostrar el formulario
-           si no hay nada que el estudiante pueda entregar ahora mismo. -->
       <q-banner
         v-if="requisitosDisponibles_vc.length === 0"
         dense
@@ -44,14 +20,12 @@
         <strong>pendientes de revisión</strong> no requieren nueva entrega.
       </q-banner>
 
-      <!-- Formulario completo: solo visible cuando hay requisitos disponibles -->
       <template v-else>
         <div class="form-row_sm_vc">
           <div class="field-group_sm_vc">
             <label class="field-label_sm_vc">
               Requisito / Capítulo <span class="req-mark_sm_vc">*</span>
             </label>
-            <!-- q-select reactivo: filtra los requisitos por estado derivado -->
             <q-select
               v-model="form_sm_vc.requisito_id_sm_vc"
               :options="requisitosDisponibles_vc"
@@ -136,40 +110,24 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { getRequisitoSeleccionado_sm_vc } from "src/stores/requisitoContextoStore";
+import { ref, computed, onMounted, watch } from "vue";
+import { getRequisitoSeleccionado_sm_vc, useRequisitoContextoStore } from "src/stores/requisitoContextoStore";
+import { usePasantiasStore } from "src/stores/pasantiasStore";
 
 const props = defineProps({
   requisitos: { type: Array, default: () => [] },
-  /**
-   * mensajes: Timeline de la conversación activa (ya filtrada por materia).
-   * Fuente de verdad para el Estado Derivado de requisitosDisponibles_vc.
-   * Cada nodo DOCUMENTO carga estado_sm_vc (EstadoAprobacion de la Entrega).
-   */
+  requisitosAprobadosIniciales: { type: Array, default: () => [] }, // Ya no lo usamos para el disable, usamos Pinia
   mensajes: { type: Array, default: () => [] },
-  /**
-   * materiaId: clave de indexación en localStorage.
-   * Necesario para recuperar el requisito pre-seleccionado correcto
-   * cuando el usuario navega desde el dashboard o la tabla de progreso.
-   * También se usa como materiaId_sm_vc en el payload del WebSocket.
-   */
   materiaId: { type: [String, Number], default: null },
-  /**
-   * estudianteId: ID del estudiante propietario.
-   * Necesario para el Caso B: UPSERT atómico de Entrega.
-   * Se obtiene del JWT del usuario autenticado como fallback.
-   */
   estudianteId: { type: [String, Number], default: null },
-  /**
-   * bloqueado_sm_vc: true cuando el WebSocket está desconectado.
-   * Bloquea los inputs temporalmente hasta que se restablezca la conexión.
-   */
   bloqueado_sm_vc: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["enviar"]);
 
-/* ── Estado local ── */
+const contextoStore = useRequisitoContextoStore();
+const pasantiasStore = usePasantiasStore();
+
 const fileInput_sm_vc = ref(null);
 const archivo_sm_vc = ref(null);
 const enviando_sm_vc = ref(false);
@@ -181,7 +139,6 @@ const form_sm_vc = ref({
   comentario_sm_vc: "",
 });
 
-/* ── Handlers de UI ── */
 const handleFileSelect_sm_vc = (e_sm_vc) => {
   const file = e_sm_vc.target.files[0];
   if (file) {
@@ -191,73 +148,22 @@ const handleFileSelect_sm_vc = (e_sm_vc) => {
 };
 
 /* ═══════════════════════════════════════════════════════════════════
-   ESTADO DERIVADO — requisitosDisponibles_vc
+   ✅ FIX MAGIA REACTIVA: El "Despertador" del WebSocket.
+   Si llega un mensaje nuevo al chat, actualizamos silenciosamente el progreso.
+   ═══════════════════════════════════════════════════════════════════ */
+watch(() => props.mensajes, async (newVal, oldVal) => {
+  if (newVal.length > oldVal.length && props.estudianteId) {
+    await pasantiasStore.fetch_progreso_estudiante_sm_vc(props.estudianteId);
+  }
+}, { deep: true });
 
-   Fuente de verdad: props.mensajes (timeline ya filtrado por materia).
-   Compara el catálogo de requisitos exigidos contra el historial del
-   estudiante para construir el subconjunto accionable.
-
-   Regla de negocio:
-
-     INCLUIR en el q-select:
-       - Requisitos que NO aparecen en el timeline (nunca entregados)
-       - Requisitos con estado_sm_vc === 'REPROBADO' (debe corregir y reenviar)
-
-     EXCLUIR del q-select:
-       - estado_sm_vc === 'ENTREGADO'  → esperando revisión, no debe re-enviar
-       - estado_sm_vc === 'APROBADO'   → ya evaluado positivamente, cerrado
-
-   Algoritmo:
-     1. Construir un mapa {requisito_id → estado} desde los nodos DOCUMENTO
-        del timeline (solo del estudiante, no del profesor).
-     2. Para cada requisito del catálogo, verificar si existe en el mapa
-        y cuál es su estado.
+/* ═══════════════════════════════════════════════════════════════════
+   ✅ FIX: Requisitos accionables 100% en tiempo real.
    ═══════════════════════════════════════════════════════════════════ */
 const requisitosDisponibles_vc = computed(() => {
-  // Paso 1: construir mapa {requisito_id_sm_vc (string) → ultimo_estado_sm_vc}
-  // Iteramos TODOS los nodos DOCUMENTO del estudiante en el timeline.
-  // Si un mismo requisito tiene múiltiples entregas, el último nodo gana
-  // (el array viene ordenado por fecha_creacion ASC desde el backend).
-  const mapaEstados_sm_vc = new Map();
-
-  props.mensajes.forEach((nodo_sm_vc) => {
-    // Solo nodos de tipo DOCUMENTO del estudiante (no correcciones del profesor)
-    if (
-      nodo_sm_vc.tipo_nodo_sm_vc !== 'DOCUMENTO' ||
-      nodo_sm_vc.es_sistema_sm_vc ||
-      nodo_sm_vc.remitente_rol_sm_vc === 'PROFESOR'
-    ) return;
-
-    // Indexar por requisito_id. Si hay duplicados, el último estado prevalece.
-    if (nodo_sm_vc.requisito_id_sm_vc != null) {
-      mapaEstados_sm_vc.set(
-        String(nodo_sm_vc.requisito_id_sm_vc),
-        nodo_sm_vc.estado_sm_vc,
-      );
-    }
-  });
-
-  // Paso 2: filtrar el catálogo de requisitos
-  return props.requisitos.filter((req_sm_vc) => {
-    const ultimoEstado_sm_vc = mapaEstados_sm_vc.get(String(req_sm_vc.id_sm_vc));
-
-    // Caso A: nunca fue entregado → disponible
-    if (ultimoEstado_sm_vc === undefined) return true;
-
-    // Caso B: REPROBADO → debe reenviar corrección → disponible
-    if (ultimoEstado_sm_vc === 'REPROBADO') return true;
-
-    // Caso C: ENTREGADO → esperando revisión → NO disponible
-    // Caso D: APROBADO  → ya solucionado → NO disponible
-    return false;
-  });
+  return contextoStore.getRequisitosDisponiblesEstudiante(props.estudianteId, props.materiaId);
 });
 
-/* ══════════════════════════════════════════════════════════════
- *  FLUJO PRINCIPAL DE ENVÍO — Dumb Component Pattern
- *  El padre (DocumentConversacion) implementa el patrón de 2 pasos.
- *  Este componente solo recolecta datos y delega al orquestador.
- * ══════════════════════════════════════════════════════════════ */
 const enviarDatos_sm_vc = async () => {
   if (!archivo_sm_vc.value || !form_sm_vc.value.requisito_id_sm_vc) return;
   if (enviando_sm_vc.value) return;
@@ -272,15 +178,12 @@ const enviarDatos_sm_vc = async () => {
       requisito_id_sm_vc: form_sm_vc.value.requisito_id_sm_vc,
       version_sm_vc: form_sm_vc.value.version_sm_vc,
     });
-
-    // Limpiar formulario tras envío exitoso
     resetForm_sm_vc();
   } finally {
     enviando_sm_vc.value = false;
   }
 };
 
-/* ── Limpieza del formulario tras envío exitoso ── */
 const resetForm_sm_vc = () => {
   form_sm_vc.value = {
     requisito_id_sm_vc: null,
@@ -289,31 +192,14 @@ const resetForm_sm_vc = () => {
     comentario_sm_vc: "",
   };
   archivo_sm_vc.value = null;
-  // Resetear el input file (sin esto, no se puede subir el mismo archivo dos veces)
   if (fileInput_sm_vc.value) fileInput_sm_vc.value.value = "";
 };
 
-/* ══════════════════════════════════════════════════════════════════════
- *  PRE-SELECCIÓN desde contexto persistido en localStorage.
- *
- *  Al montar el componente leemos el ID del requisito que el usuario
- *  tenía la intención de subir (guardado antes de navegar aquí).
- *  getRequisitoSeleccionado_sm_vc hace consumo único: borra el dato
- *  después de leerlo para no contaminar sesiones futuras.
- *
- *  INTEGRACIÓN CON ESTADO DERIVADO:
- *  La búsqueda se hace sobre requisitosDisponibles_vc (no el catálogo completo)
- *  para garantizar que el requisito pre-seleccionado sea accionable.
- *  Si el requisito está en estado ENTREGADO o APROBADO, no se pre-selecciona.
- * ══════════════════════════════════════════════════════════════════════ */
 onMounted(() => {
   const idContexto_sm_vc = getRequisitoSeleccionado_sm_vc(props.materiaId);
   if (idContexto_sm_vc === null) return;
 
   const idStr_sm_vc = String(idContexto_sm_vc);
-
-  // Buscar en el arreglo DERIVADO (filtrado), no en el catálogo completo.
-  // Garantiza que no se pre-seleccione un requisito bloqueado (ENTREGADO/APROBADO).
   const requisito_sm_vc = requisitosDisponibles_vc.value.find(
     (r_sm_vc) => String(r_sm_vc.id_sm_vc) === idStr_sm_vc,
   );
@@ -324,91 +210,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.action-panel_sm_vc {
-  border-top: 1px solid var(--sn-borde);
-  padding: 1.25rem;
-  background: var(--sn-fondo-elevado);
-}
-.panel-header_sm_vc {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.68rem;
-  color: var(--sn-acento-sec);
-  letter-spacing: 0.06em;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-}
-.action-form_sm_vc {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-}
-.form-row_sm_vc {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: flex-end;
-}
-.field-group_sm_vc {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.field-label_sm_vc {
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--sn-texto-terciario);
-  font-weight: 500;
-}
-.req-mark_sm_vc {
-  color: var(--sn-error-claro);
-}
-:deep(.sntnl-select_sm_vc .q-field__control),
-:deep(.sntnl-input_sm_vc .q-field__control) {
-  background: var(--sn-surface-alpha) !important;
-  border: 1px solid var(--sn-borde) !important;
-  border-radius: 6px !important;
-}
-:deep(.sntnl-select_sm_vc .q-field__native),
-:deep(.sntnl-input_sm_vc .q-field__native) {
-  color: var(--sn-texto-principal) !important;
-  font-size: 0.78rem !important;
-  font-family: var(--sn-font-mono) !important;
-}
-.mini-upload_sm_vc {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--sn-surface-alpha);
-  border: 1px dashed rgba(111, 255, 233, 0.18);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.72rem;
-  color: var(--sn-texto-secundario);
-  transition: all 0.15s;
-}
-.mini-upload_sm_vc:hover {
-  border-color: rgba(111, 255, 233, 0.4);
-  color: var(--sn-primario);
-}
-.send-btn_sm_vc {
-  background: var(--sn-surface-active) !important;
-  color: var(--sn-primario) !important;
-  border: 1px solid rgba(111, 255, 233, 0.25) !important;
-  font-size: 0.72rem !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
-  align-self: flex-start;
-}
-/* Estado Vacío — q-banner de "Sin requisitos pendientes" */
-.empty-banner-requis_sm_vc {
-  background: rgba(111, 255, 233, 0.06) !important;
-  border: 1px solid rgba(111, 255, 233, 0.18) !important;
-  border-radius: 8px !important;
-  color: var(--sn-texto-secundario) !important;
-  font-size: 0.75rem !important;
-}
+.action-panel_sm_vc { border-top: 1px solid var(--sn-borde); padding: 1.25rem; background: var(--sn-fondo-elevado); }
+.panel-header_sm_vc { display: flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; color: var(--sn-acento-sec); letter-spacing: 0.06em; margin-bottom: 1rem; text-transform: uppercase; }
+.action-form_sm_vc { display: flex; flex-direction: column; gap: 0.875rem; }
+.form-row_sm_vc { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; align-items: flex-end; }
+.field-group_sm_vc { display: flex; flex-direction: column; gap: 0.3rem; }
+.field-label_sm_vc { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sn-texto-terciario); font-weight: 500; }
+.req-mark_sm_vc { color: var(--sn-error-claro); }
+:deep(.sntnl-select_sm_vc .q-field__control), :deep(.sntnl-input_sm_vc .q-field__control) { background: var(--sn-surface-alpha) !important; border: 1px solid var(--sn-borde) !important; border-radius: 6px !important; }
+:deep(.sntnl-select_sm_vc .q-field__native), :deep(.sntnl-input_sm_vc .q-field__native) { color: var(--sn-texto-principal) !important; font-size: 0.78rem !important; font-family: var(--sn-font-mono) !important; }
+.mini-upload_sm_vc { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--sn-surface-alpha); border: 1px dashed rgba(111, 255, 233, 0.18); border-radius: 6px; cursor: pointer; font-size: 0.72rem; color: var(--sn-texto-secundario); transition: all 0.15s; }
+.mini-upload_sm_vc:hover { border-color: rgba(111, 255, 233, 0.4); color: var(--sn-primario); }
+.send-btn_sm_vc { background: var(--sn-surface-active) !important; color: var(--sn-primario) !important; border: 1px solid rgba(111, 255, 233, 0.25) !important; font-size: 0.72rem !important; font-weight: 600 !important; border-radius: 6px !important; align-self: flex-start; }
+.empty-banner-requis_sm_vc { background: rgba(111, 255, 233, 0.06) !important; border: 1px solid rgba(111, 255, 233, 0.18) !important; border-radius: 8px !important; color: var(--sn-texto-secundario) !important; font-size: 0.75rem !important; }
 </style>

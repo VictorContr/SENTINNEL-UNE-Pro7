@@ -128,6 +128,8 @@
             :materia-id="props.materiaId"
             :estudiante-id="idEstudianteFinal_sm_vc"
             :bloqueado_sm_vc="!chatStore_sm_vc.conectado_sm_vc"
+            :mensajes="mensajesOrdenados_sm_vc"
+            :requisitos-aprobados-iniciales="requisitosAprobadosIniciales_sm_vc"
             @enviar="handleEnviarInforme_sm_vc"
           />
 
