@@ -14,9 +14,6 @@ export class PasantiasService_sm_vc {
 
   async getMaterias_sm_vc() {
     // ✅ FIX: Filtrar por el período ACTIVO.
-    // Sin este filtro, el endpoint devuelve materias de todos los períodos históricos,
-    // causando que el frontend del DialogNuevoUsuario y el selector muestren
-    // materias obsoletas de semestres anteriores.
     const config_sm_vc = await this.prisma.configuracionSistema.findFirst({
       where: { id_sm_vc: 1 },
       select: { periodo_id_sm_vc: true },
@@ -30,8 +27,6 @@ export class PasantiasService_sm_vc {
       where: { periodo_id_sm_vc: config_sm_vc.periodo_id_sm_vc },
       include: {
         requisitos: { orderBy: { posicion_sm_vc: 'asc' } },
-        // Incluir el período en la respuesta para que el frontend
-        // pueda construir el label correctamente (ej. "P-165")
         periodo: { select: { nombre_sm_vc: true, descripcion_sm_vc: true } },
       },
       orderBy: { posicion_sm_vc: 'asc' },
@@ -69,7 +64,6 @@ export class PasantiasService_sm_vc {
     const materiaAnterior = await this.prisma.materia.findFirst({
       where: { 
         posicion_sm_vc: materiaActual.posicion_sm_vc - 1,
-        // Usa periodo_id_sm_vc (FK real) en lugar del string obsoleto
         periodo_id_sm_vc: materiaActual.periodo_id_sm_vc,
       }
     });
@@ -105,12 +99,7 @@ export class PasantiasService_sm_vc {
   }
 
   /**
-   * Crear una entrega física con archivo binario y trazabilidad
-   */
-  /**
    * Crear o actualizar una entrega física con archivo binario y trazabilidad
-   * Implementa lógica de versiones: un requisito puede tener múltiples documentos (historial)
-   * pero solo un registro de Entrega (estado actual).
    */
   async crearEntrega_sm_vc(
     usuarioId: number,
@@ -157,7 +146,6 @@ export class PasantiasService_sm_vc {
 
     // ── Transacción Atómica ──
     const entrega = await this.prisma.$transaction(async (tx) => {
-      // 1. Upsert de la entrega (Crear si no existe, actualizar estado si existe)
       const entP_sm_vc = await tx.entrega.upsert({
         where: {
           estudiante_id_sm_vc_requisito_id_sm_vc: {
@@ -171,13 +159,11 @@ export class PasantiasService_sm_vc {
           estado_sm_vc: EstadoAprobacion.ENTREGADO,
         },
         update: {
-          // Si se vuelve a subir, el estado pasa obligatoriamente a ENTREGADO (especialmente si estaba REPROBADO)
           estado_sm_vc: EstadoAprobacion.ENTREGADO,
           fecha_actualizacion_sm_vc: new Date(),
         },
       });
 
-      // 2. Registrar el nuevo documento físico (Siempre se crea una nueva fila para el historial)
       await tx.documento.create({
         data: {
           entrega_id_sm_vc: entP_sm_vc.id_sm_vc,
@@ -224,27 +210,52 @@ export class PasantiasService_sm_vc {
     observaciones?: string,
     archivoCorreccion?: Express.Multer.File
   ) {
-    const entrega = await this.prisma.entrega.findUnique({
-      where: { id_sm_vc: entregaId },
+    let id_real_sm_vc = entregaId;
+
+    let entrega = await this.prisma.entrega.findUnique({
+      where: { id_sm_vc: id_real_sm_vc },
       include: { requisito: { include: { materia: true } }, estudiante: true }
     });
 
-    if (!entrega) throw new NotFoundException('Entrega no encontrada.');
+    // Fallback de Documento: Si no es ID de Entrega, buscar si es de Documento
+    if (!entrega) {
+      const documentoFallback = await this.prisma.documento.findUnique({
+        where: { id_sm_vc: entregaId },
+      });
+
+      if (documentoFallback && documentoFallback.entrega_id_sm_vc) {
+        id_real_sm_vc = documentoFallback.entrega_id_sm_vc;
+        entrega = await this.prisma.entrega.findUnique({
+          where: { id_sm_vc: id_real_sm_vc },
+          include: { requisito: { include: { materia: true } }, estudiante: true }
+        });
+      }
+    }
+
+    if (!entrega) throw new NotFoundException('Entrega/Documento no encontrado.');
+
+    // ✅ FIX MAGISTRAL: Mapeador de Enum
+    // El frontend manda "OBSERVACIONES", pero la base de datos solo entiende "REPROBADO" (u otros validos).
+    // Usamos 'as any' para bypassear a TypeScript, ya que en tiempo de ejecución llega un string puro.
+    let estadoReal_sm_vc: any = decision;
+    if (estadoReal_sm_vc === 'OBSERVACIONES') {
+      estadoReal_sm_vc = EstadoAprobacion.REPROBADO; 
+    }
 
     return await this.prisma.$transaction(async (tx) => {
       // 1. Crear/Actualizar Evaluación
       const evaluacion = await tx.evaluacion.upsert({
-        where: { entrega_id_sm_vc: entregaId },
+        where: { entrega_id_sm_vc: id_real_sm_vc },
         update: {
-          decision_sm_vc: decision,
+          decision_sm_vc: estadoReal_sm_vc, // <-- Aquí inyectamos el estado limpio
           nota_sm_dec: nota ? parseFloat(nota.toFixed(2)) : null,
           observaciones_sm_vc: observaciones,
           profesor_id_sm_vc: profesorId,
         },
         create: {
-          entrega_id_sm_vc: entregaId,
+          entrega_id_sm_vc: id_real_sm_vc,
           profesor_id_sm_vc: profesorId,
-          decision_sm_vc: decision,
+          decision_sm_vc: estadoReal_sm_vc, // <-- Aquí también
           nota_sm_dec: nota ? parseFloat(nota.toFixed(2)) : null,
           observaciones_sm_vc: observaciones,
         }
@@ -252,15 +263,15 @@ export class PasantiasService_sm_vc {
 
       // 2. Actualizar estado de la Entrega
       await tx.entrega.update({
-        where: { id_sm_vc: entregaId },
-        data: { estado_sm_vc: decision }
+        where: { id_sm_vc: id_real_sm_vc },
+        data: { estado_sm_vc: estadoReal_sm_vc } // <-- Y aquí
       });
 
       // 3. Documento de corrección (Opcional)
       if (archivoCorreccion) {
         await tx.documento.create({
           data: {
-            entrega_id_sm_vc: entregaId,
+            entrega_id_sm_vc: id_real_sm_vc,
             usuario_subida_id_sm_vc: profesorId,
             tipo_sm_vc: TipoDocumento.CORRECCION_PROFESOR,
             nombre_archivo_sm_vc: archivoCorreccion.originalname,
@@ -272,10 +283,12 @@ export class PasantiasService_sm_vc {
       }
 
       // 4. Log de trazabilidad con identidad del Profesor
-      const prefijoLog = decision === EstadoAprobacion.APROBADO ? '✅ Aprobado' : (decision === EstadoAprobacion.REPROBADO ? '❌ Reprobado' : '📝 Observaciones');
+      const prefijoLog = decision === EstadoAprobacion.APROBADO as any 
+        ? '✅ Aprobado' 
+        : (estadoReal_sm_vc === EstadoAprobacion.REPROBADO && decision !== 'OBSERVACIONES' as any ? '❌ Reprobado' : '📝 Observaciones');
+      
       const contenidoMensaje = `${prefijoLog}: Requisito **${entrega.requisito.nombre_sm_vc}**.\n\n**Nota:** ${nota || 'N/A'}\n**Observaciones:** ${observaciones || 'Sin observaciones.'}`;
 
-      // [FIX] Propagar identidad del Profesor para que el mensaje aparezca con birrete
       await this.conversacionesService.registrarMensajeManual_sm_vc({
         estudianteId: entrega.estudiante_id_sm_vc,
         contenido_sm_vc: contenidoMensaje,
@@ -290,7 +303,6 @@ export class PasantiasService_sm_vc {
 
   /**
    * Evaluación masiva o granular de requisitos.
-   * DT-005: Si se aprueba toda la materia, se genera un log consolidado con la nota global.
    */
   async evaluarRequisitosBulk_sm_vc(
     profesorId: number,
@@ -316,7 +328,6 @@ export class PasantiasService_sm_vc {
 
     await this.prisma.$transaction(async (tx) => {
       for (const reqId of requisitosIds) {
-        // 1. Forzar Entrega (UPSERT)
         const entP = await tx.entrega.upsert({
           where: {
             estudiante_id_sm_vc_requisito_id_sm_vc: {
@@ -332,7 +343,6 @@ export class PasantiasService_sm_vc {
           }
         });
 
-        // 2. Forzar Evaluación (UPSERT)
         await tx.evaluacion.upsert({
           where: { entrega_id_sm_vc: entP.id_sm_vc },
           update: {
@@ -350,7 +360,6 @@ export class PasantiasService_sm_vc {
       }
     });
 
-    // 3. Trazabilidad con identidad del Profesor
     let mensajeLog = '';
     if (esMateriaCompleta) {
       mensajeLog = `🏆 **Materia Aprobada en Totalidad**\n\nEl profesor ha aprobado todos los requisitos de **${materia.nombre_sm_vc}**.\n\n**Calificación Global:** ${notaGlobal}\n**Comentario:** ${comentario || 'Ninguno'}`;
@@ -358,7 +367,6 @@ export class PasantiasService_sm_vc {
       mensajeLog = `✅ **Aprobación de Requisitos (${requisitosIds.length}/${materia.requisitos.length})**\n\nEl profesor ha aprobado un lote de requisitos de la materia.\n\n${comentario || ''}`;
     }
 
-    // [FIX] Propagar identidad del Profesor para el icono de birrete
     await this.conversacionesService.registrarMensajeManual_sm_vc({
       estudianteId: estudianteId,
       contenido_sm_vc: mensajeLog,
@@ -387,14 +395,6 @@ export class PasantiasService_sm_vc {
       throw new NotFoundException('Estudiante o materia activa no encontrados');
     }
 
-    // ✅ FIX: Filtrar materias estrictamente por el período ACTIVO.
-    // El bug de duplicación ocurre cuando el estudiante cambia de período:
-    // la consulta sin filtro devuelve las 4 materias del período VIEJO y las 4 del NUEVO
-    // juntas (8 registros), rompiendo el stepper del dashboard.
-    //
-    // Estrategia: leemos el periodo_id de la materia activa del estudiante.
-    // Esto garantiza que aunque ConfiguracionSistema haya cambiado ya,
-    // mostramos las materias del período al que pertenece su materia activa actual.
     const periodoDeLaMateria_sm_vc = estudianteBase.materiaActiva.periodo_id_sm_vc;
 
     const materias = await this.prisma.materia.findMany({
@@ -403,8 +403,6 @@ export class PasantiasService_sm_vc {
       orderBy:  { posicion_sm_vc: 'asc' },
     });
 
-    // Validación de integridad: en un período saludable siempre deben existir
-    // exactamente las posiciones configuradas (generalmente 4).
     if (materias.length === 0) {
       throw new NotFoundException(
         `No se encontraron materias para el período activo del estudiante (periodo_id=${periodoDeLaMateria_sm_vc}).`,
@@ -427,7 +425,6 @@ export class PasantiasService_sm_vc {
       const aprobados_list = entregasMateria.filter(e => e.estado_sm_vc === EstadoAprobacion.APROBADO);
       const aprobados = aprobados_list.length;
 
-      // Intentar obtener la nota global si existe en alguna evaluación de la materia
       const evalConNota = aprobados_list.find(e => e.evaluacion?.nota_sm_dec != null);
       const notaMateria_sm_dec = (evalConNota && evalConNota.evaluacion) 
         ? parseFloat(evalConNota.evaluacion.nota_sm_dec!.toString()) 
@@ -457,7 +454,6 @@ export class PasantiasService_sm_vc {
         nombre_sm_vc:    materia.nombre_sm_vc,
         orden_sm_int:    materia.posicion_sm_vc,
         posicion_sm_vc:  materia.posicion_sm_vc,
-        // Exponemos el ID del período (FK real) en lugar del string obsoleto
         periodo_id_sm_vc: materia.periodo_id_sm_vc,
         estado_aprobacion_sm_vc: estadoAprobacion,
         progreso_decimal: progresoDecimal,
