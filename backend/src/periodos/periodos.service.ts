@@ -197,7 +197,7 @@ export class PeriodosAcademicosService {
       data:  { estado_activo_sm_vc: false },
     });
 
-    const periodo_sm_vc = await this.findOne_sm_vc(id);
+    await this.findOne_sm_vc(id);
 
     try {
       await this.prisma.configuracionSistema.update({
@@ -297,7 +297,6 @@ export class PeriodosAcademicosService {
             requisitos: {
               include: {
                 entregas: {
-                  where:   { estudiante_id_sm_vc: undefined }, 
                   orderBy: { fecha_actualizacion_sm_vc: 'desc' },
                   take:    1,
                 },
@@ -312,11 +311,17 @@ export class PeriodosAcademicosService {
     });
 
     for (const estudiante of estudiantes) {
-      // Si por alguna razón la data está corrupta y no tiene materia, saltar
       if (!estudiante.materiaActiva) continue;
 
-      const posicionActual = estudiante.materiaActiva.posicion_sm_vc;
+      // ✅ FIX DEFINITIVO 1: El Escudo de Intocables
+      // Si el estudiante ya tiene el deploy habilitado, NO LO TOCAMOS.
+      // Se queda con su materia vieja y sus requisitos viejos para no perder el progreso del 100%.
+      if (estudiante.puede_hacer_deploy_sm_vc) {
+        console.log(`[Reasignación] Saltando estudiante ID ${estudiante.id_sm_vc}. Ya es candidato a Deploy.`);
+        continue;
+      }
 
+      const posicionActual = estudiante.materiaActiva.posicion_sm_vc;
       const requisitosDeMateria = estudiante.materiaActiva.requisitos;
       const todosAprobados = requisitosDeMateria.length > 0 &&
         requisitosDeMateria.every((req) => {
@@ -326,20 +331,24 @@ export class PeriodosAcademicosService {
           return entrega?.estado_sm_vc === EstadoAprobacion.APROBADO;
         });
 
-let nuevaPosicion: number;
-      let nuevosIntentos: number;
-      let habilitarDeploy = estudiante.puede_hacer_deploy_sm_vc; // Mantenemos su estado actual
+      // ✅ FIX DEFINITIVO 2: El que se gradúa en el último segundo
+      // Si aprobó todos los requisitos de Trabajo de Grado II justo antes de cambiar el periodo
+      if (todosAprobados && posicionActual === maxPosicion) {
+        await tx.estudiante.update({
+          where: { id_sm_vc: estudiante.id_sm_vc },
+          data: { puede_hacer_deploy_sm_vc: true },
+        });
+        console.log(`[Reasignación] Estudiante ID ${estudiante.id_sm_vc} alcanzó el Deploy. Anclado a su periodo actual.`);
+        continue; // Terminamos con él, no lo migramos a la "nueva" Posición 4 vacía.
+      }
 
+      let nuevaPosicion: number;
+      let nuevosIntentos: number;
+
+      // Para los mortales normales: si aprobó, avanza. Si no, repite.
       if (todosAprobados) {
         nuevaPosicion = posicionActual + 1;
         nuevosIntentos = 1; 
-
-        // ✅ FIX: Si el tesista aprobó la última fase (Pos 4)
-        if (nuevaPosicion > maxPosicion) {
-          nuevaPosicion = maxPosicion; // Lo anclamos en la 4
-          nuevosIntentos = estudiante.intentos_materia_sm_vc; // Mantiene su intento final
-          habilitarDeploy = true; // ✅ Le damos luz verde para graduarse (Deploy)
-        }
       } else {
         nuevaPosicion  = posicionActual;
         nuevosIntentos = estudiante.intentos_materia_sm_vc + 1;
@@ -349,18 +358,15 @@ let nuevaPosicion: number;
 
       if (!nuevaMateriaId) {
         throw new InternalServerErrorException(
-          `[Reasignación] No se encontró materia en posición ${nuevaPosicion} para el nuevo período. ` +
-          `Estudiante ID: ${estudiante.id_sm_vc}. Operación cancelada.`,
+          `[Reasignación] No se encontró materia en posición ${nuevaPosicion} para el nuevo período. Operación cancelada.`,
         );
       }
 
-      // ✅ FIX: Actualizamos la BD usando SOLO las columnas que de verdad existen
       await tx.estudiante.update({
         where: { id_sm_vc: estudiante.id_sm_vc },
         data: {
           materia_activa_id_sm_vc: nuevaMateriaId,
           intentos_materia_sm_vc:  nuevosIntentos,
-          puede_hacer_deploy_sm_vc: habilitarDeploy, // El flag real para los que aprueban todo
         },
       });
 
@@ -380,11 +386,8 @@ let nuevaPosicion: number;
         },
       });
 
-// ✅ FIX: Actualizamos el mensaje del bot para que lea la variable correcta
       const accion_sm_vc = todosAprobados
-        ? (habilitarDeploy) 
-          ? `✅ Felicitaciones, has culminado tus pasantías. Ya tienes habilitado el módulo de Deploy en Producción.` 
-          : `✅ Has avanzado al siguiente nivel (Posición ${nuevaPosicion}).`
+        ? `✅ Has avanzado al siguiente nivel (Posición ${nuevaPosicion}).`
         : `🔄 Repetirás este nivel (Posición ${nuevaPosicion}, Intento #${nuevosIntentos}).`;
 
       await tx.mensaje.create({
@@ -401,7 +404,7 @@ let nuevaPosicion: number;
     }
 
     console.log(
-      `[PeriodosService] Reasignación completa: ${estudiantes.length} estudiante(s) procesado(s).`,
+      `[PeriodosService] Reasignación completa.`,
     );
   }
 }
