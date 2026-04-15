@@ -111,6 +111,7 @@ export class AdminService {
         empresa: string | null;
         titulo_proyecto: string | null;
       }[] = [];
+
       wsUsuarios.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // Saltamos la cabecera
         const emailCell = row.getCell(4).value;
@@ -119,17 +120,17 @@ export class AdminService {
             : String(emailCell || '');
 
         rowsUsuarios.push({
-          nombre: String(row.getCell(1).value || ''),
-          apellido: String(row.getCell(2).value || ''),
-          cedula: String(row.getCell(3).value || ''),
-          correo: emailStr,
-          telefono: row.getCell(5).value ? String(row.getCell(5).value) : null,
-          clave: String(row.getCell(6).value || ''),
-          rol: String(row.getCell(7).value || 'ESTUDIANTE').toUpperCase(),
+          nombre: String(row.getCell(1).value || '').trim(),
+          apellido: String(row.getCell(2).value || '').trim(),
+          cedula: String(row.getCell(3).value || '').trim(),
+          correo: emailStr.trim().toLowerCase(),
+          telefono: row.getCell(5).value ? String(row.getCell(5).value).trim() : null,
+          clave: String(row.getCell(6).value || '').trim(),
+          rol: String(row.getCell(7).value || 'ESTUDIANTE').trim().toUpperCase(),
           profesor_asignado_id: Number(row.getCell(8).value) || null,
-          tutor_empresarial: row.getCell(9).value ? String(row.getCell(9).value) : null,
-          empresa: row.getCell(10).value ? String(row.getCell(10).value) : null,
-          titulo_proyecto: row.getCell(11).value ? String(row.getCell(11).value) : null,
+          tutor_empresarial: row.getCell(9).value ? String(row.getCell(9).value).trim() : null,
+          empresa: row.getCell(10).value ? String(row.getCell(10).value).trim() : null,
+          titulo_proyecto: row.getCell(11).value ? String(row.getCell(11).value).trim() : null,
         });
       });
 
@@ -148,6 +149,59 @@ export class AdminService {
           posicion: Number(row.getCell(4).value) || 0,
         });
       });
+
+      // PRE-VALIDACIÓN ESTRICTA
+      const erroresValidacion: string[] = [];
+      const cedulasExcel = new Set<string>();
+      const correosExcel = new Set<string>();
+
+      // Obtener usuarios existentes en BD
+      const usuariosDb = await this.prisma.usuario.findMany({ select: { cedula_sm_vc: true, correo_sm_vc: true } });
+      const cedulasDbSet = new Set(usuariosDb.map((u) => u.cedula_sm_vc));
+      const correosDbSet = new Set(usuariosDb.map((u) => u.correo_sm_vc));
+
+      for (let i = 0; i < rowsUsuarios.length; i++) {
+        const u = rowsUsuarios[i];
+        const f = i + 2;
+
+        if (!u.nombre) erroresValidacion.push(`Fila ${f}: Faltó el nombre.`);
+        if (!u.apellido) erroresValidacion.push(`Fila ${f}: Faltó el apellido.`);
+        if (!u.cedula) erroresValidacion.push(`Fila ${f}: Faltó la cédula.`);
+        if (!u.correo) erroresValidacion.push(`Fila ${f}: Faltó el correo.`);
+        
+        if (!['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(u.rol)) {
+          erroresValidacion.push(`Fila ${f}: El rol "${u.rol}" es inválido. Seleccione ADMIN, PROFESOR o ESTUDIANTE.`);
+        }
+
+        if (cedulasExcel.has(u.cedula)) {
+          erroresValidacion.push(`Fila ${f}: La cédula ${u.cedula} está repetida dentro de este mismo archivo de Excel.`);
+        } else if (u.cedula) {
+          cedulasExcel.add(u.cedula);
+        }
+
+        if (correosExcel.has(u.correo)) {
+          erroresValidacion.push(`Fila ${f}: El correo ${u.correo} está repetido dentro de este mismo archivo de Excel.`);
+        } else if (u.correo) {
+          correosExcel.add(u.correo);
+        }
+
+        // Si el modo es 'continuar', validamos que no existan en la BD (para evitar duplicados o fallos silentes)
+        if (modo === 'continuar') {
+          if (cedulasDbSet.has(u.cedula)) {
+            erroresValidacion.push(`Fila ${f}: La cédula ${u.cedula} ya existe previamente en el sistema.`);
+          }
+          if (correosDbSet.has(u.correo)) {
+            erroresValidacion.push(`Fila ${f}: El correo ${u.correo} ya existe previamente en el sistema.`);
+          }
+        }
+      }
+
+      if (erroresValidacion.length > 0) {
+        throw new BadRequestException({
+          message: 'Se encontraron errores de validación. La carga completa fue cancelada.',
+          detalles: erroresValidacion
+        });
+      }
 
       for (const u of rowsUsuarios) {
         const passwordToHash = u.clave ? u.clave : 'Est@2025!';
@@ -180,10 +234,6 @@ export class AdminService {
 
         for (const u of rowsUsuarios) {
           const rolClean = ['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(u.rol) ? (u.rol as RolUsuario) : RolUsuario.ESTUDIANTE;
-          
-          // Verificar si cedula o correo ya existe (en caso de modo 'continuar' y choques)
-          const existe = await tx.usuario.findFirst({ where: { OR: [{ cedula_sm_vc: u.cedula }, { correo_sm_vc: u.correo }] } });
-          if (existe) continue;
 
           const userCreate = await tx.usuario.create({
             data: {
@@ -292,6 +342,34 @@ export class AdminService {
     return {
       buffer: new Uint8Array(buffer),
       fileName: `backup_${tipo}_${new Date().getTime()}.xlsx`
+    };
+  }
+
+  /**
+   * Consulta duplicados para pre-validar en el frontend.
+   */
+  async validarDuplicados(cedulas: string[], correos: string[]) {
+    // Si llegan listas vacías para evitar consultas innecesarias
+    if ((cedulas?.length || 0) === 0 && (correos?.length || 0) === 0) {
+      return { cedulasDuplicadas: [], correosDuplicadas: [] };
+    }
+
+    const cedulasValidas = cedulas.filter(c => c && c.trim() !== '');
+    const correosValidos = correos.filter(c => c && c.trim() !== '');
+
+    const usuariosPorCedula = cedulasValidas.length > 0 ? await this.prisma.usuario.findMany({
+      where: { cedula_sm_vc: { in: cedulasValidas } },
+      select: { cedula_sm_vc: true }
+    }) : [];
+
+    const usuariosPorCorreo = correosValidos.length > 0 ? await this.prisma.usuario.findMany({
+      where: { correo_sm_vc: { in: correosValidos } },
+      select: { correo_sm_vc: true }
+    }) : [];
+
+    return {
+      cedulasDuplicadas: usuariosPorCedula.map(u => u.cedula_sm_vc),
+      correosDuplicadas: usuariosPorCorreo.map(u => u.correo_sm_vc)
     };
   }
 }
