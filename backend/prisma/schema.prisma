@@ -119,8 +119,6 @@ model Materia {
   estudiantes       Estudiante[]
   requisitos        Requisito[]
   mensajes          Mensaje[]
-  periodo           PeriodoAcademico @relation(fields: [periodo_id_sm_vc], references: [id_sm_vc])
-
   @@unique([posicion_sm_vc, periodo_id_sm_vc])
   @@map("tdmateria_sm_vc")
 }
