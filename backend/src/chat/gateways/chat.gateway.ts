@@ -445,6 +445,38 @@ export class ChatGateway_sm_vc
     }
   }
 
+  @OnEvent('entrega.actualizada_sm_vc', { async: true })
+  handleEntregaActualizada_sm_vc(payload_sm_vc: {
+    estudianteId_sm_vc: number;
+    materiaId_sm_vc: number;
+    requisito_id_sm_vc: number;
+    estado_sm_vc: string;
+    documento_id_original: number;
+    entrega_id_real: number;
+  }): void {
+    try {
+      // 🚨 La sala a la que debemos emitir. FORMATO EXACTO: conv:{estudianteId}:{materiaId}
+      const roomId_sm_vc = `conv:${payload_sm_vc.estudianteId_sm_vc}:${payload_sm_vc.materiaId_sm_vc}`;
+
+      this.logger_sm_vc.warn(
+        `🔥 [GATEWAY] Atrapé el evento! Emitiendo a la sala: ${roomId_sm_vc} con payload: ${JSON.stringify(payload_sm_vc)}`
+      );
+
+      this.server_sm_vc
+        .to(roomId_sm_vc)
+        .emit('entrega_updated_sm_vc', {
+          ...payload_sm_vc,
+          documento_id_original: payload_sm_vc.documento_id_original // CRÍTICO PARA EL FRONTEND
+        });
+
+    } catch (err_sm_vc) {
+      this.logger_sm_vc.error(
+        `[handleEntregaActualizada_sm_vc] Error: ${(err_sm_vc as Error).message}`,
+        (err_sm_vc as Error).stack,
+      );
+    }
+  }
+
   // ══════════════════════════════════════════════════════════════
   // HELPERS PRIVADOS
   // ══════════════════════════════════════════════════════════════

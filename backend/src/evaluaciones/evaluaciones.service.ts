@@ -135,6 +135,14 @@ export class EvaluacionesService {
         dto.observaciones_sm_vc,
       );
 
+      this.eventEmitter_sm_vc.emit('entrega.actualizada_sm_vc', {
+        estudianteId_sm_vc: entrega.estudiante_id_sm_vc,
+        materiaId_sm_vc: entrega.requisito.materia_id_sm_vc,
+        entrega_id_sm_vc: dto.entrega_id_sm_vc,
+        estado_sm_vc: dto.decision_sm_vc,
+        requisito_id_sm_vc: entrega.requisito_id_sm_vc,
+      });
+
       // Verificar desbloqueo de materia
       let materiaDesbloqueada: string | null = null;
       if (dto.decision_sm_vc === EstadoAprobacion.APROBADO) {

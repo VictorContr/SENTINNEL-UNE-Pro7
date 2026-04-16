@@ -215,6 +215,9 @@ watch(() => form_sm_vc.value.estado_evaluacion_sm_vc, (nuevoEstado_sm_vc) => {
 
 const documentosPendientesEvaluar_vc = computed(() => {
   return props.mensajes.filter((nodo_sm_vc) => {
+    // 🛡️ Filtro Anti-Mocks: Ignorar registros generados por Seed
+    if (nodo_sm_vc.mock_sm_vc === true) return false;
+    
     if (nodo_sm_vc.tipo_nodo_sm_vc !== 'DOCUMENTO') return false;
     if (nodo_sm_vc.es_sistema_sm_vc || nodo_sm_vc.remitente_rol_sm_vc === 'PROFESOR') return false;
     return nodo_sm_vc.estado_sm_vc === 'ENTREGADO';

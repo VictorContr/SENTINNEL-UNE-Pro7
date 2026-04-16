@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EstadoAprobacion, TipoDocumento } from '@prisma/client';
 import { ConversacionesService } from '../conversaciones/conversaciones.service';
 import { DocumentosService } from '../documentos/documentos.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class PasantiasService_sm_vc {
@@ -10,6 +11,7 @@ export class PasantiasService_sm_vc {
     private readonly prisma: PrismaService,
     private readonly conversacionesService: ConversacionesService,
     private readonly documentosService: DocumentosService,
+    private readonly eventEmitter_sm_vc: EventEmitter2,
   ) {}
 
   async getMaterias_sm_vc() {
@@ -295,6 +297,15 @@ export class PasantiasService_sm_vc {
         materiaId: entrega.requisito.materia_id_sm_vc,
         remitenteId: profesorId,
         remitenteRol: 'PROFESOR',
+      });
+
+      this.eventEmitter_sm_vc.emit('entrega.actualizada_sm_vc', {
+        estudianteId_sm_vc: entrega.estudiante_id_sm_vc,
+        materiaId_sm_vc: entrega.requisito.materia_id_sm_vc,
+        requisito_id_sm_vc: entrega.requisito_id_sm_vc,
+        estado_sm_vc: estadoReal_sm_vc, // APROBADO o REPROBADO
+        documento_id_original: entregaId, // 🚨 CRÍTICO: El ID que el frontend mandó inicialmente
+        entrega_id_real: id_real_sm_vc
       });
 
       return evaluacion;
