@@ -100,4 +100,14 @@ export class AdminController {
 
     return new StreamableFile(buffer);
   }
+
+  /**
+   * Valida array de cedulas y correos contra la base de datos para detectar pre-duplicados
+   * POST /admin/validar-duplicados
+   */
+  @Post('validar-duplicados')
+  @Roles_sm_vc(RolUsuario.ADMIN)
+  async validarDuplicados(@Body() data: { cedulas: string[], correos: string[] }) {
+    return this.adminService.validarDuplicados(data.cedulas, data.correos);
+  }
 }

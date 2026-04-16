@@ -1,3 +1,35 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     ConvFormProfesor.vue — Formulario de corrección y evaluación.
+     Incluye el modal de aprobación granular de requisitos.
+
+     SPRINT 3: Flujo de Subida en 2 Pasos (Igual que ConvFormEstudiante)
+     ─────────────────────────────────────────────────────────────────────
+     1. POST /api/documentos (multipart) → obtiene documentoId
+     2. chatStore_sm_vc.enviarMensaje_sm_vc(contenido, materiaId, documentoId, 'DOCUMENTO')
+        → emite por WS a todos los clientes de la sala
+
+     El archivo de corrección del profesor usa tipo_sm_vc='CORRECCION_PROFESOR'.
+     Como el profesor adjunta correcciones (no crea Entregas), usamos
+     el Caso A (adjunto flotante, sin entrega_id ni requisito_id).
+
+     TAREA 2: Modal de Vinculación de Entregas
+     ─────────────────────────────────────────────────────────────────────
+     Al seleccionar "Observación" o "Aprobar Item", se dispara un modal
+     que lista los mensajes DOCUMENTO del alumno que no han sido evaluados
+     (!msg.evaluacion_estado_sm_vc). Solo se puede seleccionar uno a la vez.
+     Al confirmar, se adjunta id_entrega_sm_vc al payload del backend.
+
+     TAREA 3: Acción Global de Reprobar
+     ─────────────────────────────────────────────────────────────────────
+     "Reprobado" no vincula un documento específico: es un cambio de
+     estado global del estudiante. El payload refleja este cambio
+     sin id_entrega_sm_vc.
+
+     TAREA 4: Modal de Requisitos con Estado Visual
+     ─────────────────────────────────────────────────────────────────────
+     Los requisitos ya aprobados aparecen pre-marcados, en verde y
+     deshabilitados para evitar re-envíos accidentales.
+     ══════════════════════════════════════════════════════════════════ -->
 <template>
   <div class="action-panel_sm_vc">
     <div class="panel-header_sm_vc">
@@ -6,6 +38,25 @@
     </div>
 
     <div class="action-form_sm_vc">
+      <!-- Módulo Completado -->
+      <q-banner
+        v-if="materiaCompletada_sm_vc"
+        dense
+        rounded
+        class="empty-banner-evaluar_sm_vc q-mb-sm text-center"
+      >
+        <template #avatar>
+          <q-icon name="verified" color="teal-3" size="md" />
+        </template>
+        <strong style="color: var(--sn-texto-principal); font-size: 0.9rem;">Módulo Aprobado</strong>
+        <div class="q-mt-xs">
+          Todos los requisitos de esta fase han sido aprobados.<br/>
+          Ya no es posible realizar nuevas correcciones.
+        </div>
+      </q-banner>
+
+      <template v-else>
+      <!-- Botones de Acción Masiva / Granular -->
       <div class="bulk-actions_sm_vc">
         <q-btn outline color="grey-5" icon="checklist" label="Evaluar por Requisitos" no-caps size="sm" class="granular-btn_sm_vc" @click="mostrarModal_sm_vc = true" />
         <q-btn unelevated color="teal-3" icon="workspace_premium" label="Aprobar Toda la Materia" no-caps size="sm" class="bulk-approve-btn_sm_vc" @click="mostrarModalAprobarTodo_sm_vc = true" />
@@ -54,7 +105,26 @@
         Todos los documentos de esta fase han sido evaluados.
       </q-banner>
 
-      <q-btn unelevated no-caps :label="labelBotonEnvio_sm_vc" :icon="iconBotonEnvio_sm_vc" class="send-btn_sm_vc send-btn--profesor_sm_vc" :loading="enviandoRespuesta_sm_vc" :disable="props.bloqueado_sm_vc || !form_sm_vc.estado_evaluacion_sm_vc || !form_sm_vc.comentario_sm_vc || enviandoRespuesta_sm_vc || (form_sm_vc.estado_evaluacion_sm_vc !== 'REPROBADO' && documentosPendientesEvaluar_vc.length === 0)" @click="handleClickEnvio_sm_vc" />
+      <q-btn
+        unelevated
+        no-caps
+        :label="labelBotonEnvio_sm_vc"
+        :icon="iconBotonEnvio_sm_vc"
+        class="send-btn_sm_vc send-btn--profesor_sm_vc"
+        :loading="enviandoRespuesta_sm_vc"
+        :disable="
+          props.bloqueado_sm_vc ||
+          !form_sm_vc.estado_evaluacion_sm_vc ||
+          !form_sm_vc.comentario_sm_vc ||
+          enviandoRespuesta_sm_vc ||
+          (
+            form_sm_vc.estado_evaluacion_sm_vc !== 'REPROBADO' &&
+            documentosPendientesEvaluar_vc.length === 0
+          )
+        "
+        @click="handleClickEnvio_sm_vc"
+      />
+      </template>
     </div>
   </div>
 
@@ -238,6 +308,10 @@ const requisitosOrdenados_sm_vc = computed(() => {
     if (pesoA !== pesoB) return pesoA - pesoB;
     return (a_sm_vc.posicion_sm_vc ?? 0) - (b_sm_vc.posicion_sm_vc ?? 0);
   });
+});
+
+const materiaCompletada_sm_vc = computed(() => {
+  return props.requisitos.length > 0 && props.requisitosAprobadosIniciales.length === props.requisitos.length;
 });
 
 const labelBotonEnvio_sm_vc = computed(() => form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO' ? 'Reprobar Materia' : 'Enviar Evaluación');

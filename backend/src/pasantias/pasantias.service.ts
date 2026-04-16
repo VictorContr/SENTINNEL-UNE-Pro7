@@ -33,6 +33,12 @@ export class PasantiasService_sm_vc {
       },
       orderBy: { posicion_sm_vc: 'asc' },
     });
+
+    return materias.map(m => ({
+      ...m,
+      // Retrocompatibilidad con frontend que espera el string directo:
+      periodo_sm_vc: m.periodo?.nombre_sm_vc || 'Sin Periodo'
+    }));
   }
 
   /**

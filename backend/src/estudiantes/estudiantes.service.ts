@@ -35,7 +35,7 @@ export class EstudiantesService {
               activo_sm_vc: true,
             },
           },
-          materiaActiva: true,
+          materiaActiva: { include: { periodo: true } },
           entregas: {
             include: { requisito: { include: { materia: true } }, evaluacion: true },
           },
@@ -79,7 +79,7 @@ export class EstudiantesService {
         where: { id_sm_vc: estudianteId },
         include: {
           usuario: true,
-          materiaActiva: true,
+          materiaActiva: { include: { periodo: true } },
           profesorTutor: {
             select: { nombre_sm_vc: true, apellido_sm_vc: true, correo_sm_vc: true },
           },
@@ -133,7 +133,7 @@ export class EstudiantesService {
     try {
       const estudiante = await this.prisma.estudiante.findUnique({
         where: { id_sm_vc: estudianteId },
-        include: { materiaActiva: true },
+        include: { materiaActiva: { include: { periodo: true } } },
       });
       if (!estudiante)
         throw new NotFoundException(`Estudiante ${estudianteId} no encontrado.`);

@@ -132,7 +132,7 @@
                 </div>
                 <div class="col-12">
                   <div class="field-group_sm_vc">
-                    <label class="field-label_sm_vc">Título del Proyecto <span class="req-mark_sm_vc">*</span></label>
+                    <label class="field-label_sm_vc">Título del Proyecto</label>
                     <q-input
                       v-model="form_sm_vc.estudiante_sm_vc.titulo_proyecto_sm_vc"
                       dense outlined color="teal-3" class="sntnl-input_sm_vc"
@@ -141,7 +141,7 @@
                 </div>
                 <div class="col-12 col-sm-6">
                   <div class="field-group_sm_vc">
-                    <label class="field-label_sm_vc">Empresa <span class="req-mark_sm_vc">*</span></label>
+                    <label class="field-label_sm_vc">Empresa</label>
                     <q-input
                       v-model="form_sm_vc.estudiante_sm_vc.empresa_sm_vc"
                       dense outlined color="teal-3" class="sntnl-input_sm_vc"
@@ -150,7 +150,7 @@
                 </div>
                 <div class="col-12 col-sm-6">
                   <div class="field-group_sm_vc">
-                    <label class="field-label_sm_vc">Tutor Empresarial <span class="req-mark_sm_vc">*</span></label>
+                    <label class="field-label_sm_vc">Tutor Empresarial</label>
                     <q-input
                       v-model="form_sm_vc.estudiante_sm_vc.tutor_empresarial_sm_vc"
                       dense outlined color="teal-3" class="sntnl-input_sm_vc"
@@ -288,8 +288,8 @@ const guardar_sm_vc = () => {
   } else {
     // Validar ficha académica si es estudiante
     const est = f.estudiante_sm_vc
-    if (!est.empresa_sm_vc || !est.tutor_empresarial_sm_vc || !est.titulo_proyecto_sm_vc || !est.materia_activa_id_sm_vc) {
-      $q.notify({ type: 'warning', message: 'Debe rellenar todos los campos obligatorios de la Ficha Académica del Estudiante.' })
+    if (!est.materia_activa_id_sm_vc) {
+      $q.notify({ type: 'warning', message: 'La Materia Activa es obligatoria para registrar a un estudiante.' })
       return
     }
 

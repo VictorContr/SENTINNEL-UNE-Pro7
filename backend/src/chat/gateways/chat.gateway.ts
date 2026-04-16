@@ -169,6 +169,7 @@ export class ChatGateway_sm_vc
     try {
       const user_sm_vc = this.obtenerUserAutenticado_sm_vc(client_sm_vc);
 
+
       const roomId_sm_vc = this.buildRoomId_sm_vc(
         payload_sm_vc.estudianteId_sm_vc,
         payload_sm_vc.materiaId_sm_vc,
@@ -491,6 +492,7 @@ export class ChatGateway_sm_vc
   ): string {
     return `conv:${estudianteId_sm_vc}:${materiaId_sm_vc ?? 'global'}`;
   }
+
 
   /** Obtiene el payload del usuario autenticado desde socket.data. */
   private obtenerUserAutenticado_sm_vc(

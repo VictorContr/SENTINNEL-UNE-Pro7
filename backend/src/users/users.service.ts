@@ -401,34 +401,43 @@ export class UsersService_sm_vc {
       const fila_sm_vc  = i + 2; // Excel empieza en fila 2 (fila 1 = headers)
       const filaData_sm_vc = data[i];
       let error_sm_vc: string | null = null;
+      
+      const u = {
+        Nombre: filaData_sm_vc.Nombre?.toString().trim() || '',
+        Apellido: filaData_sm_vc.Apellido?.toString().trim() || '',
+        Cédula: filaData_sm_vc.Cédula?.toString().trim() || '',
+        Correo: filaData_sm_vc.Correo?.toString().trim().toLowerCase() || '',
+        Rol: filaData_sm_vc.Rol?.toString().trim().toUpperCase() || '',
+      };
+      filaData_sm_vc.Nombre = u.Nombre;
+      filaData_sm_vc.Apellido = u.Apellido;
+      filaData_sm_vc.Cédula = u.Cédula;
+      filaData_sm_vc.Correo = u.Correo;
+      filaData_sm_vc.Rol = u.Rol;
 
       try {
         // Validar campos requeridos
-        if (
-          !filaData_sm_vc.Nombre    ||
-          !filaData_sm_vc.Apellido  ||
-          !filaData_sm_vc.Cédula    ||
-          !filaData_sm_vc.Correo    ||
-          !filaData_sm_vc.Rol
-        ) {
+        if (!u.Nombre || !u.Apellido || !u.Cédula || !u.Correo || !u.Rol) {
           error_sm_vc = 'Faltan campos requeridos (Nombre, Apellido, Cédula, Correo, Rol).';
-        } else if (!/^\d+$/.test(filaData_sm_vc.Cédula)) {
+        } else if (!/^\d+$/.test(u.Cédula)) {
           error_sm_vc = 'La cédula debe contener solo números.';
-        } else if (!/.+@.+\..+/.test(filaData_sm_vc.Correo)) {
+        } else if (!/.+@.+\..+/.test(u.Correo)) {
           error_sm_vc = 'El correo no tiene un formato válido.';
-        } else if (!['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(filaData_sm_vc.Rol)) {
-          error_sm_vc = 'Rol no válido. Debe ser: ADMIN, PROFESOR o ESTUDIANTE.';
+        } else if (!['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(u.Rol)) {
+          error_sm_vc = `Rol "${u.Rol}" no válido. Debe ser: ADMIN, PROFESOR o ESTUDIANTE.`;
+        } else if (u.Rol === 'ESTUDIANTE' && !filaData_sm_vc.Materia_Activa_ID) {
+          error_sm_vc = 'El ID de la Materia Activa es requerido para los estudiantes.';
         } else {
           // Verificar duplicados en BD antes de encolar la inserción
           const [dupCedula_sm_vc, dupCorreo_sm_vc] = await Promise.all([
-            this.prisma.usuario.findUnique({ where: { cedula_sm_vc: filaData_sm_vc.Cédula } }),
-            this.prisma.usuario.findUnique({ where: { correo_sm_vc: filaData_sm_vc.Correo.toLowerCase() } }),
+            this.prisma.usuario.findUnique({ where: { cedula_sm_vc: u.Cédula } }),
+            this.prisma.usuario.findUnique({ where: { correo_sm_vc: u.Correo } }),
           ]);
 
           if (dupCedula_sm_vc) {
-            error_sm_vc = `La cédula ${filaData_sm_vc.Cédula} ya está registrada.`;
+            error_sm_vc = `La cédula ${u.Cédula} ya está registrada en la Base de Datos.`;
           } else if (dupCorreo_sm_vc) {
-            error_sm_vc = `El correo ${filaData_sm_vc.Correo} ya está registrado.`;
+            error_sm_vc = `El correo ${u.Correo} ya está registrado en la Base de Datos.`;
           }
         }
       } catch (err_sm_vc: any) {
@@ -442,25 +451,33 @@ export class UsersService_sm_vc {
       });
     }
 
-    // Intentar la inserción fila a fila con Promise.allSettled
-    // FIX: nunca se usa createMany — cumple el mandato de claude.md
-    const promesas_sm_vc = tareasValidadas_sm_vc.map(async (tarea_sm_vc) => {
-      const { fila_sm_vc, payload_sm_vc, error_sm_vc } = tarea_sm_vc;
+    // SI HAY AL MENOS UN ERROR, CANCELAR TODA LA CARGA MASIVA
+    const erroresPrevios = tareasValidadas_sm_vc.filter(t => t.error_sm_vc !== null);
+    if (erroresPrevios.length > 0) {
+      resultados_sm_vc.filas_con_error_sm_vc = erroresPrevios.length;
+      resultados_sm_vc.detalles_sm_vc = erroresPrevios.map((t) => ({
+        fila_sm_vc: t.fila_sm_vc,
+        cedula_sm_vc: t.payload_sm_vc.Cédula?.toString() ?? 'N/A',
+        correo_sm_vc: t.payload_sm_vc.Correo ?? 'N/A',
+        error_sm_vc: t.error_sm_vc!
+      }));
+      return resultados_sm_vc;
+    }
 
-      if (error_sm_vc) {
-        return { fila_sm_vc, cedula_sm_vc: payload_sm_vc.Cédula ?? 'N/A', correo_sm_vc: payload_sm_vc.Correo ?? 'N/A', error_sm_vc };
-      }
+    // Intentar la inserción fila a fila con Promise.allSettled
+    const promesas_sm_vc = tareasValidadas_sm_vc.map(async (tarea_sm_vc) => {
+      const { fila_sm_vc, payload_sm_vc } = tarea_sm_vc;
 
       try {
         const claveHash_sm_vc = await bcrypt.hash('Temp123!', 10);
 
-        await this.prisma.usuario.create({
+        const usuarioCreado = await this.prisma.usuario.create({
           data: {
             nombre_sm_vc:               payload_sm_vc.Nombre?.trim(),
             apellido_sm_vc:             payload_sm_vc.Apellido?.trim(),
-            cedula_sm_vc:               payload_sm_vc.Cédula?.trim(),
+            cedula_sm_vc:               payload_sm_vc.Cédula?.toString()?.trim(),
             correo_sm_vc:               payload_sm_vc.Correo?.trim().toLowerCase(),
-            telefono_sm_vc:             payload_sm_vc.Teléfono?.trim() || null,
+            telefono_sm_vc:             payload_sm_vc.Teléfono?.toString()?.trim() || null,
             rol_sm_vc:                  payload_sm_vc.Rol as any,
             clave_sm_vc:                claveHash_sm_vc,
             activo_sm_vc:               true,
@@ -468,11 +485,37 @@ export class UsersService_sm_vc {
           },
         });
 
+        if (payload_sm_vc.Rol === 'ESTUDIANTE') {
+          const matId = parseInt(payload_sm_vc.Materia_Activa_ID?.toString());
+          const profId = parseInt(payload_sm_vc.Profesor_Asignado_ID?.toString());
+          const perfil = await this.prisma.estudiante.create({
+            data: {
+              usuario_id_sm_vc: usuarioCreado.id_sm_vc,
+              materia_activa_id_sm_vc: isNaN(matId) ? 1 : matId,
+              profesor_id_sm_vc: isNaN(profId) ? null : profId,
+              empresa_sm_vc: payload_sm_vc.Empresa?.trim() || null,
+              tutor_empresarial_sm_vc: payload_sm_vc.Tutor_Empresarial?.trim() || null,
+              titulo_proyecto_sm_vc: payload_sm_vc.Titulo_Proyecto?.trim() || null,
+            }
+          });
+
+          const conv = await this.prisma.conversacion.create({
+            data: { estudiante_id_sm_vc: perfil.id_sm_vc }
+          });
+          await this.prisma.mensaje.create({
+            data: {
+              conversacion_id_sm_vc: conv.id_sm_vc,
+              contenido_sm_vc: `Log de Sistema: Proceso de pasantías iniciado. Por favor, completa tu perfil y define tu proyecto con un Profesor.`,
+              es_sistema_sm_vc: true,
+            }
+          });
+        }
+
         return null; // null === éxito
       } catch (err_sm_vc: any) {
         return {
           fila_sm_vc,
-          cedula_sm_vc: payload_sm_vc.Cédula ?? 'N/A',
+          cedula_sm_vc: payload_sm_vc.Cédula?.toString() ?? 'N/A',
           correo_sm_vc: payload_sm_vc.Correo ?? 'N/A',
           error_sm_vc: `Error al crear usuario: ${err_sm_vc?.message ?? 'desconocido'}.`,
         };
