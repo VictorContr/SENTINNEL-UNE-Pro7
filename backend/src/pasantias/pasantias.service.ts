@@ -25,7 +25,7 @@ export class PasantiasService_sm_vc {
       return []; // Sistema no inicializado aún
     }
 
-    return this.prisma.materia.findMany({
+    const materias = await this.prisma.materia.findMany({
       where: { periodo_id_sm_vc: config_sm_vc.periodo_id_sm_vc },
       include: {
         requisitos: { orderBy: { posicion_sm_vc: 'asc' } },
