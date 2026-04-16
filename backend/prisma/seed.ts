@@ -91,7 +91,6 @@ async function main() {
   };
 
   const mat1 = await crearMateria('Investigación y Desarrollo', 1, [
-    { nombre: 'Capítulo I (Fundamentos)',  desc: 'Estructura inicial del proyecto de grado.' },
     { nombre: 'Contexto Organizacional',   desc: 'Descripción detallada de la empresa.' },
     { nombre: 'Situación Problemática',    desc: 'Análisis del problema a resolver.' },
     { nombre: 'Objetivos',                 desc: 'Definición de metas alcanzables.' },
@@ -189,7 +188,7 @@ async function main() {
         conversacion_id_sm_vc: conv.id_sm_vc, 
         contenido_sm_vc: `Adjunto mi entrega para revisión: ${req.nombre_sm_vc}`, 
         es_sistema_sm_vc: false, 
-        remitente_id_sm_vc: estudianteId,
+        remitente_id_sm_vc: usuarioId,
         remitente_rol_sm_vc: 'ESTUDIANTE',
         materia_id_sm_vc: materiaId, 
         fecha_creacion_sm_vc: fecha,
@@ -233,7 +232,7 @@ async function main() {
         conversacion_id_sm_vc: conv.id_sm_vc, 
         contenido_sm_vc: `Adjunto mi entrega, quedo atento a correcciones.`, 
         es_sistema_sm_vc: false, 
-        remitente_id_sm_vc: estudianteId,
+        remitente_id_sm_vc: usuarioId,
         remitente_rol_sm_vc: 'ESTUDIANTE',
         materia_id_sm_vc: materiaId, 
         fecha_creacion_sm_vc: fecha,
@@ -272,7 +271,7 @@ async function main() {
         conversacion_id_sm_vc: conv.id_sm_vc, 
         contenido_sm_vc: `Envío mi avance para la revisión.`, 
         es_sistema_sm_vc: false, 
-        remitente_id_sm_vc: estudianteId, 
+        remitente_id_sm_vc: usuarioId, 
         remitente_rol_sm_vc: 'ESTUDIANTE', 
         materia_id_sm_vc: materiaId, 
         fecha_creacion_sm_vc: fecha, 
