@@ -180,17 +180,17 @@ function onMensajeEnviado() {
 }
 .page-subtitle { font-size: 0.72rem; color: var(--sn-texto-terciario); margin: 0; }
 .code-tag {
-  background: rgba(111,255,233,0.08);
+  background: var(--sn-surface-alpha);
   color: var(--sn-acento-sec);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--sn-radius-sm);
   font-size: 0.68rem;
   font-family: var(--sn-font-mono);
 }
 .conv-card {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(111,255,233,0.1);
-  border-radius: 14px;
+  background: var(--sn-fondo-panel);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radius-xl);
   max-width: 780px;
 }
 

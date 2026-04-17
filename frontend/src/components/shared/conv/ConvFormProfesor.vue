@@ -192,7 +192,10 @@
   <q-dialog v-model="mostrarModalAprobarTodo_sm_vc" persistent>
     <q-card class="modal-card_sm_vc approve-all-card_sm_vc">
       <q-card-section class="q-pb-none">
-        <div class="text-h6 text-teal-3">🏆 Aprobar Materia Completa</div>
+        <div class="text-h6 text-sn-acento flex items-center gap-2">
+          <q-icon name="emoji_events" size="md" />
+          Aprobar Materia Completa
+        </div>
       </q-card-section>
       <q-card-section class="q-mt-md">
         <div class="field-group_sm_vc">
@@ -247,9 +250,9 @@ const entregaVinculada_sm_vc = ref(null);
 const form_sm_vc = ref({ estado_evaluacion_sm_vc: null, nota_sm_dec: null, archivo_nombre_sm_vc: "", archivo_raw_sm_vc: null, comentario_sm_vc: "" });
 const formAprobarTodo_sm_vc = ref({ nota_sm_dec: null, comentario_sm_vc: "" });
 const evalOpciones_sm_vc = [
-  { value: "OBSERVACIONES", label: "Observaciones", icon: "warning", color: "#f0a500" },
-  { value: "APROBADO", label: "Aprobar Item", icon: "done", color: "#6fffe9" },
-  { value: "REPROBADO", label: "Reprobar Materia", icon: "block", color: "#ff8fa3" },
+  { value: "OBSERVACIONES", label: "Observaciones", icon: "warning", color: "var(--sn-advertencia)" },
+  { value: "APROBADO", label: "Aprobar Item", icon: "done", color: "var(--sn-exito)" },
+  { value: "REPROBADO", label: "Reprobar Materia", icon: "block", color: "var(--sn-error)" },
 ];
 const requisitosSeleccionados_sm_vc = ref([]);
 
@@ -411,15 +414,15 @@ onMounted(() => {
 .eval-option_sm_vc:hover { background: rgba(255, 255, 255, 0.05); }
 .eval-option--selected_sm_vc { font-weight: 700; }
 .eval-option--reprobado_sm_vc:hover { background: rgba(255, 143, 163, 0.06); border-color: rgba(255, 143, 163, 0.35); }
-.reprobado-notice_sm_vc { display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.5rem 0.75rem; background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; font-size: 0.65rem; color: #fca5a5; font-family: var(--sn-font-sans); margin-top: 0.25rem; }
+.reprobado-notice_sm_vc { display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.5rem 0.75rem; background: rgba(239, 68, 68, 0.06); border: 1px solid var(--sn-error); border-radius: 6px; font-size: 0.65rem; color: var(--sn-error-claro); font-family: var(--sn-font-sans); margin-top: 0.25rem; }
 .entrega-vinculada-badge_sm_vc { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.75rem; background: rgba(111, 255, 233, 0.06); border: 1px solid rgba(111, 255, 233, 0.2); border-radius: 6px; font-size: 0.68rem; color: var(--sn-texto-secundario); font-family: var(--sn-font-sans); }
 .send-btn_sm_vc { background: var(--sn-surface-active) !important; color: var(--sn-primario) !important; border: 1px solid rgba(111, 255, 233, 0.25) !important; font-size: 0.72rem !important; font-weight: 600 !important; border-radius: 6px !important; align-self: flex-start; margin-top: 5px; }
-.send-btn--profesor_sm_vc { background: rgba(158, 158, 158, 0.1) !important; color: #9e9e9e !important; border-color: rgba(158, 158, 158, 0.25) !important; }
+.send-btn--profesor_sm_vc { background: var(--sn-surface-alpha) !important; color: var(--sn-texto-apagado) !important; border-color: var(--sn-borde) !important; }
 .modal-card_sm_vc { background: var(--sn-fondo-panel) !important; border: 1px solid var(--sn-borde-hover) !important; border-radius: 12px !important; min-width: 450px; font-family: var(--sn-font-mono); }
 .approve-all-card_sm_vc { max-width: 500px; }
 .modal-entregas-card_sm_vc { min-width: 520px; max-width: 640px; }
 .empty-banner-evaluar_sm_vc { background: rgba(111, 255, 233, 0.06) !important; border: 1px solid rgba(111, 255, 233, 0.18) !important; border-radius: 8px !important; color: var(--sn-texto-secundario) !important; font-size: 0.75rem !important; }
 .doc-item--seleccionado_sm_vc { background: rgba(111, 255, 233, 0.06) !important; }
 .req-item--aprobado_sm_vc { background: rgba(111, 255, 233, 0.04) !important; border-left: 2px solid rgba(111, 255, 233, 0.3) !important; }
-.req-aprobado-badge_sm_vc { display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #6fffe9; font-weight: 600; }
+.req-aprobado-badge_sm_vc { display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: var(--sn-exito); font-weight: 600; }
 </style>
