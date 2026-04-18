@@ -94,11 +94,11 @@ export class NotificacionesService {
       include: { usuario: true } // Para obtener su nombre
     });
     
-    if(!estudianteActivo || !estudianteActivo.profesor_asignado_id_sm_vc) return;
+    if(!estudianteActivo || !estudianteActivo.profesor_id_sm_vc) return;
 
     await this.crearNotificacion(
       payload.emisorId || 1, 
-      estudianteActivo.profesor_asignado_id_sm_vc, 
+      estudianteActivo.profesor_id_sm_vc, 
       'IMPORTANTE', 
       'Nuevo Informe Recibido', 
       `El estudiante ${estudianteActivo.usuario?.nombre_sm_vc || ''} ha enviado un documento: ${payload.descripcion_sm_vc}`
