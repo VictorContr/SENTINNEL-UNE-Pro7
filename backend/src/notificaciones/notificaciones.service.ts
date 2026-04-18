@@ -30,6 +30,7 @@ export class NotificacionesService {
         }
       });
       // Emit to Gateway via EventBus
+      console.log(`[NotificacionesService] Creando notificacion para receptor ${receptorId} de tipo ${tipo}. Emitiendo notificacion.enviar para websocket...`);
       this.eventEmitter.emit('notificacion.enviar', {
         receptorId,
         notificacion: notif
@@ -62,6 +63,7 @@ export class NotificacionesService {
 
   @OnEvent('periodo.cambiado', { async: true })
   async handlePeriodoCambiado(payload: { emisorId: number, periodoActivoName: string }) {
+    console.log(`[NotificacionesService] Evento capturado: periodo.cambiado. Generando alertas masivas...`)
     const usuariosActivos = await this.prisma.usuario.findMany({ where: { activo_sm_vc: true }, select: { id_sm_vc: true }});
     for (const u of usuariosActivos) {
        await this.crearNotificacion(payload.emisorId, u.id_sm_vc, 'IMPORTANTE', 'Cambio de Periodo', `El periodo académico ha cambiado a ${payload.periodoActivoName}.`);
@@ -84,14 +86,34 @@ export class NotificacionesService {
     }
   }
 
-  @OnEvent('documento.enviado', { async: true })
-  async handleDocumentoEnviado(payload: { emisorId: number, estudianteName: string, profesorId: number }) {
-    if(!payload.profesorId) return;
-    await this.crearNotificacion(payload.emisorId, payload.profesorId, 'IMPORTANTE', 'Nuevo documento', `El estudiante ${payload.estudianteName} ha enviado un documento nuevo.`);
+  @OnEvent('documento.subido_sm_vc', { async: true })
+  async handleDocumentoEnviado(payload: { estudianteId: number, materiaId: number, descripcion_sm_vc: string, emisorId?: number }) {
+    console.log(`[NotificacionesService] Evento capturado: documento.subido_sm_vc. Buscando al profesor de este estudiante.`)
+    const estudianteActivo = await this.prisma.estudiante.findUnique({
+      where: { id_sm_vc: payload.estudianteId },
+      include: { usuario: true } // Para obtener su nombre
+    });
+    
+    if(!estudianteActivo || !estudianteActivo.profesor_asignado_id_sm_vc) return;
+
+    await this.crearNotificacion(
+      payload.emisorId || 1, 
+      estudianteActivo.profesor_asignado_id_sm_vc, 
+      'IMPORTANTE', 
+      'Nuevo Informe Recibido', 
+      `El estudiante ${estudianteActivo.usuario?.nombre_sm_vc || ''} ha enviado un documento: ${payload.descripcion_sm_vc}`
+    );
   }
 
   @OnEvent('documento.evaluado', { async: true })
   async handleDocumentoEvaluado(payload: { emisorId: number, estudianteId: number, decision: string, materiaName: string }) {
-    await this.crearNotificacion(payload.emisorId, payload.estudianteId, 'IMPORTANTE', 'Materia Evaluada', `Tu profesor ha evaluado un documento para ${payload.materiaName} como ${payload.decision}.`);
+    console.log(`[NotificacionesService] Evento capturado: documento.evaluado. Avisando al estudiante...`)
+    // Necesitamos el ID del usuario del estudiante
+    const estudianteActivo = await this.prisma.estudiante.findUnique({
+      where: { id_sm_vc: payload.estudianteId }
+    });
+    if(!estudianteActivo || !estudianteActivo.usuario_id_sm_vc) return;
+
+    await this.crearNotificacion(payload.emisorId, estudianteActivo.usuario_id_sm_vc, 'IMPORTANTE', 'Documento Evaluado', `Tu profesor ha evaluado un documento para ${payload.materiaName} como ${payload.decision}.`);
   }
 }
