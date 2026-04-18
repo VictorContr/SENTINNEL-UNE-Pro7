@@ -238,7 +238,7 @@ export class EvaluacionesService {
         descripcion_sm_vc: '¡Proceso completado! Todas las materias aprobadas. Deploy habilitado.',
       });
 
-      await this.prisma.notificacion.create({
+      const notif1 = await this.prisma.notificacion.create({
         data: {
           emisor_id_sm_vc:   actorId,
           receptor_id_sm_vc: usuarioEstudianteId,
@@ -247,6 +247,9 @@ export class EvaluacionesService {
           contenido_sm_vc:   'Has aprobado todas las materias. El módulo de Deploy del Proyecto Final está desbloqueado.',
         },
       });
+
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: usuarioEstudianteId, notificacion: notif1 });
+
 
       return 'TODAS_COMPLETADAS';
     }
@@ -264,7 +267,7 @@ export class EvaluacionesService {
       descripcion_sm_vc: `Materia "${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
     });
 
-    await this.prisma.notificacion.create({
+    const notif2 = await this.prisma.notificacion.create({
       data: {
         emisor_id_sm_vc:   actorId,
         receptor_id_sm_vc: usuarioEstudianteId,
@@ -274,6 +277,8 @@ export class EvaluacionesService {
           `Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`,
       },
     });
+
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: usuarioEstudianteId, notificacion: notif2 });
 
     return siguienteMateria.nombre_sm_vc;
   }
@@ -291,7 +296,7 @@ export class EvaluacionesService {
   ) {
     const esAprobado = decision === EstadoAprobacion.APROBADO;
 
-    await this.prisma.notificacion.create({
+    const notif = await this.prisma.notificacion.create({
       data: {
         emisor_id_sm_vc:   emisorId,
         receptor_id_sm_vc: receptorId,
@@ -305,6 +310,8 @@ export class EvaluacionesService {
             (observaciones ? ` Observaciones: ${observaciones}` : ''),
       },
     });
+
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId, notificacion: notif });
   }
 
   private generarRespuesta_sm_vc(evaluacion: any, materiaDesbloqueada: string | null) {
