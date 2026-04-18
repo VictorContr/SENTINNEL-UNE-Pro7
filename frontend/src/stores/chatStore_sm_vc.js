@@ -263,11 +263,7 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
         socket_sm_vc.value.on("notificacion_recibida_sm_vc", async (payload_sm_vc) => {
           console.log("🔔 [WS] Notificación en tiempo real:", payload_sm_vc);
           try {
-            const { useNotificacionesStore } = await import("src/stores/notificacionesStore");
-            const notiStore = useNotificacionesStore();
-            notiStore.agregarNotificacion_sm_vc(payload_sm_vc);
-
-            // Mostrar el popup
+            // Mostrar el popup SIEMPRE primero por si falla la inyección Pinia
             const tipoIcono = payload_sm_vc.tipo_sm_vc === 'URGENTE' ? 'warning' : 'info';
             const tipoColor = payload_sm_vc.tipo_sm_vc === 'URGENTE' ? 'negative' : 'primary';
 
@@ -280,8 +276,12 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
               timeout: 5000,
               actions: [{ icon: 'close', color: 'white' }]
             });
+
+            const { useNotificacionesStore } = await import("src/stores/notificacionesStore");
+            const notiStore = useNotificacionesStore();
+            notiStore.agregarNotificacion_sm_vc(payload_sm_vc);
           } catch (err_sm_vc) {
-            console.error("❌ Error al procesar notificación recibida:", err_sm_vc);
+            console.error("❌ Error al procesar notificación recibida en Pinia (silenciado visualmente):", err_sm_vc);
           }
         });
 
