@@ -116,4 +116,22 @@ export class NotificacionesService {
 
     await this.crearNotificacion(payload.emisorId, estudianteActivo.usuario_id_sm_vc, 'IMPORTANTE', 'Documento Evaluado', `Tu profesor ha evaluado un documento para ${payload.materiaName} como ${payload.decision}.`);
   }
+
+  @OnEvent('notificacion.crear', { async: true })
+  async handleNotificacionCrear(payload: {
+    emisorId: number;
+    receptorId: number;
+    tipo: TipoNotificacion;
+    titulo: string;
+    contenido: string;
+  }) {
+    console.log(`[NotificacionesService] Evento capturado: notificacion.crear. Generando alerta para usuario ${payload.receptorId}.`);
+    await this.crearNotificacion(
+      payload.emisorId, 
+      payload.receptorId, 
+      payload.tipo, 
+      payload.titulo, 
+      payload.contenido
+    );
+  }
 }

@@ -10,7 +10,6 @@ import { EstadoAprobacion, RolUsuario, TipoNotificacion, TipoDocumento } from '@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CrearEvaluacionDto } from './dto/crear-evaluacion.dto';
 import { DocumentosService } from '../documentos/documentos.service';
-import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Injectable()
 export class EvaluacionesService {
@@ -18,7 +17,6 @@ export class EvaluacionesService {
     private readonly prisma:            PrismaService,
     private readonly eventEmitter_sm_vc: EventEmitter2,
     private readonly documentosService: DocumentosService,
-    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   // ─────────────────────────────────────────────────────────────────
@@ -240,13 +238,14 @@ export class EvaluacionesService {
         descripcion_sm_vc: '¡Proceso completado! Todas las materias aprobadas. Deploy habilitado.',
       });
 
-      await this.notificacionesService.crearNotificacion(
-        actorId,
-        usuarioEstudianteId,
-        TipoNotificacion.IMPORTANTE,
-        '¡Proceso completado! Deploy habilitado',
-        'Has aprobado todas las materias. El módulo de Deploy del Proyecto Final está desbloqueado.'
-      );
+      // Desbloqueo maneja su propia logica de enviar sockets a traves del logger o dejaremos que Nextjs emita events
+      this.eventEmitter_sm_vc.emit('notificacion.crear', {
+        emisorId:          actorId,
+        receptorId:        usuarioEstudianteId,
+        tipo:              TipoNotificacion.IMPORTANTE,
+        titulo:            '¡Proceso completado! Deploy habilitado',
+        contenido:         'Has aprobado todas las materias. El módulo de Deploy del Proyecto Final está desbloqueado.',
+      });
 
 
       return 'TODAS_COMPLETADAS';
@@ -265,13 +264,13 @@ export class EvaluacionesService {
       descripcion_sm_vc: `Materia "${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
     });
 
-    await this.notificacionesService.crearNotificacion(
-      actorId,
-      usuarioEstudianteId,
-      TipoNotificacion.INFORMATIVA,
-      `${materiaNombre} completada — ${siguienteMateria.nombre_sm_vc} desbloqueada`,
-      `¡Felicitaciones! Aprobaste todos los requisitos de "${materiaNombre}". Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`
-    );
+    this.eventEmitter_sm_vc.emit('notificacion.crear', {
+      emisorId:          actorId,
+      receptorId:        usuarioEstudianteId,
+      tipo:              TipoNotificacion.INFORMATIVA,
+      titulo:            `${materiaNombre} completada — ${siguienteMateria.nombre_sm_vc} desbloqueada`,
+      contenido:         `¡Felicitaciones! Aprobaste todos los requisitos de "${materiaNombre}". Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`,
+    });
 
     return siguienteMateria.nombre_sm_vc;
   }
@@ -298,13 +297,13 @@ export class EvaluacionesService {
       : `Tu entrega del requisito "${requisitoNombre}" fue reprobada.` +
         (observaciones ? ` Observaciones: ${observaciones}` : '');
 
-    await this.notificacionesService.crearNotificacion(
-      emisorId,
-      receptorId,
-      tipo,
-      titulo,
-      contenido
-    );
+    this.eventEmitter_sm_vc.emit('notificacion.crear', {
+      emisorId:          emisorId,
+      receptorId:        receptorId,
+      tipo:              tipo,
+      titulo:            titulo,
+      contenido:         contenido,
+    });
   }
 
   private generarRespuesta_sm_vc(evaluacion: any, materiaDesbloqueada: string | null) {
