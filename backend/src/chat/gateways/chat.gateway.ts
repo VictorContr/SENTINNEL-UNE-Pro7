@@ -490,9 +490,7 @@ export class ChatGateway_sm_vc
         .to(personalRoomId)
         .emit('notificacion_recibida_sm_vc', payload.notificacion);
 
-      this.logger_sm_vc.debug(
-        `[Broadcast] notificacion_recibida_sm_vc → sala personal "${personalRoomId}"`
-      );
+      console.log(`🚀 [GATEWAY] Atrapé notificacion.enviar! Haciendo broadcast "notificacion_recibida_sm_vc" a sala "${personalRoomId}"`);
     } catch (err_sm_vc) {
       this.logger_sm_vc.error(
         `[handleNotificacionEnviar_sm_vc] Error: ${(err_sm_vc as Error).message}`

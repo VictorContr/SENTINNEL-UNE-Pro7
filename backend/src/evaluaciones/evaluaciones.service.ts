@@ -313,6 +313,7 @@ export class EvaluacionesService {
       },
     });
 
+    console.log(`📤 [EvaluacionesService] DB Notificacion guardada para el Estudiante ${receptorId}. Emitiendo 'notificacion.enviar' al Gateway...`);
     this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId, notificacion: notif });
   }
 
