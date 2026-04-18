@@ -279,16 +279,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/authStore'
 import { useNotificacionesStore } from 'src/stores/notificacionesStore'
+import { useChatStore_sm_vc } from 'src/stores/chatStore_sm_vc'
 import { useConfigStore } from 'src/stores/configStore'
 import DialogMantenedor from 'src/components/shared/DialogMantenedor.vue'
 
 /* ── Stores & Router ── */
 
 const auth                = useAuthStore()
+const chat_store_sm_vc    = useChatStore_sm_vc()
 const notif_store_sm_vc   = useNotificacionesStore()
 const configStore_sm_vc   = useConfigStore()
 const route_sm_vc         = useRoute()
@@ -300,6 +302,16 @@ const isDark_sm_vc = computed(() => configStore_sm_vc.isDark_sm_vc)
 /* ── Drawer ── */
 const drawer_open_sm_vc = ref(true)
 
+/* ── Lifecycle ── */
+onMounted(() => {
+  if (auth.user_sm_vc) {
+    notif_store_sm_vc.fetchNotificaciones_sm_vc()
+    // [FIX NOTIFICACIONES GLOBALES] Conectar al socket desde la raíz 
+    // para estar siempre escuchando el user:{id} sin estar en el Chat.
+    chat_store_sm_vc.conectar_sm_vc()
+  }
+})
+
 /* ── Navigation helper ── */
 const navigate_sm_vc = (to_sm_vc) => {
   router_sm_vc.push(to_sm_vc)
@@ -307,6 +319,7 @@ const navigate_sm_vc = (to_sm_vc) => {
 
 /* ── Logout ── */
 const handle_logout_sm_vc = () => {
+  chat_store_sm_vc.salirDeSala_sm_vc() // Desconecta el socket limpio
   auth.logout_sm_vc()
   router_sm_vc.push('/login')
 }

@@ -258,6 +258,34 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
         });
 
         /**
+         * [SPRINT NOTIFICACIONES] notificacion_recibida_sm_vc: Notificación en tiempo real
+         */
+        socket_sm_vc.value.on("notificacion_recibida_sm_vc", async (payload_sm_vc) => {
+          console.log("🔔 [WS] Notificación en tiempo real:", payload_sm_vc);
+          try {
+            const { useNotificacionesStore } = await import("src/stores/notificacionesStore");
+            const notiStore = useNotificacionesStore();
+            notiStore.agregarNotificacion_sm_vc(payload_sm_vc);
+
+            // Mostrar el popup
+            const tipoIcono = payload_sm_vc.tipo_sm_vc === 'URGENTE' ? 'warning' : 'info';
+            const tipoColor = payload_sm_vc.tipo_sm_vc === 'URGENTE' ? 'negative' : 'primary';
+
+            Notify.create({
+              message: `<b>${payload_sm_vc.titulo_sm_vc}</b><br/>${payload_sm_vc.contenido_sm_vc}`,
+              html: true,
+              color: tipoColor,
+              icon: tipoIcono,
+              position: 'top-right',
+              timeout: 5000,
+              actions: [{ icon: 'close', color: 'white' }]
+            });
+          } catch (err_sm_vc) {
+            console.error("❌ Error al procesar notificación recibida:", err_sm_vc);
+          }
+        });
+
+        /**
          * typing_status_sm_vc: Indicador de 'escribiendo...'
          */
         socket_sm_vc.value.on("typing_status_sm_vc", (payload_sm_vc) => {

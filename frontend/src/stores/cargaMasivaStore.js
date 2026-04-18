@@ -90,6 +90,7 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
            const apellido = row[1]
            const cedula = row[2] ? row[2].toString().trim() : null
            const correo = row[3] ? row[3].toString().trim().toLowerCase() : null
+           const telefono = row[4] ? row[4].toString().trim() : null
            const rol = row[6] ? row[6].toString().trim().toUpperCase() : ''
            
            if (!nombre) erroresData.push(`Fila ${filaNum}: Faltó el nombre.`)
@@ -97,6 +98,8 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
            
            if (!cedula) {
              erroresData.push(`Fila ${filaNum}: Faltó la cédula.`)
+           } else if (!/^V-\d+$/i.test(cedula)) {
+             erroresData.push(`Fila ${filaNum}: La cédula debe tener el formato V- acompañado de números (ej: V-12345678).`)
            } else {
              if (cedulasEnArchivo.has(cedula)) {
                  erroresData.push(`Fila ${filaNum}: La cédula ${cedula} está repetida dentro de este mismo archivo.`)
@@ -104,6 +107,10 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
                  cedulasEnArchivo.add(cedula)
                  cedulasExtraidas.push(cedula)
              }
+           }
+           
+           if (telefono && !/^\+58\d+$/.test(telefono)) {
+             erroresData.push(`Fila ${filaNum}: El teléfono debe tener el formato +58 seguido de los números.`)
            }
            
            if (!correo) {
@@ -237,27 +244,27 @@ export const useCargaMasivaStore = defineStore('cargaMasiva', () => {
         // Ejemplo Admin
         sheet_vc.cell(2, 1).value('Carlos')
         sheet_vc.cell(2, 2).value('Administrador')
-        sheet_vc.cell(2, 3).value('11111111')
+        sheet_vc.cell(2, 3).value('V-11111111')
         sheet_vc.cell(2, 4).value('admin@ejemplo.com')
-        sheet_vc.cell(2, 5).value('04141234567')
+        sheet_vc.cell(2, 5).value('+584141234567')
         sheet_vc.cell(2, 6).value('Admin123!')
         sheet_vc.cell(2, 7).value('ADMIN')
 
         // Ejemplo Profesor
         sheet_vc.cell(3, 1).value('María')
         sheet_vc.cell(3, 2).value('Gómez')
-        sheet_vc.cell(3, 3).value('22222222')
+        sheet_vc.cell(3, 3).value('V-22222222')
         sheet_vc.cell(3, 4).value('profesor@ejemplo.com')
-        sheet_vc.cell(3, 5).value('04241234567')
+        sheet_vc.cell(3, 5).value('+584241234567')
         sheet_vc.cell(3, 6).value('Prof123!')
         sheet_vc.cell(3, 7).value('PROFESOR')
 
         // Ejemplo Estudiante
         sheet_vc.cell(4, 1).value('Juan')
         sheet_vc.cell(4, 2).value('Pérez')
-        sheet_vc.cell(4, 3).value('33333333')
+        sheet_vc.cell(4, 3).value('V-33333333')
         sheet_vc.cell(4, 4).value('estudiante@ejemplo.com')
-        sheet_vc.cell(4, 5).value('04121234567')
+        sheet_vc.cell(4, 5).value('+584121234567')
         sheet_vc.cell(4, 6).value('Estud123!')
         sheet_vc.cell(4, 7).value('ESTUDIANTE')
         sheet_vc.cell(4, 8).value('1')

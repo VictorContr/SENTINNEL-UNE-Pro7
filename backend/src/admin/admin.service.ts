@@ -5,6 +5,7 @@ import * as ExcelJS from 'exceljs';
 import * as bcrypt from 'bcryptjs';
 import { ActualizarPeriodoDto } from './dto/actualizar-periodo.dto';
 import { PeriodosAcademicosService } from 'src/periodos/periodos.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 /**
  * Servicio de Administración - Manejo de configuración global del sistema.
@@ -18,6 +19,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly periodosService: PeriodosAcademicosService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -75,6 +77,11 @@ export class AdminService {
 
       // Delegamos al servicio especializado para crear y activar el periodo
       const nuevoPeriodo_sm_vc = await this.periodosService.create_sm_vc(createDto);
+
+      this.eventEmitter.emit('periodo.cambiado', {
+        emisorId: 1, // System o admin si se pasa
+        periodoActivoName: nuevoPeriodo_sm_vc.nombre_sm_vc
+      });
 
       // El PeriodosAcademicosService ya actualiza la ConfiguracionSistema internamente,
       // pero por seguridad y contrato de este método, devolvemos la configuración final.
@@ -310,6 +317,11 @@ export class AdminService {
       }, {
         maxWait: 5000,
         timeout: 10000 
+      });
+
+      this.eventEmitter.emit('carga_masiva.hecha', {
+        emisorId: 1,
+        mensaje: `Carga masiva procesada: de ${rowsUsuarios.length} usuarios por administrador.`
       });
 
       return { success: true, message: 'Carga masiva ejecutada exitosamente.' };

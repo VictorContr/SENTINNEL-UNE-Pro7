@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UsersService_sm_vc {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly eventEmitter: EventEmitter2) {}
 
   async findAllPaged_sm_vc(page: number, limit: number, search_sm_vc?: string) {
     const skip = (page - 1) * limit;
@@ -148,6 +149,13 @@ export class UsersService_sm_vc {
             tx
           );
         }
+
+        this.eventEmitter.emit('usuario.modificado', {
+          emisorId: adminUser_sm_vc?.id_sm_vc || 1,
+          accion: 'creado',
+          user: nuevoUsuario.nombre_sm_vc
+        });
+
         return nuevoUsuario;
       });
     } catch (error) {
@@ -222,6 +230,12 @@ export class UsersService_sm_vc {
             tx
           );
         }
+
+        this.eventEmitter.emit('usuario.modificado', {
+          emisorId: adminUser_sm_vc?.id_sm_vc || 1,
+          accion: 'actualizado',
+          user: usuarioAct.nombre_sm_vc
+        });
 
         return usuarioAct;
       });
@@ -419,8 +433,10 @@ export class UsersService_sm_vc {
         // Validar campos requeridos
         if (!u.Nombre || !u.Apellido || !u.Cédula || !u.Correo || !u.Rol) {
           error_sm_vc = 'Faltan campos requeridos (Nombre, Apellido, Cédula, Correo, Rol).';
-        } else if (!/^\d+$/.test(u.Cédula)) {
-          error_sm_vc = 'La cédula debe contener solo números.';
+        } else if (!/^V-\d+$/i.test(u.Cédula)) {
+          error_sm_vc = 'La cédula debe tener el formato V- acompañado de números (ej: V-12345678).';
+        } else if (filaData_sm_vc.Teléfono && !/^\+58\d+$/.test(filaData_sm_vc.Teléfono.toString().trim())) {
+          error_sm_vc = 'El teléfono debe tener el formato +58 seguido de los números.';
         } else if (!/.+@.+\..+/.test(u.Correo)) {
           error_sm_vc = 'El correo no tiene un formato válido.';
         } else if (!['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(u.Rol)) {
@@ -544,6 +560,13 @@ export class UsersService_sm_vc {
           error_sm_vc:  `Error inesperado: ${res_sm_vc.reason?.message ?? 'desconocido'}.`,
         });
       }
+    }
+
+    if (resultados_sm_vc.filas_exitosas_sm_vc > 0) {
+      this.eventEmitter.emit('carga_masiva.hecha', {
+        emisorId: 1, // System
+        mensaje: `Se han importado ${resultados_sm_vc.filas_exitosas_sm_vc} usuarios mediante carga masiva.`
+      });
     }
 
     return resultados_sm_vc;

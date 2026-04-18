@@ -119,6 +119,9 @@ export class ChatGateway_sm_vc
         payload_sm_vc.rol,
       );
 
+      // SPRINT NOTIFICACIONES: Unirse al canal personal automáticamente
+      await client_sm_vc.join(`user:${payload_sm_vc.sub}`);
+
       this.logger_sm_vc.log(
         `[Conexión] socket=${client_sm_vc.id} userId=${payload_sm_vc.sub} rol=${payload_sm_vc.rol}`,
       );
@@ -474,6 +477,25 @@ export class ChatGateway_sm_vc
       this.logger_sm_vc.error(
         `[handleEntregaActualizada_sm_vc] Error: ${(err_sm_vc as Error).message}`,
         (err_sm_vc as Error).stack,
+      );
+    }
+  }
+
+  // ── [SPRINT NOTIFICACIONES] Listener para Notificaciones en Tiempo Real ──
+  @OnEvent('notificacion.enviar', { async: true })
+  handleNotificacionEnviar_sm_vc(payload: { receptorId: number, notificacion: any }): void {
+    try {
+      const personalRoomId = `user:${payload.receptorId}`;
+      this.server_sm_vc
+        .to(personalRoomId)
+        .emit('notificacion_recibida_sm_vc', payload.notificacion);
+
+      this.logger_sm_vc.debug(
+        `[Broadcast] notificacion_recibida_sm_vc → sala personal "${personalRoomId}"`
+      );
+    } catch (err_sm_vc) {
+      this.logger_sm_vc.error(
+        `[handleNotificacionEnviar_sm_vc] Error: ${(err_sm_vc as Error).message}`
       );
     }
   }

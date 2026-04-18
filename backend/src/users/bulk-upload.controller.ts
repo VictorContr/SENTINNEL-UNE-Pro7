@@ -119,9 +119,9 @@ export class BulkUploadController {
       {
         Nombre: 'Juan',
         Apellido: 'Pérez',
-        Cédula: '12345678',
+        Cédula: 'V-12345678',
         Correo: 'juan.perez@ejemplo.com',
-        Teléfono: '04141234567',
+        Teléfono: '+584141234567',
         Rol: 'ESTUDIANTE',
         Materia_Activa_ID: '1',
         Profesor_Asignado_ID: '',
@@ -132,9 +132,9 @@ export class BulkUploadController {
       {
         Nombre: 'María',
         Apellido: 'González',
-        Cédula: '87654321',
+        Cédula: 'V-87654321',
         Correo: 'maria.gonzalez@ejemplo.com',
-        Teléfono: '04142345678',
+        Teléfono: '+584142345678',
         Rol: 'PROFESOR',
         Materia_Activa_ID: '',
         Profesor_Asignado_ID: '',
