@@ -239,13 +239,16 @@ export class EvaluacionesService {
       });
 
       // Desbloqueo maneja su propia logica de enviar sockets a traves del logger o dejaremos que Nextjs emita events
-      this.eventEmitter_sm_vc.emit('notificacion.crear', {
-        emisorId:          actorId,
-        receptorId:        usuarioEstudianteId,
-        tipo:              TipoNotificacion.IMPORTANTE,
-        titulo:            '¡Proceso completado! Deploy habilitado',
-        contenido:         'Has aprobado todas las materias. El módulo de Deploy del Proyecto Final está desbloqueado.',
+      const notif1 = await this.prisma.notificacion.create({
+        data: {
+          emisor_id_sm_vc:   actorId,
+          receptor_id_sm_vc: usuarioEstudianteId,
+          tipo_sm_vc:        TipoNotificacion.IMPORTANTE,
+          titulo_sm_vc:      '¡Proceso completado! Deploy habilitado',
+          contenido_sm_vc:   'Has aprobado todas las materias. El módulo de Deploy del Proyecto Final está desbloqueado.',
+        },
       });
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: usuarioEstudianteId, notificacion: notif1 });
 
 
       return 'TODAS_COMPLETADAS';
@@ -264,13 +267,16 @@ export class EvaluacionesService {
       descripcion_sm_vc: `Materia "${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
     });
 
-    this.eventEmitter_sm_vc.emit('notificacion.crear', {
-      emisorId:          actorId,
-      receptorId:        usuarioEstudianteId,
-      tipo:              TipoNotificacion.INFORMATIVA,
-      titulo:            `${materiaNombre} completada — ${siguienteMateria.nombre_sm_vc} desbloqueada`,
-      contenido:         `¡Felicitaciones! Aprobaste todos los requisitos de "${materiaNombre}". Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`,
+    const notif2 = await this.prisma.notificacion.create({
+      data: {
+        emisor_id_sm_vc:   actorId,
+        receptor_id_sm_vc: usuarioEstudianteId,
+        tipo_sm_vc:        TipoNotificacion.INFORMATIVA,
+        titulo_sm_vc:      `${materiaNombre} completada — ${siguienteMateria.nombre_sm_vc} desbloqueada`,
+        contenido_sm_vc:   `¡Felicitaciones! Aprobaste todos los requisitos de "${materiaNombre}". Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`,
+      },
     });
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: usuarioEstudianteId, notificacion: notif2 });
 
     return siguienteMateria.nombre_sm_vc;
   }
@@ -297,13 +303,17 @@ export class EvaluacionesService {
       : `Tu entrega del requisito "${requisitoNombre}" fue reprobada.` +
         (observaciones ? ` Observaciones: ${observaciones}` : '');
 
-    this.eventEmitter_sm_vc.emit('notificacion.crear', {
-      emisorId:          emisorId,
-      receptorId:        receptorId,
-      tipo:              tipo,
-      titulo:            titulo,
-      contenido:         contenido,
+    const notif = await this.prisma.notificacion.create({
+      data: {
+        emisor_id_sm_vc:   emisorId,
+        receptor_id_sm_vc: receptorId,
+        tipo_sm_vc:        tipo,
+        titulo_sm_vc:      titulo,
+        contenido_sm_vc:   contenido,
+      },
     });
+
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId, notificacion: notif });
   }
 
   private generarRespuesta_sm_vc(evaluacion: any, materiaDesbloqueada: string | null) {
