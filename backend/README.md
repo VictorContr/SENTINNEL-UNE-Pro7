@@ -1,161 +1,74 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🛡️ SENTINNEL - Backend (Nucleus)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend de misión crítica para la plataforma **SENTINNEL**, diseñado para la gestión integral de programas de pasantías y seguimiento académico. Construido sobre **NestJS** y **Prisma ORM** con un enfoque de arquitectura estricta y tipado fuerte.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🏗️ Filosofía Arquitectónica
+Este backend implementa el estándar `_sm_vc` (Strict Model Validation Contract). Todas las entidades, DTOs y servicios están blindados para garantizar la integridad de los datos y prevenir efectos secundarios en la lógica de negocio.
 
-## Description
+- **Stack**: NestJS (v10+), TypeScript (v5+), PostgreSQL, Prisma.
+- **Validación**: Class-validator con esquemas DTO estrictos.
+- **Seguridad**: JWT, Guards de roles específicos y filtros de excepción globales.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🚀 Requisitos Previos
+- **Node.js**: v18.x o superior (Recomendado v20 LTS).
+- **PostgreSQL**: v14 o superior.
+- **npm**: v9.x o superior.
 
-## Project setup
-
+## 📦 Instalación Rápida
 ```bash
-$ npm install
+# Navegar al directorio del backend
+cd backend
+
+# Instalar dependencias
+npm install
 ```
 
-## Compile and run the project
+## 🗄️ Configuración de Base de Datos (CRÍTICO)
+Para inicializar el sistema por primera vez o realizar un reset completo bajo el nuevo esquema de arquitectura estricta, ejecute el siguiente comando. 
+
+> [!CAUTION]
+> **ESTE COMANDO BORRARÁ LA BASE DE DATOS ACTUAL**, aplicará las nuevas migraciones y ejecutará el `seed` oficial con datos maestros.
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npx prisma migrate reset
 ```
 
-## 💾 Base de Datos y Prisma
+## ⚙️ Comandos de Ejecución
+| Comando | Descripción |
+| :--- | :--- |
+| `npm run start:dev` | Inicia el servidor en modo desarrollo con hot-reload. |
+| `npm run build` | Compila el proyecto para producción en la carpeta `/dist`. |
+| `npm run start:prod` | Ejecuta la versión compilada en modo producción. |
+| `npm run lint` | Ejecuta el linter para asegurar la calidad del código. |
 
-### 📋 Comandos principales
+## 📂 Árbol de Directorios (src/)
+El código fuente ha sido modularizado para seguir el patrón de separación de intereses (SoC):
 
-```bash
-# 🔄 Actualizar schema en DB (sin migraciones - para desarrollo rápido)
-npx prisma db push
-
-# 🌱 Ejecutar seed con datos iniciales
-npx prisma db seed
-
-# 🔧 Generar Prisma Client (después de cambios en schema)
-npx prisma generate
-
-# 📊 Abrir Prisma Studio (UI para ver/editar datos)
-npx prisma studio
+```text
+src/
+├── admin/           # Administración global de usuarios, roles y permisos.
+├── auth/            # Gestión de autenticación, sockets y tokens JWT.
+├── common/          # Decoradores, interceptores y constantes globales.
+├── config/          # Centralización de variables de entorno y servicios.
+├── conversaciones/  # Motor de mensajería interna (Chats).
+├── deploy/          # Automatización y scripts de despliegue.
+├── documentos/      # Gestión y almacenamiento de archivos/formatos.
+├── estudiantes/     # Lógica central del ciclo de vida del estudiante.
+├── evaluaciones/     # Sistema de corrección de entregas y feedback.
+├── mailer/          # Microservicio de integración para envío de correos.
+├── notificaciones/  # Orquestador de alertas y notificaciones push.
+├── pasantias/       # Gestión de procesos de pasantía y aprobaciones.
+├── periodos/        # Control de lapsos académicos y semestres.
+├── prisma/          # Capa de datos y cliente de base de datos unificado.
+├── users/           # Perfiles de usuario y gestión de datos personales.
+├── app.module.ts    # Módulo raíz encargado del ensamblaje del sistema.
+└── main.ts          # Punto de entrada y configuración global de la APP.
 ```
 
-### 🔄 Flujo de trabajo cuando cambias el schema
+---
+## 👥 Equipo de Ingeniería
+- **Lead Software Architect**: Victor Contreras
+- **Core Backend Engineer**: Victor Contreras
 
-**Opción A: Desarrollo rápido (recomendado durante desarrollo)**
+© 2026 SENTINNEL - Equipo de Ingeniería. Todos los derechos reservados.
 
-```bash
-# 1. Modificar prisma/schema.prisma
-# 2. Sincronizar con base de datos
-npx prisma db push
-
-# 3. Regenerar el cliente Prisma
-npx prisma generate
-
-# 4. Reiniciar el servidor
-npm run start:dev
-```
-
-**Opción B: Con migraciones (para producción)**
-
-```bash
-# 1. Modificar prisma/schema.prisma
-# 2. Crear migración
-npx prisma migrate dev --name nombre_del_cambio
-
-# 3. Aplicar migración
-npx prisma migrate deploy
-
-# 4. Regenerar cliente
-npx prisma generate
-```
-
-### 🌱 Seed de datos
-
-Para poblar la base de datos con datos iniciales (Materias, Requisitos, Usuarios de prueba):
-
-```bash
-npx prisma db seed
-```
-
-Esto ejecuta `prisma/seed.ts` y carga:
-
-- Período académico actual
-- Materias (5 materias del ciclo de pasantías)
-- Requisitos por materia
-- Usuarios de prueba (Admin, Profesor, Estudiante)
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

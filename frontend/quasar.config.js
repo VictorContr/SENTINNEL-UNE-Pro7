@@ -47,10 +47,14 @@ export default defineConfig((/* ctx */) => {
       // publicPath: '/',
       // analyze: true,
       env: {
+        // URL base del backend — usada por Axios y derivada por chatStore para WS
+        API_URL: process.env.API_URL || "http://localhost:3000/api",
+        // Clave de cifrado de sesión — debe coincidir con el backend
         SESSION_ENCRYPTION_KEY:
           process.env.SESSION_ENCRYPTION_KEY ||
           "SENTINNEL-SESSION-ENCRYPTION-KEY-2026-PRO7-VICTOR-SANTIAGO",
-        API_URL: process.env.API_URL || "http://localhost:3000/api",
+        // Límite de tamaño de archivos PDF (bytes). Default: 10 MB.
+        MAX_PDF_SIZE_vc: process.env.MAX_PDF_SIZE_vc || "10485760",
       },
       // rawDefine: {}
       // ignorePublicFolder: true,

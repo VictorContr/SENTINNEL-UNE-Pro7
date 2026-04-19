@@ -141,6 +141,7 @@ import { useConfigStore } from 'src/stores/configStore.js'
 
 // Assets
 import victorImg_sm_vc from 'src/assets/Victor Contreras.jpg'
+import santiagoImg_sm_vc from 'src/assets/Santiago Maldonado.jpeg'
 
 const configStore_sm_vc = useConfigStore()
 const isDark_sm_vc = computed(() => configStore_sm_vc.isDark_sm_vc)
@@ -154,9 +155,6 @@ const accentLight1_sm_vc = '#0d7a6f'
 const accentLight2_sm_vc = '#0284c7'
 
 const desarrolladores_sm_vc = computed(() => {
-  const bgHex_sm_vc = isDark_sm_vc.value ? '0b132b' : 'f0fffe'
-  const color2_sm_vc = isDark_sm_vc.value ? '7ec8e3' : '0284c7'
-
   return [
     {
       id_sm_vc: 'victor',
@@ -180,14 +178,14 @@ const desarrolladores_sm_vc = computed(() => {
     },
     {
       id_sm_vc: 'santiago',
-      nombre_sm_vc: 'Santiago',
+      nombre_sm_vc: 'Santiago Maldonado',
       rol_sm_vc: 'Desarrollador Backend',
       filename_sm_vc: 'santiago.dev.ts',
       accentColor_sm_vc: isDark_sm_vc.value ? accentDark2_sm_vc : accentLight2_sm_vc,
       accentGradient_sm_vc: isDark_sm_vc.value
         ? 'linear-gradient(90deg, #7ec8e3, #4a9fbf)'
         : 'linear-gradient(90deg, #0284c7, #0ea5e9)',
-      avatarUrl_sm_vc: `https://ui-avatars.com/api/?name=Santiago&background=${bgHex_sm_vc}&color=${color2_sm_vc}&bold=true&size=128&length=1&font-size=0.5`,
+      avatarUrl_sm_vc: santiagoImg_sm_vc,
       campos_sm_vc: [
         { key_sm_vc: 'matricula', value_sm_vc: '30.407.730', type_sm_vc: 'string' },
         { key_sm_vc: 'universidad', value_sm_vc: 'UNE', type_sm_vc: 'string' },

@@ -1,25 +1,0 @@
-Loaded Prisma config from prisma.config.ts.
-
-Prisma schema loaded from prisma\schema.prisma.
-
-Error: Prisma schema validation - (validate wasm)
-Error code: P1012
-[1;91merror[0m: [1mError validating: This line is not a valid field or attribute definition.[0m
-  [1;94m-->[0m  [4mprisma\schema.prisma:177[0m
-[1;94m   | [0m
-[1;94m176 | [0m  entrega         Entrega?        @relation(fields: [entrega_id_sm_vc],        references: [id_sm_vc])
-[1;94m177 | [0m  [1;91musuario         Usuario         @relation("UsuarioSubeDocumento",[0m
-[1;94m178 | [0m                                   fields: [usuario_subida_id_sm_vc], references: [id_sm_vc])
-[1;94m   | [0m
-[1;91merror[0m: [1mError validating: This line is not a valid field or attribute definition.[0m
-  [1;94m-->[0m  [4mprisma\schema.prisma:178[0m
-[1;94m   | [0m
-[1;94m177 | [0m  usuario         Usuario         @relation("UsuarioSubeDocumento",
-[1;94m178 | [0m                                   [1;91mfields: [usuario_subida_id_sm_vc], references: [id_sm_vc])[0m
-[1;94m179 | [0m  deployCodigo    ProyectoDeploy? @relation("DeployCodigoZIP")
-[1;94m   | [0m
-
-Validation Error Count: 2
-[Context: validate]
-
-Prisma CLI Version : 7.6.0
