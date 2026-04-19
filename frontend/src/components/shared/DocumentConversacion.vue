@@ -277,7 +277,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  chatStore_sm_vc.salirDeSala_sm_vc();
+  chatStore_sm_vc.salirDeSalaActual_sm_vc();
 });
 
 /* ── [FIX] Watcher: unir a sala solo cuando el socket esté listo ── */
