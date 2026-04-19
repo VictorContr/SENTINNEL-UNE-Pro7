@@ -1,28 +1,29 @@
-# Resolución del Merge: `santiago-dev-7`
+# 🛸 Walkthrough: Bitácora de Vuelo de AntiGravity
 
-¡El trabajo de integración está completado! Hemos combinado exitosamente tu rama (`santiago-dev-6`) con la rama de Víctor (`victor-dev-14`) dentro de una nueva rama (`santiago-dev-7`).
+## 📌 Contexto
+Se completó auditoría y refactor del flujo de "Reprobación de Materia". Antes, el frontend enviaba un estado de "REPROBADO" sin identificar el payload adecuado ni inhabilitar la UI consecuentemente, lo que provocaba una excepción 400 del Backend (requería `entrega_id_sm_vc` por defecto para evaluación puntual). 
 
-## 🛠️ Modificaciones y Decisiones Durante el Merge
+## 🛠️ Modificaciones y Decisiones (Sprint: Resolución de Reprobación)
 
-Se generaron varios conflictos debido a que ambos realizaron cambios significativos en la estructura de base de datos y en los servicios principales del sistema.
+### 1. Reajuste de Esquemas en Pasantías DTO (Backend)
+- `backend/src/pasantias/dto/evaluar-entrega.dto.ts` ✅ **Implementado**
+- **Por qué:** Aplicamos `@ValidateIf` para condicionalmente tolerar transacciones que NO posean el ID de una entrega (`entrega_id_sm_vc = null`), de manera que el sistema comprenda que estamos abortando globalmente, y en su lugar exigimos `estudiante_id` y `materia_id`. Validar DTOs con la capa de `class-validator` y `class-transformer` previene mutaciones inesperadas y 500 Internals. 
 
-### 1. Base de Datos (`schema.prisma` y `seed.ts`)
-> [!IMPORTANT]
-> **Prioridad a la Arquitectura de Víctor:** Víctor implementó una relación real de clave foránea (`FK`) entre `Materia` y `PeriodoAcademico`. Hemos preservado esta arquitectura, ya que es más limpia para relacionar datos, por lo que ahora **siempre que consultemos materias**, el modelo utiliza el ID del periodo (`periodo_id_sm_vc`) en lugar del nombre quemado.
+### 2. Controlador de Pasantías (Backend)
+- `backend/src/pasantias/pasantias.controller.ts` ✅ **Implementado**
+- **Por qué:** El endpoint ahora intercepta si posee el flag de *Reprobación Global*. Redirige la data cruda, ya limpia mediante el interceptor de DTO a un método transaccional de Pasantías Service adaptado.
 
-> [!NOTE]
-> Se resolvió un problema de duplicidad en `schema.prisma` donde la relación del periodo aparecía dos veces. El cliente de Prisma ahora genera el esquema de forma exitosa.
+### 3. Función `reprobarMateriaGlobal_sm_vc` en `PasantiasService` (Backend)
+- `backend/src/pasantias/pasantias.service.ts` ✅ **Implementado**
+- **Por qué:** Un ciclo iterativo basado en los requisitos formales de la materia, iterando y forzando con `upsert` que se escriban las entregas como "REPROBADAS", más el guardado global en evaluaciones. Tras la transacción ACID exitosa emitimos por Gateway. 
 
-### 2. Lógica de Servicios Backend
-- **Estudiantes y Evaluaciones:** Hemos unificado los servicios de `estudiantes.service.ts` y `evaluaciones.service.ts` para que utilicen la nueva estructura `periodo_id_sm_vc` instaurada por Víctor. Tu lógica permanece intacta pero operando con FK.
-- **Pasantías (`pasantias.service.ts`):** Tu lógica de carga masiva, validaciones preventivas, e inicialización de período requerían ser compatibilizadas. Se arregló un problema de validación de sintaxis en el merge.
-- **Chat Gateways:** Se aplicaron ambos códigos previniendo que se borren validaciones de conexión para evitar que un estudiante pueda ver partes no autorizadas pero validando permisos en `chat-room.guard.ts`.
+### 4. Modificaciones en el Store Pinia (Frontend)
+- `frontend/src/stores/pasantiasStore.js` ✅ **Implementado**
+- **Por qué:** Al disparar la reprobación desde el modal, el formData de `responderCorreccion` ahora acopla los id forzosos (estudiante y materia).
 
-### 3. Frontend UI (`ConvFormProfesor.vue`)
-- **Fusión de Funcionalidades:** Mantuve el ordenamiento reactivo de los requerimientos que programó Víctor y a la vez integré **el nuevo visual y comportamiento** (`<q-banner>` del estado "Módulo Aprobado") de tu rama.
+### 5. Interfaz Restrictiva (Frontend)
+- `frontend/src/components/shared/DocumentConversacion.vue` ✅ **Implementado**
+- **Por qué:** Hemos agregado la directiva condicional computada que verifica si `props.estadoProgreso === "REPROBADO"`. Cortamos del DOM (`v-if`) cualquier capa de inputs impidiendo enviar cosas adicionales. Además inyectamos el cartel de `.readonly-banner-reprobado_sm_vc`.
 
-## ✅ Validación y Compilación
-- **Compilación de Backend:** El proyecto fue probado usando `npm run build` en el servidor backend para asegurarnos que la combinación de tipos y archivos de TypeScript no resultara en errores de compilación ocultos tras arreglar sintaxis. **¡El backend compila en 0 errores!**
-
-## 🚀 Próximos pasos recomendados
-Como sugerencia, te invito a probar el sistema subiendo un archivo Excel como lo hiciste en la rama de `santiago-dev-6` para verificar que la "Carga Masiva" registre a los estudiantes usando las claves foráneas correspondientes.
+### 🚨 Conclusión
+La base de código se mantiene fiel a SOLID y DRY preservando `EstadoAprobacion.REPROBADO` en vez de migraciones nuevas. La transición funcionará de forma natural cuando ocurra el cambio semestral y la UI vuelva al estado "PENDIENTE".

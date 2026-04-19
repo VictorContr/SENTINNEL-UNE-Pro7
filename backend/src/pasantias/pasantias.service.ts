@@ -428,6 +428,97 @@ export class PasantiasService_sm_vc {
   }
 
   /**
+   * Reprobar Materia Globalmente
+   */
+  async reprobarMateriaGlobal_sm_vc(
+    profesorId: number,
+    estudianteId: number,
+    materiaId: number,
+    observaciones?: string
+  ) {
+    const estudiante = await this.prisma.estudiante.findUnique({
+      where: { id_sm_vc: estudianteId },
+      include: { materiaActiva: true }
+    });
+    if (!estudiante) throw new NotFoundException('Estudiante no encontrado.');
+
+    const materia = await this.prisma.materia.findUnique({
+      where: { id_sm_vc: materiaId },
+      include: { requisitos: true }
+    });
+    if (!materia) throw new NotFoundException('Materia no encontrada.');
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        for (const req of materia.requisitos) {
+          const entP = await tx.entrega.upsert({
+            where: {
+              estudiante_id_sm_vc_requisito_id_sm_vc: {
+                estudiante_id_sm_vc: estudianteId,
+                requisito_id_sm_vc: req.id_sm_vc,
+              }
+            },
+            update: { estado_sm_vc: EstadoAprobacion.REPROBADO },
+            create: {
+              estudiante_id_sm_vc: estudianteId,
+              requisito_id_sm_vc: req.id_sm_vc,
+              estado_sm_vc: EstadoAprobacion.REPROBADO
+            }
+          });
+
+          await tx.evaluacion.upsert({
+            where: { entrega_id_sm_vc: entP.id_sm_vc },
+            update: {
+              decision_sm_vc: EstadoAprobacion.REPROBADO,
+              profesor_id_sm_vc: profesorId,
+              observaciones_sm_vc: observaciones || 'Materia reprobada globalmente',
+            },
+            create: {
+              entrega_id_sm_vc: entP.id_sm_vc,
+              profesor_id_sm_vc: profesorId,
+              decision_sm_vc: EstadoAprobacion.REPROBADO,
+              observaciones_sm_vc: observaciones || 'Materia reprobada globalmente',
+            }
+          });
+        }
+      });
+      
+      const mensajeLog = `❌ **Materia Reprobada**\n\nEl profesor ha reprobado la materia **${materia.nombre_sm_vc}**.\n\n**Comentario:** ${observaciones || 'Ninguno'}`;
+  
+      await this.conversacionesService.registrarMensajeManual_sm_vc({
+        estudianteId: estudianteId,
+        contenido_sm_vc: mensajeLog,
+        materiaId: materiaId,
+        remitenteId: profesorId,
+        remitenteRol: 'PROFESOR',
+      });
+  
+      const notifReprobado = await this.prisma.notificacion.create({
+        data: {
+          emisor_id_sm_vc: profesorId,
+          receptor_id_sm_vc: estudiante.usuario_id_sm_vc,
+          tipo_sm_vc: 'IMPORTANTE',
+          titulo_sm_vc: `❌ Materia "${materia.nombre_sm_vc}" Reprobada`,
+          contenido_sm_vc: `Has reprobado la materia en este período. Queda bloqueada hasta la apertura de un nuevo ciclo.`,
+        }
+      });
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: estudiante.usuario_id_sm_vc, notificacion: notifReprobado });
+  
+      this.eventEmitter_sm_vc.emit('entrega.actualizada_sm_vc', {
+        estudianteId_sm_vc: estudianteId,
+        materiaId_sm_vc: materiaId,
+        estado_sm_vc: EstadoAprobacion.REPROBADO,
+        es_reprobacion_global: true
+      });
+
+      return { success: true, message: 'Materia reprobada en su totalidad.' };
+    } catch (err) {
+      console.error('[PasantiasService] Error al reprobar materia globalmente', err);
+      throw new BadRequestException('Ocurrió un error al intentar reprobar la materia globalmente.');
+    }
+  }
+
+  /**
    * Obtener el progreso actual de un estudiante
    */
   async getProgresoEstudiante_sm_vc(id: number, tipo_id: 'ESTUDIANTE' | 'USUARIO' = 'USUARIO') {

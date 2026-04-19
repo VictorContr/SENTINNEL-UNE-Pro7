@@ -196,6 +196,11 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         payload_sm_vc.es_reprobacion_global_sm_vc ? 'true' : 'false'
       )
       
+      if (payload_sm_vc.es_reprobacion_global_sm_vc) {
+        if (payload_sm_vc.estudiante_id_sm_vc) formData.append('estudiante_id_sm_vc', payload_sm_vc.estudiante_id_sm_vc);
+        if (payload_sm_vc.materia_id_sm_vc) formData.append('materia_id_sm_vc', payload_sm_vc.materia_id_sm_vc);
+      }
+      
       if (payload_sm_vc.archivo_correccion_sm_vc) {
         formData.append('archivo_correccion_sm_vc', payload_sm_vc.archivo_correccion_sm_vc)
       }

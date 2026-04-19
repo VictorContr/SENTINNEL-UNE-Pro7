@@ -156,6 +156,14 @@
       </div>
 
       <div
+        v-else-if="estadoProgreso === 'REPROBADO' && !esAdmin_sm_vc"
+        class="readonly-banner-reprobado_sm_vc"
+      >
+        <q-icon name="block" size="14px" color="negative" />
+        <span>Has reprobado la materia. Queda bloqueada hasta la apertura de un nuevo ciclo.</span>
+      </div>
+
+      <div
         v-else-if="props.modoVista_sm_vc === 'TRAZABILIDAD'"
         class="readonly-banner_sm_vc"
       >
@@ -235,7 +243,9 @@ const puedeEscribir_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
   const esModoChat_sm_vc = props.modoVista_sm_vc === "CHAT";
   const estaAprobada_sm_vc = props.estadoProgreso === "APROBADO";
+  const estaReprobada_sm_vc = props.estadoProgreso === "REPROBADO";
   if (esAdmin_sm_vc.value) return false;
+  if (estaReprobada_sm_vc) return false;
   if (rol_sm_vc === "ESTUDIANTE")
     return esModoChat_sm_vc && !estaAprobada_sm_vc;
   if (rol_sm_vc === "PROFESOR") return esModoChat_sm_vc && !estaAprobada_sm_vc;
@@ -536,6 +546,14 @@ const handleGuardarRequisitos_sm_vc = async (payload_sm_vc) => {
   background: rgba(158, 158, 158, 0.04);
   border-top: 1px solid rgba(158, 158, 158, 0.12);
   font-size: 0.68rem; color: #616161;
+  font-family: var(--sn-font-sans);
+}
+.readonly-banner-reprobado_sm_vc {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(220, 38, 38, 0.06);
+  border-top: 1px solid rgba(220, 38, 38, 0.2);
+  font-size: 0.68rem; color: var(--q-negative);
   font-family: var(--sn-font-sans);
 }
 </style>
