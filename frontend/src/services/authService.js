@@ -34,3 +34,8 @@ export const cambiarClaveInicial_sm_vc = async (correo_sm_vc, clave_temporal_sm_
   })
   return respuesta_sm_vc.data
 }
+
+export const refresh_sm_vc = async () => {
+  const respuesta_sm_vc = await api.post('/auth/refresh')
+  return respuesta_sm_vc.data
+}

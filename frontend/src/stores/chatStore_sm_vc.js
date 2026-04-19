@@ -133,237 +133,176 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
    *
    * @returns {void}
    */
-  const conectar_sm_vc = () => {
-    // Prevenir conexiones duplicadas si ya hay un socket activo
-    if (socket_sm_vc.value?.connected) return;
+    const conectar_sm_vc = () => {
+        // 1. Prevenir conexiones duplicadas
+        if (socket_sm_vc.value?.connected) return;
 
-    const token_sm_vc = LocalStorage.getItem("token_sm_vc");
-
-    if (!token_sm_vc) {
-      console.warn(
-        "[ChatStore] No se encontró token JWT. Abortando conexión WS.",
-      );
-      errorWs_sm_vc.value = "Sin token de autenticación.";
-      return;
-    }
-
-    conectando_sm_vc.value = true;
-    errorWs_sm_vc.value = null;
-
-    // Inicializar el socket con el namespace correcto y el JWT en el handshake
-    socket_sm_vc.value = io(`${WS_BASE_URL_sm_vc}/${WS_NAMESPACE_sm_vc}`, {
-      // [FIX] Autenticación DINÁMICA: callback se ejecuta en cada intento de conexión/reconexión
-      // Esto evita el "token fantasma" cuando el JWT se renueva tras logout/login
-      auth: (cb_sm_vc) => {
-        const tokenFresco_sm_vc = LocalStorage.getItem("token_sm_vc");
-        cb_sm_vc({ token: tokenFresco_sm_vc });
-      },
-      // Reconexión automática con backoff exponencial (max 5 intentos, 2s de espera inicial)
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 10000,
-      // Forzar nueva conexión si ya existe una previa (evita reusar socket con token viejo)
-      forceNew: true,
-      // Usar websocket primero (más eficiente que polling)
-      transports: ["websocket"],
-    });
-
-    // ══════════════════════════════════════════════════════════════
-    // LISTENERS DE CICLO DE VIDA (Sprint 5: Resiliencia)
-    // ══════════════════════════════════════════════════════════════
-
-    /**
-     * connect — Socket conectado exitosamente al servidor.
-     * Marca el estado como 'online' y limpia cualquier error previo.
-     */
-    socket_sm_vc.value.on("connect", () => {
-      estadoConexion_sm_vc.value = "online";
-      conectando_sm_vc.value = false;
-      errorWs_sm_vc.value = null;
-      console.info(
-        `[ChatStore] Conectado al namespace /${WS_NAMESPACE_sm_vc}. ` +
-          `Socket ID: ${socket_sm_vc.value.id}`,
-      );
-    });
-
-    /**
-     * disconnect — Socket desconectado del servidor.
-     *
-     * Razones comunes:
-     *   'io server disconnect' → El servidor cerró la conexión explícitamente (JWT expirado).
-     *   'transport close'      → Pérdida de red del cliente.
-     *   'ping timeout'         → El servidor no respondió al ping a tiempo.
-     *
-     * Estado → 'offline'. Socket.io intentará reconectar automáticamente
-     * (a menos que el servidor haya cerrado la conexión intencionalmente).
-     *
-     * [SECURITY] Si el servidor desconectó explícitamente, verificamos si es
-     * por JWT expirado comparando con el estado del error previo.
-     */
-    socket_sm_vc.value.on("disconnect", (razon_sm_vc) => {
-      estadoConexion_sm_vc.value = "offline";
-      // Limpiar indicadores de escritura al perder la conexión
-      escribiendo_sm_vc.value = {};
-      console.info(`[ChatStore] Desconectado. Razón: ${razon_sm_vc}`);
-
-      // Si el servidor forzó la desconexión y hay error de JWT, manejar sesión expirada
-      if (
-        razon_sm_vc === "io server disconnect" &&
-        errorWs_sm_vc.value?.includes("jwt")
-      ) {
-        manejarSesionExpirada_sm_vc();
-      }
-    });
-
-    /**
-     * connect_error — Error al intentar conectar o reconectar.
-     *
-     * Ocurre cuando el servidor rechaza el handshake (JWT inválido/expirado)
-     * o cuando no hay red disponible durante un intento de reconexión.
-     * Estado → 'reconnecting' para indicar que Socket.io está reintentando.
-     *
-     * [SECURITY] Si el error es JWT expirado o Unauthorized, forzamos logout
-     * para evitar que el usuario permanezca en la app con un token inválido.
-     */
-    socket_sm_vc.value.on("connect_error", (err_sm_vc) => {
-      const mensajeError_sm_vc = err_sm_vc?.message || "";
-
-      // Detectar si el error es por JWT expirado o no autorizado
-      if (
-        mensajeError_sm_vc.includes("jwt expired") ||
-        mensajeError_sm_vc.includes("Unauthorized") ||
-        mensajeError_sm_vc.includes("Token inválido")
-      ) {
-        console.error(
-          "[ChatStore] JWT expirado o inválido. Forzando logout...",
-        );
-        manejarSesionExpirada_sm_vc();
-        return;
-      }
-
-      estadoConexion_sm_vc.value = "reconnecting";
-      conectando_sm_vc.value = false;
-      errorWs_sm_vc.value =
-        mensajeError_sm_vc || "Error de conexión al servidor de chat.";
-      console.error("[ChatStore] Error de conexión WS:", mensajeError_sm_vc);
-    });
-
-    /**
-     * reconnect_attempt — Socket.io está intentando reconectar activamente.
-     * El contador `intento_sm_vc` indica cuántos intentos ha realizado ya.
-     */
-    socket_sm_vc.value.io.on("reconnect_attempt", (intento_sm_vc) => {
-      estadoConexion_sm_vc.value = "reconnecting";
-      console.info(
-        `[ChatStore] Reintentando conexión... (intento ${intento_sm_vc}/5)`,
-      );
-    });
-
-    /**
-     * reconnect_failed — Todos los intentos de reconexión agotados.
-     * Pasamos a 'offline' definitivo hasta que el usuario recargue.
-     */
-    socket_sm_vc.value.io.on("reconnect_failed", () => {
-      estadoConexion_sm_vc.value = "offline";
-      console.warn("[ChatStore] Todos los intentos de reconexión fallaron.");
-    });
-
-    // ══════════════════════════════════════════════════════════════
-    // LISTENERS DE MENSAJES Y EVENTOS DE NEGOCIO
-    // ══════════════════════════════════════════════════════════════
-
-    /**
-     * message_received_sm_vc — Nuevo mensaje en tiempo real (broadcast a sala).
-     *
-     * El backend emite este evento a TODOS los clientes de la sala cuando un
-     * mensaje es persistido en BD. Inyectamos el mensaje directamente al
-     * conversacionStore para mantener una sola fuente de verdad reactiva.
-     */
-    socket_sm_vc.value.on("message_received_sm_vc", (mensaje_sm_vc) => {
-      console.log("📡 [WS BROADCAST] Payload crudo recibido:", mensaje_sm_vc);
-      _inyectarMensajeEnStore_sm_vc(mensaje_sm_vc);
-    });
-
-    /**
-     * message_ack_sm_vc — Confirmación de que el mensaje fue guardado en BD.
-     *
-     * [FIX] El backend envía este ACK al remitente justo después de persistir.
-     * Usamos el mensaje devuelto (ya con ID de BD) para actualizar la UI.
-     */
-    socket_sm_vc.value.on("message_ack_sm_vc", (ack_sm_vc) => {
-      console.log("📨 [WS ACK] Payload crudo recibido:", ack_sm_vc);
-      if (ack_sm_vc?.mensaje_sm_vc) {
-        _inyectarMensajeEnStore_sm_vc(ack_sm_vc.mensaje_sm_vc);
-      }
-    });
-
-    /**
-     * error_sm_vc — Evento de error estandarizado del Gateway.
-     *
-     * [Sprint 4] Se emite cuando el backend bloquea una acción no autorizada,
-     * como un ADMIN intentando escribir un mensaje.
-     *
-     * Acción: Mostrar notificación Quasar de tipo 'negative' (roja) para dar
-     * feedback visual inmediato al usuario, sin interrumpir la UI.
-     */
-    socket_sm_vc.value.on("error_sm_vc", (errorPayload_sm_vc) => {
-      const mensaje_sm_vc =
-        errorPayload_sm_vc?.message_sm_vc ||
-        "Acción no permitida por el servidor.";
-      const codigo_sm_vc = errorPayload_sm_vc?.code_sm_vc || "ERROR";
-
-      console.warn("[ChatStore] Error del Gateway:", errorPayload_sm_vc);
-
-      // Mostrar notificación Quasar roja con el mensaje del error del servidor
-      Notify.create({
-        type: "negative",
-        message: mensaje_sm_vc,
-        caption: `Código: ${codigo_sm_vc}`,
-        icon: "block",
-        position: "top-right",
-        timeout: 4000,
-        progress: true,
-        actions: [{ icon: "close", color: "white", round: true }],
-      });
-    });
-
-    /**
-     * typing_status_sm_vc — El backend retransmite el estado de escritura de otro usuario.
-     *
-     * Payload recibido:
-     *   { userId_sm_vc, rol_sm_vc, isTyping_sm_vc, timestamp_sm_vc }
-     *
-     * Estrategia: Mantenemos el mapa `escribiendo_sm_vc` con los IDs de los
-     * usuarios que están escribiendo. Si `isTyping_sm_vc === false` o el timer
-     * expira, eliminamos la entrada del mapa.
-     */
-    socket_sm_vc.value.on("typing_status_sm_vc", (payload_sm_vc) => {
-      const userId_sm_vc = String(payload_sm_vc?.userId_sm_vc);
-      if (!userId_sm_vc) return;
-
-      if (payload_sm_vc.isTyping_sm_vc) {
-        // Marcar al usuario como "escribiendo"
-        escribiendo_sm_vc.value = {
-          ...escribiendo_sm_vc.value,
-          [userId_sm_vc]: true,
-        };
-
-        // Cancelar el timer anterior si existía (el usuario sigue escribiendo)
-        if (_timerEscribiendo_sm_vc.value[userId_sm_vc]) {
-          clearTimeout(_timerEscribiendo_sm_vc.value[userId_sm_vc]);
+        const token_sm_vc = LocalStorage.getItem("token_sm_vc");
+        if (!token_sm_vc) {
+          console.warn("[ChatStore] No se encontró token JWT. Abortando conexión WS.");
+          errorWs_sm_vc.value = "Sin token de autenticación.";
+          return;
         }
 
-        // Auto-limpiar si no llega señal de "dejé de escribir" en TYPING_TIMEOUT_MS_sm_vc
-        _timerEscribiendo_sm_vc.value[userId_sm_vc] = setTimeout(() => {
-          _limpiarEscribiendoUsuario_sm_vc(userId_sm_vc);
-        }, TYPING_TIMEOUT_MS_sm_vc);
-      } else {
-        // El usuario indicó explícitamente que dejó de escribir
-        _limpiarEscribiendoUsuario_sm_vc(userId_sm_vc);
-      }
-    });
-  };
+        conectando_sm_vc.value = true;
+        errorWs_sm_vc.value = null;
+
+        // 2. Inicializar el socket
+        socket_sm_vc.value = io(`${WS_BASE_URL_sm_vc}/${WS_NAMESPACE_sm_vc}`, {
+          auth: (cb_sm_vc) => {
+            const tokenFresco_sm_vc = LocalStorage.getItem("token_sm_vc");
+            cb_sm_vc({ token: tokenFresco_sm_vc });
+          },
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 2000,
+          forceNew: true,
+          transports: ["websocket"],
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // LISTENERS DE CICLO DE VIDA
+        // ══════════════════════════════════════════════════════════════
+
+        socket_sm_vc.value.on("connect", () => {
+          estadoConexion_sm_vc.value = "online";
+          conectando_sm_vc.value = false;
+          errorWs_sm_vc.value = null;
+          console.info(`[ChatStore] Conectado. ID: ${socket_sm_vc.value.id}`);
+        });
+
+        socket_sm_vc.value.on("disconnect", (razon_sm_vc) => {
+          estadoConexion_sm_vc.value = "offline";
+          escribiendo_sm_vc.value = {};
+          if (razon_sm_vc === "io server disconnect" && errorWs_sm_vc.value?.includes("jwt")) {
+            manejarSesionExpirada_sm_vc();
+          }
+        });
+
+        socket_sm_vc.value.on("connect_error", (err_sm_vc) => {
+          const msg = err_sm_vc?.message || "";
+          if (msg.includes("jwt") || msg.includes("Unauthorized")) {
+            manejarSesionExpirada_sm_vc();
+            return;
+          }
+          estadoConexion_sm_vc.value = "reconnecting";
+          conectando_sm_vc.value = false;
+          errorWs_sm_vc.value = msg || "Error de conexión WS.";
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // LISTENERS DE NEGOCIO (EL CORAZÓN DE LA REACTIVIDAD)
+        // ══════════════════════════════════════════════════════════════
+
+        /**
+         * message_received_sm_vc: Recibir mensaje nuevo
+         */
+        socket_sm_vc.value.on("message_received_sm_vc", (mensaje_sm_vc) => {
+          _inyectarMensajeEnStore_sm_vc(mensaje_sm_vc);
+        });
+
+        /**
+         * message_ack_sm_vc: Confirmación de envío propio
+         */
+        socket_sm_vc.value.on("message_ack_sm_vc", (ack_sm_vc) => {
+          if (ack_sm_vc?.mensaje_sm_vc) {
+            _inyectarMensajeEnStore_sm_vc(ack_sm_vc.mensaje_sm_vc);
+          }
+        });
+
+        /**
+         * ✅ [FIX CRÍTICO] entrega_updated_sm_vc: Parcheo en tiempo real
+         * Este listener es el que hace que el badge del documento cambie de color 
+         * de azul (ENTREGADO) a verde/rojo sin recargar la página.
+         */
+        socket_sm_vc.value.on("entrega_updated_sm_vc", async (payload_sm_vc) => {
+          console.log("🔄 [WS] Recibida actualización de entrega:", payload_sm_vc);
+
+          try {
+            // Importamos los stores necesarios
+            const { useConversacionStore_sm_vc } = await import("src/stores/conversacionStore");
+            const { usePasantiasStore } = await import("src/stores/pasantiasStore");
+            
+            const convStore = useConversacionStore_sm_vc();
+            const pasStore = usePasantiasStore();
+
+            // 🚨 Búsqueda estricta usando el documento_id_original
+            const nodo = convStore.conversaciones_sm_vc.find(n => 
+              n.tipo_nodo_sm_vc === 'DOCUMENTO' && 
+              Number(n.documento_id_sm_vc) === Number(payload_sm_vc.documento_id_original)
+            );
+
+            if (nodo) {
+              nodo.estado_sm_vc = payload_sm_vc.estado_sm_vc;
+              console.log(`✅ [WS] Nodo ${nodo.id_sm_vc} parcheado a ${payload_sm_vc.estado_sm_vc}`);
+            }
+
+            // Refrescar progreso general
+            if (payload_sm_vc.estudianteId_sm_vc) {
+              pasStore.fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudianteId_sm_vc);
+            }
+          } catch (err) {
+            console.error("❌ Error en el parcheo reactivo del socket:", err);
+          }
+        });
+
+        /**
+         * error_sm_vc: Notificaciones de error del servidor
+         */
+        socket_sm_vc.value.on("error_sm_vc", (payload) => {
+          Notify.create({
+            type: "negative",
+            message: payload?.message_sm_vc || "Error en la operación de chat.",
+            position: "top-right"
+          });
+        });
+
+        /**
+         * [SPRINT NOTIFICACIONES] notificacion_recibida_sm_vc: Notificación en tiempo real
+         */
+        socket_sm_vc.value.on("notificacion_recibida_sm_vc", async (payload_sm_vc) => {
+          console.log("🔔 [WS] Notificación en tiempo real:", payload_sm_vc);
+          try {
+            // Mostrar el popup SIEMPRE primero por si falla la inyección Pinia
+            const tipoIcono = payload_sm_vc.tipo_sm_vc === 'URGENTE' ? 'warning' : 'info';
+            const tipoColor = payload_sm_vc.tipo_sm_vc === 'URGENTE' ? 'negative' : 'primary';
+
+            Notify.create({
+              message: `<b>${payload_sm_vc.titulo_sm_vc}</b><br/>${payload_sm_vc.contenido_sm_vc}`,
+              html: true,
+              color: tipoColor,
+              icon: tipoIcono,
+              position: 'top-right',
+              timeout: 5000,
+              actions: [{ icon: 'close', color: 'white' }]
+            });
+
+            const { useNotificacionesStore } = await import("src/stores/notificacionesStore");
+            const notiStore = useNotificacionesStore();
+            notiStore.agregarNotificacion_sm_vc(payload_sm_vc);
+          } catch (err_sm_vc) {
+            console.error("❌ Error al procesar notificación recibida en Pinia (silenciado visualmente):", err_sm_vc);
+          }
+        });
+
+        /**
+         * typing_status_sm_vc: Indicador de 'escribiendo...'
+         */
+        socket_sm_vc.value.on("typing_status_sm_vc", (payload_sm_vc) => {
+          const userId = String(payload_sm_vc?.userId_sm_vc);
+          if (!userId) return;
+
+          if (payload_sm_vc.isTyping_sm_vc) {
+            escribiendo_sm_vc.value = { ...escribiendo_sm_vc.value, [userId]: true };
+            if (_timerEscribiendo_sm_vc.value[userId]) clearTimeout(_timerEscribiendo_sm_vc.value[userId]);
+            _timerEscribiendo_sm_vc.value[userId] = setTimeout(() => {
+              _limpiarEscribiendoUsuario_sm_vc(userId);
+            }, TYPING_TIMEOUT_MS_sm_vc);
+          } else {
+            _limpiarEscribiendoUsuario_sm_vc(userId);
+          }
+        });
+    };
 
   /**
    * unirASala_sm_vc — Une al usuario a una sala de conversación específica.
@@ -489,17 +428,17 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
   };
 
   /**
-   * salirDeSala_sm_vc — Sale de la sala actual y desconecta el socket.
+   * salirDeSalaActual_sm_vc — Sale de la sala actual sin desconectar el WebSocket.
    *
    * DISEÑO CRÍTICO: Esta función está pensada para ser llamada desde
-   * `onUnmounted` en las vistas Page. Al desmontar la página, se limpia
-   * la conexión para evitar memory leaks y listeners huérfanos.
+   * `onUnmounted` de las vistas Page, permitiendo abandonar el chat activo
+   * sin sacrificar las notificaciones globales, que requieren el socket vivo.
    *
    * IDEMPOTENTE: Si no hay socket o sala activa, no hace nada.
    *
    * @returns {void}
    */
-  const salirDeSala_sm_vc = () => {
+  const salirDeSalaActual_sm_vc = () => {
     if (!socket_sm_vc.value) return;
 
     // Notificar al backend que salimos de la sala antes de desconectar
@@ -510,15 +449,36 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
     // Cancelar todos los timers de escritura pendientes (evitar memory leaks)
     Object.values(_timerEscribiendo_sm_vc.value).forEach(clearTimeout);
 
-    // Desconectar y limpiar el estado local
-    socket_sm_vc.value.disconnect();
-    socket_sm_vc.value = null;
+    // Solo limpiar el estado de la conversación, NO desconectar de la red
     salaActual_sm_vc.value = null;
-    estadoConexion_sm_vc.value = "offline";
     escribiendo_sm_vc.value = {};
     _timerEscribiendo_sm_vc.value = {};
 
-    console.info("[ChatStore] Socket desconectado y sala limpiada.");
+    console.info("[ChatStore] Sala limpiada (Socket sigue conectado para notificaciones).");
+  };
+
+  /**
+   * desconectarSocket_sm_vc — Desconexión total del WebSocket global.
+   *
+   * DISEÑO CRÍTICO: Llamar EXCLUSIVAMENTE al cerrar la sesión (logout) o
+   * en flujos de emergencia por token expirado.
+   *
+   * @returns {void}
+   */
+  const desconectarSocket_sm_vc = () => {
+    if (!socket_sm_vc.value) return;
+
+    socket_sm_vc.value.disconnect();
+    socket_sm_vc.value = null;
+    estadoConexion_sm_vc.value = "offline";
+    conectando_sm_vc.value = false;
+    errorWs_sm_vc.value = null;
+    salaActual_sm_vc.value = null;
+    escribiendo_sm_vc.value = {};
+    Object.values(_timerEscribiendo_sm_vc.value).forEach(clearTimeout);
+    _timerEscribiendo_sm_vc.value = {};
+
+    console.info("[ChatStore] Socket global desconectado permanentemente.");
   };
 
   /* ══════════════════════════════════════════════════════════════
@@ -596,6 +556,21 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
           "✅ Inyección exitosa. Total:",
           store_sm_vc.conversaciones_sm_vc.length,
         );
+
+        // [FIX] MISSION 1: REFETCH para actualizar estado global y requisitos.
+        // Cuando llega un mensaje (especialmente evaluaciones del profesor), 
+        // necesitamos refrescar la fuente de verdad (progreso) para bloquear el formulario pertinentemente.
+        if (salaActual_sm_vc.value) {
+          const partes_sm_vc = salaActual_sm_vc.value.split(":"); // formato: conv:{estudianteId}:{materiaId}
+          if (partes_sm_vc.length >= 2) {
+            const estId_sm_vc = partes_sm_vc[1];
+            import("src/stores/pasantiasStore").then(({ usePasantiasStore }) => {
+              usePasantiasStore()
+                .fetch_progreso_estudiante_sm_vc(estId_sm_vc)
+                .catch((e) => console.warn("[WS Refetch] Error refrescando progreso:", e));
+            });
+          }
+        }
       })
       .catch((err_sm_vc) => {
         console.error("❌ ERROR FATAL EN PINIA:", err_sm_vc);
@@ -674,6 +649,7 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
     enviarMensaje_sm_vc,
     /** Emite el evento typing_sm_vc al servidor con el estado de escritura */
     emitirEscribiendo_sm_vc,
-    salirDeSala_sm_vc, // ⬅ EXPUESTO para onUnmounted en vistas Page
+    salirDeSalaActual_sm_vc, // ⬅ EXPUESTO: abandonar chat actual, mantener socket
+    desconectarSocket_sm_vc, // ⬅ EXPUESTO: solo para MainLayout (logout)
   };
 });

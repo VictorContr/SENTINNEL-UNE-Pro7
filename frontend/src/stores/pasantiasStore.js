@@ -26,7 +26,7 @@ export const ESTADO_APROBACION = {
 export const usePasantiasStore = defineStore('pasantias', () => {
   /* ── State ── */
   const materias_sm_vc    = ref([])
-  const progreso_sm_vc    = ref([]) // ← FIX: sufijo correcto _sm_vc (antes era progreso_sm en algunos getters)
+  const progreso_sm_vc    = ref([]) // ← FIX: sufijo correcto _sm_vc
   const misEntregas_sm_vc = ref([])
   const cargando_sm_vc    = ref(false)
 
@@ -37,10 +37,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
   // ACTIONS — API Backend
   // ─────────────────────────────────────────────────────────────────
 
-  /**
-   * Obtiene el catálogo de materias desde el backend.
-   * Ejecutar antes de usar getMateriaById para evitar reads de array vacío.
-   */
   const fetch_materias_sm_vc = async () => {
     cargando_sm_vc.value = true
     try {
@@ -57,15 +53,10 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     }
   }
 
-  /**
-   * Obtiene el progreso académico del estudiante autenticado (ESTUDIANTE).
-   * Guarda en progreso_sm_vc.
-   */
   const fetch_mi_progreso_sm_vc = async () => {
     cargando_sm_vc.value = true
     try {
       const resp_sm_vc = await apiGetMiProgreso_sm_vc()
-      console.log('[pasantiasStore] Mi progreso (backend):', resp_sm_vc)
       progreso_sm_vc.value = resp_sm_vc
     } catch (err_sm_vc) {
       Notify.create({
@@ -78,16 +69,10 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     }
   }
 
-  /**
-   * Obtiene el progreso académico de un estudiante específico (PROFESOR/ADMIN).
-   * @param {string|number} id_sm_vc — ID del estudiante (puede ser usuario_id o estudiante_id)
-   */
   const fetch_progreso_estudiante_sm_vc = async (id_sm_vc) => {
     cargando_sm_vc.value = true
     try {
       const resp_sm_vc = await apiGetProgresoEstudiante_sm_vc(id_sm_vc)
-      console.log(`[pasantiasStore] Progreso estudiante ${id_sm_vc}:`, resp_sm_vc)
-      // FIX: guardamos en progreso_sm_vc (sufijo correcto)
       progreso_sm_vc.value = resp_sm_vc
       return resp_sm_vc
     } catch (err_sm_vc) {
@@ -102,23 +87,12 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     }
   }
 
-  /**
-   * Ensureiza que el catálogo de materias esté disponible.
-   * Útil para acciones que dependen de getMateriaById de forma
-   * segura sin condicionales externos.
-   */
   const ensure_materias_cargadas_sm_vc = async () => {
     if (!materias_sm_vc.value.length) {
       await fetch_materias_sm_vc()
     }
   }
 
-  /**
-   * Registra una entrega documental del estudiante autenticado.
-   * @param {number} requisito_id_sm_vc
-   * @param {string} comentario_sm_vc
-   * @param {File} archivo_sm_vc
-   */
   const submit_entrega_sm_vc = async (requisito_id_sm_vc, comentario_sm_vc = '', archivo_sm_vc = null) => {
     cargando_sm_vc.value = true
     try {
@@ -133,7 +107,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         color: 'positive',
         icon: 'check_circle'
       })
-      // Refrescamos el progreso para reflejar la nueva entrega
       await fetch_mi_progreso_sm_vc()
       return resp_sm_vc
     } catch (err_sm_vc) {
@@ -150,17 +123,10 @@ export const usePasantiasStore = defineStore('pasantias', () => {
 
   // ─────────────────────────────────────────────────────────────────
   // GETTERS
-  // FIX: Todos consumen progreso_sm_vc (sufijo correcto).
   // ─────────────────────────────────────────────────────────────────
 
-  /** Alias computed del catálogo de materias. */
   const getMaterias = computed(() => materias_sm_vc.value)
 
-  /**
-   * Busca una materia por su id_sm_vc.
-   * Acepta tanto número como string para evitar comparaciones fallidas.
-   * SAFE: devuelve null si no encuentra (no rompe la UI).
-   */
   const getMateriaById = (id_sm_vc) => {
     if (id_sm_vc == null) return null
     return (
@@ -170,17 +136,8 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     )
   }
 
-  /**
-   * FIX: `miProgreso` ahora lee de `progreso_sm_vc` (sufijo correcto).
-   * Antes el alias apuntaba a `progreso_sm` que nunca existió como ref,
-   * causando que el computed devolviera undefined en todas las páginas.
-   */
   const miProgreso = computed(() => progreso_sm_vc.value)
 
-  /**
-   * Computa si todas las materias del progreso están aprobadas.
-   * SAFE: devuelve false si el array está vacío.
-   */
   const todasAprobadas = computed(() =>
     progreso_sm_vc.value.length > 0 &&
     progreso_sm_vc.value.every(
@@ -190,24 +147,15 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     )
   )
 
-  /**
-   * Retorna el array de progreso completo para uso en TrazabilidadPage.vue (Profesor).
-   * FIX: ahora apunta a progreso_sm_vc.
-   */
   const getProgresoEstudiante = () => progreso_sm_vc.value || []
 
   // ─────────────────────────────────────────────────────────────────
-  // FALLBACKS — Stubs para compatibilidad con vistas heredadas
-  // que aún no tienen su endpoint de backend conectado.
+  // FALLBACKS
   // ─────────────────────────────────────────────────────────────────
   const getDeployEstudiante   = () => null
   const miDeploy              = computed(() => null)
   const getEstudiantesDelProfesor = () => []
 
-  /**
-   * Envía un informe documental (Estudiante).
-   * @param {Object} payload_sm_vc - { requisito_id_sm_vc, comentario_sm_vc, archivo_sm_vc }
-   */
   const enviarInforme = async (payload_sm_vc) => {
     if (payload_sm_vc?.requisito_id_sm_vc) {
       return await submit_entrega_sm_vc(
@@ -226,21 +174,32 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     cargando_sm_vc.value = true
     try {
       const formData = new FormData()
-      formData.append('entrega_id_sm_vc',        payload_sm_vc.entrega_id_sm_vc ?? '')
-      formData.append('decision_sm_vc',           payload_sm_vc.estado_evaluacion_sm_vc)
-      formData.append('nota_sm_dec',              payload_sm_vc.nota_sm_dec || '')
-      formData.append('observaciones_sm_vc',      payload_sm_vc.comentario_sm_vc || '')
 
-      // TAREA 2: ID de la entrega específica vinculada por el profesor
+      // ✅ FIX 1: Tomar el ID real que viene del formulario y convertirlo a NÚMERO
       if (payload_sm_vc.id_entrega_sm_vc) {
-        formData.append('id_entrega_sm_vc', payload_sm_vc.id_entrega_sm_vc)
+        formData.append('entrega_id_sm_vc', Number(payload_sm_vc.id_entrega_sm_vc))
       }
+
+      // ✅ FIX 2: Mapear la decisión correctamente
+      formData.append('decision_sm_vc', payload_sm_vc.estado_evaluacion_sm_vc)
+
+      // ✅ FIX 3: Solo enviar nota si existe y es un número válido
+      if (payload_sm_vc.nota_sm_dec !== null && payload_sm_vc.nota_sm_dec !== undefined && payload_sm_vc.nota_sm_dec !== '') {
+        formData.append('nota_sm_dec', Number(payload_sm_vc.nota_sm_dec))
+      }
+
+      formData.append('observaciones_sm_vc', payload_sm_vc.comentario_sm_vc || '')
 
       // TAREA 3: Flag de reprobación global (sin documento específico)
       formData.append(
         'es_reprobacion_global_sm_vc',
         payload_sm_vc.es_reprobacion_global_sm_vc ? 'true' : 'false'
       )
+      
+      if (payload_sm_vc.es_reprobacion_global_sm_vc) {
+        if (payload_sm_vc.estudiante_id_sm_vc) formData.append('estudiante_id_sm_vc', payload_sm_vc.estudiante_id_sm_vc);
+        if (payload_sm_vc.materia_id_sm_vc) formData.append('materia_id_sm_vc', payload_sm_vc.materia_id_sm_vc);
+      }
       
       if (payload_sm_vc.archivo_correccion_sm_vc) {
         formData.append('archivo_correccion_sm_vc', payload_sm_vc.archivo_correccion_sm_vc)
@@ -254,6 +213,15 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         color: 'positive',
         icon: 'how_to_reg'
       })
+
+      // 💥 Mutación optimista y reactiva para ESTADOS TERMINALES
+      if (payload_sm_vc.es_reprobacion_global_sm_vc || payload_sm_vc.estado_evaluacion_sm_vc === 'REPROBADO') {
+        const itemProgreso_sm_vc = progreso_sm_vc.value.find(
+          p => String(p.estudiante_id_sm_vc) === String(payload_sm_vc.estudiante_id_sm_vc) &&
+              (String(p.id_sm_vc) === String(payload_sm_vc.materia_id_sm_vc) || String(p.materia_id_sm_vc) === String(payload_sm_vc.materia_id_sm_vc))
+        );
+        if (itemProgreso_sm_vc) itemProgreso_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO';
+      }
 
       // Refrescamos progreso del estudiante
       if (payload_sm_vc.estudiante_id_sm_vc) {
@@ -271,11 +239,10 @@ export const usePasantiasStore = defineStore('pasantias', () => {
     } finally {
       cargando_sm_vc.value = false
     }
-  }
+  } // <--- ESTA ERA LA LLAVE QUE FALTABA Y ROMPÍA TODO EL ARCHIVO
 
   /**
    * Acción de aprobación por lote (granular o materia completa).
-   * DT-007: Si se pasan todos los IDs de la materia, el backend lo trata como aprobación total.
    */
   const aprobarRequisitosGranular = async (payload_sm_vc) => {
     cargando_sm_vc.value = true
@@ -296,7 +263,6 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         icon: 'done_all'
       })
 
-      // Refrescamos progreso para actualizar la UI del profesor
       await fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudiante_id_sm_vc)
       
       return res_sm_vc
@@ -311,8 +277,40 @@ export const usePasantiasStore = defineStore('pasantias', () => {
       cargando_sm_vc.value = false
     }
   }
-  const registrarDeploy            = () => {}
-  const procesarCambioPeriodo_sm_vc = () => {}
+
+  const registrarDeploy = () => {}
+
+  /**
+   * procesarCambioPeriodo_sm_vc
+   * ─────────────────────────────────────────────────────────────────
+   * Se invoca desde periodoStore tras un Roll-Forward o cambio de período.
+   * PROTOCOLO:
+   *   1. Limpia el estado local para evitar que la UI muestre datos del
+   *      período anterior (el "estado zombie").
+   *   2. Rehidrata COMPLETAMENTE: materias Y progreso del estudiante
+   *      actual, garantizando que el store quede en un estado válido
+   *      antes de que cualquier componente reaccione.
+   *
+   * FIX: antes solo rehidrataba `materias_sm_vc` y dejaba `progreso_sm_vc`
+   * en `[]`, lo que provocaba que TrazabilidadPage renderizara en blanco
+   * en el primer intento tras un cambio de período.
+   */
+  const procesarCambioPeriodo_sm_vc = async () => {
+    // Paso 1: Reset atómico — el store queda en pizarra en blanco
+    materias_sm_vc.value    = []
+    progreso_sm_vc.value    = []
+    misEntregas_sm_vc.value = []
+
+    // Paso 2: Rehidratación completa en paralelo
+    // fetch_mi_progreso_sm_vc es el endpoint del estudiante logueado;
+    // si en el futuro se requiere el progreso del profesor, se añade aquí.
+    await Promise.all([
+      fetch_materias_sm_vc(),
+      fetch_mi_progreso_sm_vc()
+    ])
+
+    console.log('[pasantiasStore] Rehidratación completa (materias + progreso) tras cambio de período.')
+  }
 
   return {
     /* State */

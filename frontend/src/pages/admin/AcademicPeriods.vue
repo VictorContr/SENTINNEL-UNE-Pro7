@@ -132,8 +132,9 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit.prevent="savePeriod" class="q-gutter-md">
-            <!-- El nombre del período se genera automáticamente en el servidor
-                 a partir de las fechas. No se muestra ni se envía. -->
+            <!-- El backend auto-genera nombre_sm_vc (ej. "P-166") y descripcion_sm_vc.
+                 El frontend solo provee las fechas y, opcionalmente, la descripción
+                 en modo edición (PATCH). -->
             <div class="row q-col-gutter-md">
               <div class="col-12 col-md-6">
                 <q-input
@@ -163,17 +164,6 @@
                   label="Estado Activo"
                   color="primary"
                   keep-color
-                />
-              </div>
-            </div>
-            <div class="row q-mt-md">
-              <div class="col-12">
-                <q-input
-                  v-model="form.descripcion_sm_vc"
-                  type="textarea"
-                  label="Descripción"
-                  outlined
-                  rows="3"
                 />
               </div>
             </div>
@@ -283,10 +273,10 @@ const periodToDelete = ref(null)
 const successMessage = ref('')
 
 const form = ref({
+  descripcion_sm_vc: '',   // visible solo en modo edición (PATCH)
   fecha_inicio_sm_vc: '',
   fecha_fin_sm_vc: '',
   estado_activo_sm_vc: false,
-  descripcion_sm_vc: '',
 })
 
 // Reglas de validación (nombre eliminado: se genera en el servidor)
@@ -394,10 +384,10 @@ const onRequest = async (props) => {
 const editPeriodo = (period) => {
   editingPeriod.value = { ...period }
   form.value = {
+    descripcion_sm_vc: period.descripcion_sm_vc || '',
     fecha_inicio_sm_vc: date.formatDate(period.fecha_inicio_sm_vc, 'YYYY-MM-DD'),
     fecha_fin_sm_vc: date.formatDate(period.fecha_fin_sm_vc, 'YYYY-MM-DD'),
     estado_activo_sm_vc: period.estado_activo_sm_vc,
-    descripcion_sm_vc: period.descripcion_sm_vc || '',
   }
   showCreateDialog.value = true
 }
@@ -492,10 +482,10 @@ const savePeriod = async () => {
 
 const resetForm = () => {
   form.value = {
+    descripcion_sm_vc: '',
     fecha_inicio_sm_vc: '',
     fecha_fin_sm_vc: '',
     estado_activo_sm_vc: false,
-    descripcion_sm_vc: '',
   }
   editingPeriod.value = null
 }

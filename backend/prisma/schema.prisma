@@ -8,24 +8,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: PeriodoAcademico
+// Entidad raíz del ciclo académico. Todas las demás entidades dependientes
+// (Materia, ConfiguracionSistema) apuntan aquí con FK real.
+// ─────────────────────────────────────────────────────────────────────────────
 model PeriodoAcademico {
-  id_sm_vc            Int      @id @default(autoincrement())
-  nombre_sm_vc        String   @db.VarChar(100)
+  id_sm_vc            Int       @id @default(autoincrement())
+  /// Código único del período según el estándar universitario (ej. "P-165").
+  nombre_sm_vc        String    @unique @db.VarChar(50)
+  /// Descripción legible del rango de fechas (ej. "Enero 2026 - Abril 2026").
+  descripcion_sm_vc   String    @db.VarChar(100)
   fecha_inicio_sm_vc  DateTime
   fecha_fin_sm_vc     DateTime
-  estado_activo_sm_vc Boolean  @default(false)
+  estado_activo_sm_vc Boolean   @default(false)
+
+  // Relaciones inversas — permiten navegar desde el período
+  materias                Materia[]
+  configuracionesSistema  ConfiguracionSistema[]
 
   @@map("tdperiodoacademico_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: ConfiguracionSistema
+// Registro singleton (id = 1). Apunta al período activo mediante FK real.
+// ─────────────────────────────────────────────────────────────────────────────
 model ConfiguracionSistema {
-  id_sm_vc                  Int      @id @default(1)
-  periodo_actual_sm_vc      String   @db.VarChar(100)
-  fecha_actualizacion_sm_vc DateTime @updatedAt
+  id_sm_vc                  Int              @id @default(1)
+  /// FK real al período académico actual. Reemplaza el campo string anterior.
+  periodo_id_sm_vc          Int
+  fecha_actualizacion_sm_vc DateTime         @updatedAt
+
+  periodo                   PeriodoAcademico @relation(fields: [periodo_id_sm_vc], references: [id_sm_vc])
 
   @@map("tdconfiguracionsistema_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Usuario
+// ─────────────────────────────────────────────────────────────────────────────
 model Usuario {
   id_sm_vc                    Int            @id @default(autoincrement())
   nombre_sm_vc                String         @db.VarChar(50)
@@ -49,16 +71,27 @@ model Usuario {
   @@map("tdusuario_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Estudiante
+// intentos_materia_sm_vc: contador de cuántas veces ha cursado la materia activa.
+// Se inicializa en 1 y se incrementa cuando el sistema reasigna al estudiante
+// a la misma posición en un período nuevo.
+// ─────────────────────────────────────────────────────────────────────────────
 model Estudiante {
   id_sm_vc                 Int             @id @default(autoincrement())
   usuario_id_sm_vc         Int             @unique
   profesor_id_sm_vc        Int?
-  empresa_sm_vc            String          @db.VarChar(150)
-  tutor_empresarial_sm_vc  String          @db.VarChar(100)
-  titulo_proyecto_sm_vc    String          @db.VarChar(255)
+  empresa_sm_vc            String?         @db.VarChar(150)
+  tutor_empresarial_sm_vc  String?         @db.VarChar(100)
+  titulo_proyecto_sm_vc    String?         @db.VarChar(255)
   materia_activa_id_sm_vc  Int
   puede_hacer_deploy_sm_vc Boolean         @default(false)
-  conversacion             Conversacion?
+  /// Contador de intentos para la materia activa actual.
+  /// Se incrementa cuando el cambio de período reasigna al estudiante
+  /// a la misma posición académica. Nunca se resetea a 0.
+  intentos_materia_sm_vc   Int             @default(1)
+
+  conversaciones           Conversacion[]
   entregas                 Entrega[]
   materiaActiva            Materia         @relation(fields: [materia_activa_id_sm_vc], references: [id_sm_vc])
   profesorTutor            Usuario?        @relation("TutorAEstudiante", fields: [profesor_id_sm_vc], references: [id_sm_vc])
@@ -68,20 +101,31 @@ model Estudiante {
   @@map("tdestudiante_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Materia
+// FK real hacia PeriodoAcademico reemplaza el string periodo_sm_vc.
+// La constraint @@unique garantiza que no exista la misma posición dos veces
+// dentro del mismo período.
+// ─────────────────────────────────────────────────────────────────────────────
 model Materia {
-  id_sm_vc          Int          @id @default(autoincrement())
-  nombre_sm_vc      String       @db.VarChar(100)
+  id_sm_vc          Int              @id @default(autoincrement())
+  nombre_sm_vc      String           @db.VarChar(100)
   posicion_sm_vc    Int
-  periodo_sm_vc     String       @db.VarChar(10)
+  /// FK real al período. Reemplaza el campo String periodo_sm_vc anterior.
+  periodo_id_sm_vc  Int
   descripcion_sm_vc String?
+
+  periodo           PeriodoAcademico @relation(fields: [periodo_id_sm_vc], references: [id_sm_vc])
   estudiantes       Estudiante[]
   requisitos        Requisito[]
   mensajes          Mensaje[]
-
-  @@unique([posicion_sm_vc, periodo_sm_vc])
+  @@unique([posicion_sm_vc, periodo_id_sm_vc])
   @@map("tdmateria_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Requisito
+// ─────────────────────────────────────────────────────────────────────────────
 model Requisito {
   id_sm_vc          Int       @id @default(autoincrement())
   materia_id_sm_vc  Int
@@ -94,6 +138,9 @@ model Requisito {
   @@map("tdrequisito_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Entrega
+// ─────────────────────────────────────────────────────────────────────────────
 model Entrega {
   id_sm_vc                  Int              @id @default(autoincrement())
   estudiante_id_sm_vc       Int
@@ -109,6 +156,9 @@ model Entrega {
   @@map("tdentrega_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Documento
+// ─────────────────────────────────────────────────────────────────────────────
 model Documento {
   id_sm_vc                Int             @id @default(autoincrement())
   entrega_id_sm_vc        Int?
@@ -130,6 +180,9 @@ model Documento {
   @@map("tddocumento_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Evaluacion
+// ─────────────────────────────────────────────────────────────────────────────
 model Evaluacion {
   id_sm_vc               Int              @id @default(autoincrement())
   entrega_id_sm_vc       Int              @unique
@@ -144,6 +197,9 @@ model Evaluacion {
   @@map("tdevaluacion_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: ProyectoDeploy
+// ─────────────────────────────────────────────────────────────────────────────
 model ProyectoDeploy {
   id_sm_vc                       Int        @id @default(autoincrement())
   estudiante_id_sm_vc            Int        @unique
@@ -158,23 +214,51 @@ model ProyectoDeploy {
   @@map("tdproyectodeploy_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Conversacion
+//
+// DISEÑO CRÍTICO — Opción B: Una conversación por (estudiante + posición + intento).
+//
+// Justificación:
+//   - Desancla el historial del `id` de materia, que cambia en cada período.
+//   - Usar la `posicion_materia_sm_vc` (1–4) garantiza que la conversación de
+//     "Investigación y Desarrollo" sea siempre la de posición 1, sin importar
+//     en qué período académico se curse.
+//   - El campo `intento_sm_vc` permite aislar los mensajes de cada cursada
+//     cuando un estudiante repite. Si es la segunda vez en posición 1 → intento 2.
+//   - La clave @@unique([estudiante, posicion, intento]) previene duplicados.
+//   - 'posicion_materia_sm_vc = 0' es el slot reservado para mensajes globales
+//     del sistema (inicio de ciclo, deploy, etc.) que no pertenecen a ninguna materia.
+// ─────────────────────────────────────────────────────────────────────────────
 model Conversacion {
-  id_sm_vc             Int        @id @default(autoincrement())
-  estudiante_id_sm_vc  Int        @unique
-  fecha_creacion_sm_vc DateTime   @default(now())
-  estudiante           Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
-  mensajes             Mensaje[]
+  id_sm_vc               Int        @id @default(autoincrement())
+  estudiante_id_sm_vc    Int
+  /// Posición de la materia (1–4). Valor 0 = log global (no asociado a materia).
+  posicion_materia_sm_vc Int        @default(0)
+  /// Número de intento para esta posición. Empieza en 1.
+  intento_sm_vc          Int        @default(1)
+  fecha_creacion_sm_vc   DateTime   @default(now())
 
+  estudiante             Estudiante @relation(fields: [estudiante_id_sm_vc], references: [id_sm_vc], onDelete: Cascade)
+  mensajes               Mensaje[]
+
+  /// Un solo hilo de conversación por (estudiante, posición de materia, intento).
+  @@unique([estudiante_id_sm_vc, posicion_materia_sm_vc, intento_sm_vc])
   @@map("tdconversacion_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Mensaje
+// materia_id_sm_vc es opcional: null = mensaje global, valor = segmentación
+// por materia (los mensajes de 'Investigación y Desarrollo' filtran por ID real).
+// ─────────────────────────────────────────────────────────────────────────────
 model Mensaje {
   id_sm_vc              Int          @id @default(autoincrement())
   conversacion_id_sm_vc Int
   contenido_sm_vc       String
   es_sistema_sm_vc      Boolean      @default(true)
   fecha_creacion_sm_vc  DateTime     @default(now())
-  /// Segmentación por materia: null = log global (deploy, inicio de ciclo, etc.)
+  /// ID de la materia REAL (para filtrado interno). Puede ser null en logs globales.
   materia_id_sm_vc      Int?
   documento_id_sm_vc    Int?
   /// Identificador del usuario que envió el mensaje (null para mensajes de sistema)
@@ -189,6 +273,9 @@ model Mensaje {
   @@map("tdmensaje_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELO: Notificacion
+// ─────────────────────────────────────────────────────────────────────────────
 model Notificacion {
   id_sm_vc             Int              @id @default(autoincrement())
   emisor_id_sm_vc      Int
@@ -204,6 +291,9 @@ model Notificacion {
   @@map("tdnotificacion_sm_vc")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMs
+// ─────────────────────────────────────────────────────────────────────────────
 enum RolUsuario {
   ADMIN
   PROFESOR

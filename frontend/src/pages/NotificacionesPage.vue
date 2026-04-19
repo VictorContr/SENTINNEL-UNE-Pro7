@@ -91,11 +91,11 @@
               </div>
               <span v-if="!notif.leida_sm_vc" class="unread-dot_sm_vc" />
               <span class="notif-time_sm_vc">
-                {{ formatTiempo_sm_vc(notif.fecha_sm_vc) }}
+                {{ formatTiempo_sm_vc(notif.fecha_creacion_sm_vc) }}
               </span>
             </div>
             <h3 class="notif-title_sm_vc">{{ notif.titulo_sm_vc }}</h3>
-            <p class="notif-body_sm_vc">{{ notif.cuerpo_sm_vc }}</p>
+            <p class="notif-body_sm_vc">{{ notif.contenido_sm_vc }}</p>
             <div v-if="notif.materia_id_sm_vc" class="notif-meta_sm_vc">
               <q-icon name="book_outline" size="12px" />
               <span>Materia: {{ notif.materia_id_sm_vc }}</span>

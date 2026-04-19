@@ -188,8 +188,8 @@
         <DocumentConversacion
           :materia-id="materiaActiva_sm_vc.id_sm_vc"
           :estudiante-id="auth_sm_vc.user_sm_vc?.id_sm_vc ?? ''"
-          :readonly="materiaActiva_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
-          :estado-progreso="materiaActiva_sm_vc.estado_aprobacion_sm_vc"
+          :readonly="['APROBADO', 'REPROBADO'].includes(materiasConFases_sm_vc.find(m => m.id_sm_vc === materiaActiva_sm_vc.id_sm_vc)?.estado_aprobacion_sm_vc || materiaActiva_sm_vc.estado_aprobacion_sm_vc)"
+          :estado-progreso="materiasConFases_sm_vc.find(m => m.id_sm_vc === materiaActiva_sm_vc.id_sm_vc)?.estado_aprobacion_sm_vc || materiaActiva_sm_vc.estado_aprobacion_sm_vc"
           @mensaje-enviado="onMensajeEnviado_sm_vc" />
       </div>
     </div>
@@ -198,25 +198,57 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, onMounted } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { usePasantiasStore } from 'src/stores/pasantiasStore'
 import { useAuthStore } from 'src/stores/authStore'
 import { useProgressBarStore } from 'src/stores/progressBarStore'
+import { usePeriodoStore } from 'src/stores/periodoStore'
 import MateriaProgressCard from 'src/components/shared/MateriaProgressCard.vue'
 import DocumentConversacion from 'src/components/shared/DocumentConversacion.vue'
 
 /* ── Composables ── */
-const router_sm_vc = useRouter()
-const $q_sm_vc    = useQuasar()
-const store_sm_vc = usePasantiasStore()
-const auth_sm_vc  = useAuthStore()
+const router_sm_vc      = useRouter()
+const $q_sm_vc          = useQuasar()
+const store_sm_vc       = usePasantiasStore()
+const auth_sm_vc        = useAuthStore()
 const progressBar_sm_vc = useProgressBarStore()
+const periodo_sm_vc     = usePeriodoStore()
 
+/*
+ * Carga inicial: siempre forzamos un refetch al montar para no depender
+ * de datos cacheados de una sesión anterior o período anterior.
+ */
 onMounted(async () => {
   await store_sm_vc.fetch_mi_progreso_sm_vc()
 })
+
+/*
+ * watch sobre el período activo: garantiza que si el componente ESTÁ VIVO
+ * en el DOM y el admin ejecuta un Roll-Forward, la UI reacciona sin requerir
+ * navegación ni recarga manual.
+ *
+ * { immediate: false } → no re-dispara al montar (onMounted ya lo hace).
+ * { flush: 'post' }    → espera al ciclo de render para que el DOM esté listo
+ *                         cuando se asigna el nuevo stepActivo.
+ */
+watch(
+  () => periodo_sm_vc.periodoActual_sm_vc,
+  async (nuevoPeriodo_sm_vc, periodoPrevio_sm_vc) => {
+    // Ignorar la inicialización del watcher (primer valor recibido)
+    if (!periodoPrevio_sm_vc || nuevoPeriodo_sm_vc === periodoPrevio_sm_vc) return
+
+    console.log(`[TrazabilidadPage] Período cambió de "${periodoPrevio_sm_vc}" a "${nuevoPeriodo_sm_vc}". Forzando refetch.`)
+
+    // Resetear el stepper para que el watchEffect lo reposicione con los datos nuevos
+    stepActivo_sm_vc.value = null
+
+    // Re-fetch del progreso con el período nuevo
+    await store_sm_vc.fetch_mi_progreso_sm_vc()
+  },
+  { flush: 'post' }
+)
 
 /* ── Estado local del Stepper ── */
 // stepActivo_sm_vc guarda el id_sm_vc de la materia cuyo step está expandido.
@@ -248,11 +280,30 @@ const materiasConFases_sm_vc = computed(() =>
  * Se usa watchEffect (y no computed) para evitar efectos secundarios dentro
  * de funciones computadas, lo que viola la regla vue/no-side-effects-in-computed-properties.
  */
+/*
+ * watchEffect del Stepper — Posiciona el step activo en la primera materia
+ * desbloqueada cada vez que `materiasConFases_sm_vc` cambie.
+ *
+ * FIX (guard eliminado): el guard `if (stepActivo_sm_vc.value) return` fue
+ * removido porque congelaba el stepper cuando llegaban datos de un período
+ * nuevo. Ahora el stepper SIEMPRE se reposiciona si su valor actual ya no
+ * existe en la lista (ej. datos del período cambiaron).
+ *
+ * El guard de longitud (`!lista_sm_vc.length`) se mantiene para evitar
+ * un posicionamiento con lista vacía durante la carga inicial.
+ */
 watchEffect(() => {
-  if (stepActivo_sm_vc.value) return   // ya inicializado, no sobreescribir
   const lista_sm_vc = materiasConFases_sm_vc.value
   if (!lista_sm_vc.length) return
-  const primera_sm_vc = lista_sm_vc.find((m) => !m.bloqueada) ?? lista_sm_vc[0]
+
+  // Solo reposicionar si el stepActivo actual no existe en la nueva lista
+  // (evita sobreescribir una navegación manual del usuario dentro del stepper)
+  const existeEnLista_sm_vc = lista_sm_vc.some(
+    (m_sm_vc) => m_sm_vc.id_sm_vc === stepActivo_sm_vc.value
+  )
+  if (existeEnLista_sm_vc) return
+
+  const primera_sm_vc = lista_sm_vc.find((m_sm_vc) => !m_sm_vc.bloqueada) ?? lista_sm_vc[0]
   stepActivo_sm_vc.value = primera_sm_vc.id_sm_vc
 })
 

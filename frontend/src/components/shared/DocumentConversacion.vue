@@ -128,6 +128,8 @@
             :materia-id="props.materiaId"
             :estudiante-id="idEstudianteFinal_sm_vc"
             :bloqueado_sm_vc="!chatStore_sm_vc.conectado_sm_vc"
+            :mensajes="mensajesOrdenados_sm_vc"
+            :requisitos-aprobados-iniciales="requisitosAprobadosIniciales_sm_vc"
             @enviar="handleEnviarInforme_sm_vc"
           />
 
@@ -151,6 +153,14 @@
       >
         <q-icon name="check_circle" size="14px" color="teal-3" />
         <span>Materia aprobada — Historial de solo lectura.</span>
+      </div>
+
+      <div
+        v-else-if="estadoProgreso === 'REPROBADO' && !esAdmin_sm_vc"
+        class="readonly-banner-reprobado_sm_vc"
+      >
+        <q-icon name="block" size="14px" color="negative" />
+        <span>Has reprobado la materia. Queda bloqueada hasta la apertura de un nuevo ciclo.</span>
       </div>
 
       <div
@@ -217,7 +227,7 @@ const esAdmin_sm_vc = computed(
 const idEstudianteFinal_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
   if (rol_sm_vc === "ESTUDIANTE")
-    return auth_sm_vc.user_sm_vc?.id_sm_vc ?? null;
+    return auth_sm_vc.user_sm_vc?.estudiante_sm_vc?.id_sm_vc ?? null;
   if (
     rol_sm_vc === "PROFESOR" ||
     rol_sm_vc === "ADMINISTRADOR" ||
@@ -225,18 +235,22 @@ const idEstudianteFinal_sm_vc = computed(() => {
   ) {
     return props.estudianteId ?? null;
   }
-  return props.estudianteId ?? auth_sm_vc.user_sm_vc?.id_sm_vc ?? null;
+  return props.estudianteId ?? auth_sm_vc.user_sm_vc?.estudiante_sm_vc?.id_sm_vc ?? null;
 });
 
 /* ── Computed: Control de escritura ── */
 const puedeEscribir_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
   const esModoChat_sm_vc = props.modoVista_sm_vc === "CHAT";
-  const estaAprobada_sm_vc = props.estadoProgreso === "APROBADO";
+  
+  const estadosTerminales_sm_vc = ["APROBADO", "REPROBADO"];
+  const esTerminal_sm_vc = estadosTerminales_sm_vc.includes(props.estadoProgreso);
+
   if (esAdmin_sm_vc.value) return false;
+  if (esTerminal_sm_vc) return false;
   if (rol_sm_vc === "ESTUDIANTE")
-    return esModoChat_sm_vc && !estaAprobada_sm_vc;
-  if (rol_sm_vc === "PROFESOR") return esModoChat_sm_vc && !estaAprobada_sm_vc;
+    return esModoChat_sm_vc && !esTerminal_sm_vc;
+  if (rol_sm_vc === "PROFESOR") return esModoChat_sm_vc && !esTerminal_sm_vc;
   return false;
 });
 
@@ -275,7 +289,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  chatStore_sm_vc.salirDeSala_sm_vc();
+  chatStore_sm_vc.salirDeSalaActual_sm_vc();
 });
 
 /* ── [FIX] Watcher: unir a sala solo cuando el socket esté listo ── */
@@ -418,13 +432,15 @@ const handleEnviarInforme_sm_vc = async (payload_sm_vc) => {
 };
 
 /* ── Handlers de Profesor (sin cambios) ── */
-const handleResponderCorreccion_sm_vc = (payload_sm_vc) => {
-  const msg_sm_vc = pasantiasStore_sm_vc.responderCorreccion({
+const handleResponderCorreccion_sm_vc = async (payload_sm_vc) => {
+  const msg_sm_vc = await pasantiasStore_sm_vc.responderCorreccion({
     estudiante_id_sm_vc: idEstudianteFinal_sm_vc.value,
     materia_id_sm_vc: props.materiaId,
     ...payload_sm_vc,
   });
-  emit("mensajeEnviado", msg_sm_vc);
+  if (msg_sm_vc) {
+    emit("mensajeEnviado", msg_sm_vc);
+  }
 };
 
 const handleGuardarRequisitos_sm_vc = async (payload_sm_vc) => {
@@ -534,6 +550,14 @@ const handleGuardarRequisitos_sm_vc = async (payload_sm_vc) => {
   background: rgba(158, 158, 158, 0.04);
   border-top: 1px solid rgba(158, 158, 158, 0.12);
   font-size: 0.68rem; color: #616161;
+  font-family: var(--sn-font-sans);
+}
+.readonly-banner-reprobado_sm_vc {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(220, 38, 38, 0.06);
+  border-top: 1px solid rgba(220, 38, 38, 0.2);
+  font-size: 0.68rem; color: var(--q-negative);
   font-family: var(--sn-font-sans);
 }
 </style>

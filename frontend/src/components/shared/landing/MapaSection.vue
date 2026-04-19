@@ -51,12 +51,12 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useMapaStore } from 'src/stores/mapaStore.js'
 
 /* ── Importaciones Leaflet ──
-   Leaflet se importa aquí como módulo ES para que Vite lo procese.
-   El CSS de Leaflet se importa directo para que los tiles se vean. */
+   Leaflet se importará aquí como módulo ES para que Vite lo procese.
+   El CSS de Leaflet se importará directo para que los tiles se vean. */
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -128,14 +128,16 @@ onMounted(async () => {
   // Primero cargamos las coordenadas (Nominatim o fallback)
   await store_sm_vc.cargarUbicacion_sm_vc()
   // Luego inicializamos el mapa con los valores del store
+  await nextTick()
   iniciarMapa_sm_vc()
 })
 
 /* Reaccionar si las coordenadas cambian (ej. Nominatim responde tarde) */
 watch(
   [() => store_sm_vc.latitud_sm_vc, () => store_sm_vc.longitud_sm_vc],
-  () => {
+  async () => {
     if (!store_sm_vc.cargando_sm_vc) {
+      await nextTick()
       iniciarMapa_sm_vc()
     }
   }

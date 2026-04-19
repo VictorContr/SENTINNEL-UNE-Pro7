@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EstadoAprobacion, TipoDocumento } from '@prisma/client';
 import { ConversacionesService } from '../conversaciones/conversaciones.service';
 import { DocumentosService } from '../documentos/documentos.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class PasantiasService_sm_vc {
@@ -10,17 +11,34 @@ export class PasantiasService_sm_vc {
     private readonly prisma: PrismaService,
     private readonly conversacionesService: ConversacionesService,
     private readonly documentosService: DocumentosService,
+    private readonly eventEmitter_sm_vc: EventEmitter2,
   ) {}
 
   async getMaterias_sm_vc() {
-    return this.prisma.materia.findMany({
-      include: { 
-        requisitos: { 
-          orderBy: { posicion_sm_vc: 'asc' } 
-        } 
+    // ✅ FIX: Filtrar por el período ACTIVO.
+    const config_sm_vc = await this.prisma.configuracionSistema.findFirst({
+      where: { id_sm_vc: 1 },
+      select: { periodo_id_sm_vc: true },
+    });
+
+    if (!config_sm_vc) {
+      return []; // Sistema no inicializado aún
+    }
+
+    const materias = await this.prisma.materia.findMany({
+      where: { periodo_id_sm_vc: config_sm_vc.periodo_id_sm_vc },
+      include: {
+        requisitos: { orderBy: { posicion_sm_vc: 'asc' } },
+        periodo: { select: { nombre_sm_vc: true, descripcion_sm_vc: true } },
       },
       orderBy: { posicion_sm_vc: 'asc' },
     });
+
+    return materias.map(m => ({
+      ...m,
+      // Retrocompatibilidad con frontend que espera el string directo:
+      periodo_sm_vc: m.periodo?.nombre_sm_vc || 'Sin Periodo'
+    }));
   }
 
   /**
@@ -50,11 +68,11 @@ export class PasantiasService_sm_vc {
       return true;
     }
 
-    // Buscar la materia anterior
+    // Buscar la materia anterior usando FK real
     const materiaAnterior = await this.prisma.materia.findFirst({
       where: { 
         posicion_sm_vc: materiaActual.posicion_sm_vc - 1,
-        periodo_sm_vc: materiaActual.periodo_sm_vc 
+        periodo_id_sm_vc: materiaActual.periodo_id_sm_vc,
       }
     });
 
@@ -89,12 +107,7 @@ export class PasantiasService_sm_vc {
   }
 
   /**
-   * Crear una entrega física con archivo binario y trazabilidad
-   */
-  /**
    * Crear o actualizar una entrega física con archivo binario y trazabilidad
-   * Implementa lógica de versiones: un requisito puede tener múltiples documentos (historial)
-   * pero solo un registro de Entrega (estado actual).
    */
   async crearEntrega_sm_vc(
     usuarioId: number,
@@ -141,7 +154,6 @@ export class PasantiasService_sm_vc {
 
     // ── Transacción Atómica ──
     const entrega = await this.prisma.$transaction(async (tx) => {
-      // 1. Upsert de la entrega (Crear si no existe, actualizar estado si existe)
       const entP_sm_vc = await tx.entrega.upsert({
         where: {
           estudiante_id_sm_vc_requisito_id_sm_vc: {
@@ -155,13 +167,11 @@ export class PasantiasService_sm_vc {
           estado_sm_vc: EstadoAprobacion.ENTREGADO,
         },
         update: {
-          // Si se vuelve a subir, el estado pasa obligatoriamente a ENTREGADO (especialmente si estaba REPROBADO)
           estado_sm_vc: EstadoAprobacion.ENTREGADO,
           fecha_actualizacion_sm_vc: new Date(),
         },
       });
 
-      // 2. Registrar el nuevo documento físico (Siempre se crea una nueva fila para el historial)
       await tx.documento.create({
         data: {
           entrega_id_sm_vc: entP_sm_vc.id_sm_vc,
@@ -208,27 +218,52 @@ export class PasantiasService_sm_vc {
     observaciones?: string,
     archivoCorreccion?: Express.Multer.File
   ) {
-    const entrega = await this.prisma.entrega.findUnique({
-      where: { id_sm_vc: entregaId },
+    let id_real_sm_vc = entregaId;
+
+    let entrega = await this.prisma.entrega.findUnique({
+      where: { id_sm_vc: id_real_sm_vc },
       include: { requisito: { include: { materia: true } }, estudiante: true }
     });
 
-    if (!entrega) throw new NotFoundException('Entrega no encontrada.');
+    // Fallback de Documento: Si no es ID de Entrega, buscar si es de Documento
+    if (!entrega) {
+      const documentoFallback = await this.prisma.documento.findUnique({
+        where: { id_sm_vc: entregaId },
+      });
+
+      if (documentoFallback && documentoFallback.entrega_id_sm_vc) {
+        id_real_sm_vc = documentoFallback.entrega_id_sm_vc;
+        entrega = await this.prisma.entrega.findUnique({
+          where: { id_sm_vc: id_real_sm_vc },
+          include: { requisito: { include: { materia: true } }, estudiante: true }
+        });
+      }
+    }
+
+    if (!entrega) throw new NotFoundException('Entrega/Documento no encontrado.');
+
+    // ✅ FIX MAGISTRAL: Mapeador de Enum
+    // El frontend manda "OBSERVACIONES", pero la base de datos solo entiende "REPROBADO" (u otros validos).
+    // Usamos 'as any' para bypassear a TypeScript, ya que en tiempo de ejecución llega un string puro.
+    let estadoReal_sm_vc: any = decision;
+    if (estadoReal_sm_vc === 'OBSERVACIONES') {
+      estadoReal_sm_vc = EstadoAprobacion.REPROBADO; 
+    }
 
     return await this.prisma.$transaction(async (tx) => {
       // 1. Crear/Actualizar Evaluación
       const evaluacion = await tx.evaluacion.upsert({
-        where: { entrega_id_sm_vc: entregaId },
+        where: { entrega_id_sm_vc: id_real_sm_vc },
         update: {
-          decision_sm_vc: decision,
+          decision_sm_vc: estadoReal_sm_vc, // <-- Aquí inyectamos el estado limpio
           nota_sm_dec: nota ? parseFloat(nota.toFixed(2)) : null,
           observaciones_sm_vc: observaciones,
           profesor_id_sm_vc: profesorId,
         },
         create: {
-          entrega_id_sm_vc: entregaId,
+          entrega_id_sm_vc: id_real_sm_vc,
           profesor_id_sm_vc: profesorId,
-          decision_sm_vc: decision,
+          decision_sm_vc: estadoReal_sm_vc, // <-- Aquí también
           nota_sm_dec: nota ? parseFloat(nota.toFixed(2)) : null,
           observaciones_sm_vc: observaciones,
         }
@@ -236,15 +271,15 @@ export class PasantiasService_sm_vc {
 
       // 2. Actualizar estado de la Entrega
       await tx.entrega.update({
-        where: { id_sm_vc: entregaId },
-        data: { estado_sm_vc: decision }
+        where: { id_sm_vc: id_real_sm_vc },
+        data: { estado_sm_vc: estadoReal_sm_vc } // <-- Y aquí
       });
 
       // 3. Documento de corrección (Opcional)
       if (archivoCorreccion) {
         await tx.documento.create({
           data: {
-            entrega_id_sm_vc: entregaId,
+            entrega_id_sm_vc: id_real_sm_vc,
             usuario_subida_id_sm_vc: profesorId,
             tipo_sm_vc: TipoDocumento.CORRECCION_PROFESOR,
             nombre_archivo_sm_vc: archivoCorreccion.originalname,
@@ -256,10 +291,12 @@ export class PasantiasService_sm_vc {
       }
 
       // 4. Log de trazabilidad con identidad del Profesor
-      const prefijoLog = decision === EstadoAprobacion.APROBADO ? '✅ Aprobado' : (decision === EstadoAprobacion.REPROBADO ? '❌ Reprobado' : '📝 Observaciones');
+      const prefijoLog = decision === EstadoAprobacion.APROBADO as any 
+        ? '✅ Aprobado' 
+        : (estadoReal_sm_vc === EstadoAprobacion.REPROBADO && decision !== 'OBSERVACIONES' as any ? '❌ Reprobado' : '📝 Observaciones');
+      
       const contenidoMensaje = `${prefijoLog}: Requisito **${entrega.requisito.nombre_sm_vc}**.\n\n**Nota:** ${nota || 'N/A'}\n**Observaciones:** ${observaciones || 'Sin observaciones.'}`;
 
-      // [FIX] Propagar identidad del Profesor para que el mensaje aparezca con birrete
       await this.conversacionesService.registrarMensajeManual_sm_vc({
         estudianteId: entrega.estudiante_id_sm_vc,
         contenido_sm_vc: contenidoMensaje,
@@ -268,13 +305,38 @@ export class PasantiasService_sm_vc {
         remitenteRol: 'PROFESOR',
       });
 
+      this.eventEmitter_sm_vc.emit('entrega.actualizada_sm_vc', {
+        estudianteId_sm_vc: entrega.estudiante_id_sm_vc,
+        materiaId_sm_vc: entrega.requisito.materia_id_sm_vc,
+        requisito_id_sm_vc: entrega.requisito_id_sm_vc,
+        estado_sm_vc: estadoReal_sm_vc, // APROBADO o REPROBADO
+        documento_id_original: entregaId, // 🚨 CRÍTICO: El ID que el frontend mandó inicialmente
+        entrega_id_real: id_real_sm_vc
+      });
+
+      // --- [HOTFIX SPRINT NOTIFICACIONES] ---
+      const notifEvaluacion = await tx.notificacion.create({
+        data: {
+          emisor_id_sm_vc: profesorId,
+          receptor_id_sm_vc: entrega.estudiante.usuario_id_sm_vc,
+          tipo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any ? 'INFORMATIVA' : 'IMPORTANTE',
+          titulo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any 
+            ? `✔ "${entrega.requisito.nombre_sm_vc}" aprobado`
+            : `❌ Requisito re-evaluado: "${entrega.requisito.nombre_sm_vc}"`,
+          contenido_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any
+            ? `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" fue aprobada.`
+            : `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" presenta observaciones o fue reprobada.`,
+        }
+      });
+      console.log(`📤 [PasantiasService] DB Notif guardada para Estu_Usuario ${entrega.estudiante.usuario_id_sm_vc}. Emitiendo 'notificacion.enviar' al Gateway...`);
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: entrega.estudiante.usuario_id_sm_vc, notificacion: notifEvaluacion });
+
       return evaluacion;
     });
   }
 
   /**
    * Evaluación masiva o granular de requisitos.
-   * DT-005: Si se aprueba toda la materia, se genera un log consolidado con la nota global.
    */
   async evaluarRequisitosBulk_sm_vc(
     profesorId: number,
@@ -300,7 +362,6 @@ export class PasantiasService_sm_vc {
 
     await this.prisma.$transaction(async (tx) => {
       for (const reqId of requisitosIds) {
-        // 1. Forzar Entrega (UPSERT)
         const entP = await tx.entrega.upsert({
           where: {
             estudiante_id_sm_vc_requisito_id_sm_vc: {
@@ -316,7 +377,6 @@ export class PasantiasService_sm_vc {
           }
         });
 
-        // 2. Forzar Evaluación (UPSERT)
         await tx.evaluacion.upsert({
           where: { entrega_id_sm_vc: entP.id_sm_vc },
           update: {
@@ -334,7 +394,6 @@ export class PasantiasService_sm_vc {
       }
     });
 
-    // 3. Trazabilidad con identidad del Profesor
     let mensajeLog = '';
     if (esMateriaCompleta) {
       mensajeLog = `🏆 **Materia Aprobada en Totalidad**\n\nEl profesor ha aprobado todos los requisitos de **${materia.nombre_sm_vc}**.\n\n**Calificación Global:** ${notaGlobal}\n**Comentario:** ${comentario || 'Ninguno'}`;
@@ -342,7 +401,6 @@ export class PasantiasService_sm_vc {
       mensajeLog = `✅ **Aprobación de Requisitos (${requisitosIds.length}/${materia.requisitos.length})**\n\nEl profesor ha aprobado un lote de requisitos de la materia.\n\n${comentario || ''}`;
     }
 
-    // [FIX] Propagar identidad del Profesor para el icono de birrete
     await this.conversacionesService.registrarMensajeManual_sm_vc({
       estudianteId: estudianteId,
       contenido_sm_vc: mensajeLog,
@@ -351,7 +409,113 @@ export class PasantiasService_sm_vc {
       remitenteRol: 'PROFESOR',
     });
 
+    // --- [HOTFIX SPRINT NOTIFICACIONES] ---
+    const notifBulk = await this.prisma.notificacion.create({
+      data: {
+        emisor_id_sm_vc: profesorId,
+        receptor_id_sm_vc: estudiante.usuario_id_sm_vc,
+        tipo_sm_vc: 'INFORMATIVA',
+        titulo_sm_vc: esMateriaCompleta ? `🏆 Materia "${materia.nombre_sm_vc}" Aprobada` : `✅ Requisitos de "${materia.nombre_sm_vc}" Aprobados`,
+        contenido_sm_vc: esMateriaCompleta 
+          ? `Felicitaciones, has completado todos los requisitos de la materia.` 
+          : `El profesor ha aprobado un lote de ${requisitosIds.length} requisitos.`,
+      }
+    });
+    console.log(`📤 [PasantiasService BULK] DB Notif guardada para Estu_Usuario ${estudiante.usuario_id_sm_vc}. Emitiendo 'notificacion.enviar'...`);
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: estudiante.usuario_id_sm_vc, notificacion: notifBulk });
+
     return { success: true, count: requisitosIds.length };
+  }
+
+  /**
+   * Reprobar Materia Globalmente
+   */
+  async reprobarMateriaGlobal_sm_vc(
+    profesorId: number,
+    estudianteId: number,
+    materiaId: number,
+    observaciones?: string
+  ) {
+    const estudiante = await this.prisma.estudiante.findUnique({
+      where: { id_sm_vc: estudianteId },
+      include: { materiaActiva: true }
+    });
+    if (!estudiante) throw new NotFoundException('Estudiante no encontrado.');
+
+    const materia = await this.prisma.materia.findUnique({
+      where: { id_sm_vc: materiaId },
+      include: { requisitos: true }
+    });
+    if (!materia) throw new NotFoundException('Materia no encontrada.');
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        for (const req of materia.requisitos) {
+          const entP = await tx.entrega.upsert({
+            where: {
+              estudiante_id_sm_vc_requisito_id_sm_vc: {
+                estudiante_id_sm_vc: estudianteId,
+                requisito_id_sm_vc: req.id_sm_vc,
+              }
+            },
+            update: { estado_sm_vc: EstadoAprobacion.REPROBADO },
+            create: {
+              estudiante_id_sm_vc: estudianteId,
+              requisito_id_sm_vc: req.id_sm_vc,
+              estado_sm_vc: EstadoAprobacion.REPROBADO
+            }
+          });
+
+          await tx.evaluacion.upsert({
+            where: { entrega_id_sm_vc: entP.id_sm_vc },
+            update: {
+              decision_sm_vc: EstadoAprobacion.REPROBADO,
+              profesor_id_sm_vc: profesorId,
+              observaciones_sm_vc: observaciones || 'Materia reprobada globalmente',
+            },
+            create: {
+              entrega_id_sm_vc: entP.id_sm_vc,
+              profesor_id_sm_vc: profesorId,
+              decision_sm_vc: EstadoAprobacion.REPROBADO,
+              observaciones_sm_vc: observaciones || 'Materia reprobada globalmente',
+            }
+          });
+        }
+      });
+      
+      const mensajeLog = `❌ **Materia Reprobada**\n\nEl profesor ha reprobado la materia **${materia.nombre_sm_vc}**.\n\n**Comentario:** ${observaciones || 'Ninguno'}`;
+  
+      await this.conversacionesService.registrarMensajeManual_sm_vc({
+        estudianteId: estudianteId,
+        contenido_sm_vc: mensajeLog,
+        materiaId: materiaId,
+        remitenteId: profesorId,
+        remitenteRol: 'PROFESOR',
+      });
+  
+      const notifReprobado = await this.prisma.notificacion.create({
+        data: {
+          emisor_id_sm_vc: profesorId,
+          receptor_id_sm_vc: estudiante.usuario_id_sm_vc,
+          tipo_sm_vc: 'IMPORTANTE',
+          titulo_sm_vc: `❌ Materia "${materia.nombre_sm_vc}" Reprobada`,
+          contenido_sm_vc: `Has reprobado la materia en este período. Queda bloqueada hasta la apertura de un nuevo ciclo.`,
+        }
+      });
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: estudiante.usuario_id_sm_vc, notificacion: notifReprobado });
+  
+      this.eventEmitter_sm_vc.emit('entrega.actualizada_sm_vc', {
+        estudianteId_sm_vc: estudianteId,
+        materiaId_sm_vc: materiaId,
+        estado_sm_vc: EstadoAprobacion.REPROBADO,
+        es_reprobacion_global: true
+      });
+
+      return { success: true, message: 'Materia reprobada en su totalidad.' };
+    } catch (err) {
+      console.error('[PasantiasService] Error al reprobar materia globalmente', err);
+      throw new BadRequestException('Ocurrió un error al intentar reprobar la materia globalmente.');
+    }
   }
 
   /**
@@ -371,10 +535,19 @@ export class PasantiasService_sm_vc {
       throw new NotFoundException('Estudiante o materia activa no encontrados');
     }
 
+    const periodoDeLaMateria_sm_vc = estudianteBase.materiaActiva.periodo_id_sm_vc;
+
     const materias = await this.prisma.materia.findMany({
-      include: { requisitos: true },
-      orderBy: { posicion_sm_vc: 'asc' }
+      where:    { periodo_id_sm_vc: periodoDeLaMateria_sm_vc },
+      include:  { requisitos: true },
+      orderBy:  { posicion_sm_vc: 'asc' },
     });
+
+    if (materias.length === 0) {
+      throw new NotFoundException(
+        `No se encontraron materias para el período activo del estudiante (periodo_id=${periodoDeLaMateria_sm_vc}).`,
+      );
+    }
 
     const entregas = await this.prisma.entrega.findMany({
       where: { estudiante_id_sm_vc: estudianteBase.id_sm_vc },
@@ -392,7 +565,6 @@ export class PasantiasService_sm_vc {
       const aprobados_list = entregasMateria.filter(e => e.estado_sm_vc === EstadoAprobacion.APROBADO);
       const aprobados = aprobados_list.length;
 
-      // Intentar obtener la nota global si existe en alguna evaluación de la materia
       const evalConNota = aprobados_list.find(e => e.evaluacion?.nota_sm_dec != null);
       const notaMateria_sm_dec = (evalConNota && evalConNota.evaluacion) 
         ? parseFloat(evalConNota.evaluacion.nota_sm_dec!.toString()) 
@@ -418,11 +590,12 @@ export class PasantiasService_sm_vc {
       }
 
       return {
-        id_sm_vc: materia.id_sm_vc,
-        nombre_sm_vc: materia.nombre_sm_vc,
-        orden_sm_int: materia.posicion_sm_vc,
-        posicion_sm_vc: materia.posicion_sm_vc,
-        periodo_sm_vc: materia.periodo_sm_vc,
+        estudiante_id_sm_vc: estudianteBase.id_sm_vc,
+        id_sm_vc:        materia.id_sm_vc,
+        nombre_sm_vc:    materia.nombre_sm_vc,
+        orden_sm_int:    materia.posicion_sm_vc,
+        posicion_sm_vc:  materia.posicion_sm_vc,
+        periodo_id_sm_vc: materia.periodo_id_sm_vc,
         estado_aprobacion_sm_vc: estadoAprobacion,
         progreso_decimal: progresoDecimal,
         requisitos_aprobados_sm_int: aprobados,

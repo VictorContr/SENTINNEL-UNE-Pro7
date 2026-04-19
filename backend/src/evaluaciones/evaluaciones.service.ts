@@ -37,7 +37,8 @@ export class EvaluacionesService {
         where: { id_sm_vc: dto.entrega_id_sm_vc },
         include: {
           estudiante: { include: { usuario: true, materiaActiva: true } },
-          requisito:  { include: { materia: true } },
+          // Incluir el periodo de la materia para acceder a su ID (FK real)
+          requisito:  { include: { materia: { include: { periodo: true } } } },
           evaluacion: true,
         },
       });
@@ -134,6 +135,14 @@ export class EvaluacionesService {
         dto.observaciones_sm_vc,
       );
 
+      this.eventEmitter_sm_vc.emit('entrega.actualizada_sm_vc', {
+        estudianteId_sm_vc: entrega.estudiante_id_sm_vc,
+        materiaId_sm_vc: entrega.requisito.materia_id_sm_vc,
+        entrega_id_sm_vc: dto.entrega_id_sm_vc,
+        estado_sm_vc: dto.decision_sm_vc,
+        requisito_id_sm_vc: entrega.requisito_id_sm_vc,
+      });
+
       // Verificar desbloqueo de materia
       let materiaDesbloqueada: string | null = null;
       if (dto.decision_sm_vc === EstadoAprobacion.APROBADO) {
@@ -141,7 +150,8 @@ export class EvaluacionesService {
           estudianteId,
           materiaId,
           entrega.requisito.materia.posicion_sm_vc,
-          entrega.requisito.materia.periodo_sm_vc,
+          // Usamos el periodo_id_sm_vc (FK real) en lugar del string eliminado
+          entrega.requisito.materia.periodo_id_sm_vc,
           materiaNombre,
           entrega.estudiante.usuario_id_sm_vc,
           profesorId,
@@ -184,7 +194,8 @@ export class EvaluacionesService {
     estudianteId:        number,
     materiaId:           number,
     materiaPos:          number,
-    materiaPeriodo:      string,
+    // Cambiado de string a number: ahora recibe el ID del período (FK real)
+    periodoId:           number,
     materiaNombre:       string,
     usuarioEstudianteId: number,
     actorId:             number,
@@ -209,9 +220,9 @@ export class EvaluacionesService {
 
     if (!todasAprobadas) return null;
 
-    // Buscar la siguiente materia
+    // Buscar la siguiente materia usando FK real (periodo_id_sm_vc) en lugar del string
     const siguienteMateria = await this.prisma.materia.findFirst({
-      where: { posicion_sm_vc: materiaPos + 1, periodo_sm_vc: materiaPeriodo },
+      where: { posicion_sm_vc: materiaPos + 1, periodo_id_sm_vc: periodoId },
     });
 
     if (!siguienteMateria) {
@@ -227,7 +238,8 @@ export class EvaluacionesService {
         descripcion_sm_vc: '¡Proceso completado! Todas las materias aprobadas. Deploy habilitado.',
       });
 
-      await this.prisma.notificacion.create({
+      // Desbloqueo maneja su propia logica de enviar sockets a traves del logger o dejaremos que Nextjs emita events
+      const notif1 = await this.prisma.notificacion.create({
         data: {
           emisor_id_sm_vc:   actorId,
           receptor_id_sm_vc: usuarioEstudianteId,
@@ -236,6 +248,8 @@ export class EvaluacionesService {
           contenido_sm_vc:   'Has aprobado todas las materias. El módulo de Deploy del Proyecto Final está desbloqueado.',
         },
       });
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: usuarioEstudianteId, notificacion: notif1 });
+
 
       return 'TODAS_COMPLETADAS';
     }
@@ -253,16 +267,16 @@ export class EvaluacionesService {
       descripcion_sm_vc: `Materia "${materiaNombre}" completada. "${siguienteMateria.nombre_sm_vc}" desbloqueada automáticamente.`,
     });
 
-    await this.prisma.notificacion.create({
+    const notif2 = await this.prisma.notificacion.create({
       data: {
         emisor_id_sm_vc:   actorId,
         receptor_id_sm_vc: usuarioEstudianteId,
         tipo_sm_vc:        TipoNotificacion.INFORMATIVA,
         titulo_sm_vc:      `${materiaNombre} completada — ${siguienteMateria.nombre_sm_vc} desbloqueada`,
-        contenido_sm_vc:   `¡Felicitaciones! Aprobaste todos los requisitos de "${materiaNombre}". ` +
-          `Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`,
+        contenido_sm_vc:   `¡Felicitaciones! Aprobaste todos los requisitos de "${materiaNombre}". Ya puedes comenzar con "${siguienteMateria.nombre_sm_vc}".`,
       },
     });
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: usuarioEstudianteId, notificacion: notif2 });
 
     return siguienteMateria.nombre_sm_vc;
   }
@@ -280,20 +294,27 @@ export class EvaluacionesService {
   ) {
     const esAprobado = decision === EstadoAprobacion.APROBADO;
 
-    await this.prisma.notificacion.create({
+    const tipo = esAprobado ? TipoNotificacion.INFORMATIVA : TipoNotificacion.URGENTE;
+    const titulo = esAprobado
+      ? `✔ "${requisitoNombre}" aprobado`
+      : `✗ "${requisitoNombre}" requiere correcciones`;
+    const contenido = esAprobado
+      ? `Tu entrega del requisito "${requisitoNombre}" en "${materiaNombre}" fue aprobada.`
+      : `Tu entrega del requisito "${requisitoNombre}" fue reprobada.` +
+        (observaciones ? ` Observaciones: ${observaciones}` : '');
+
+    const notif = await this.prisma.notificacion.create({
       data: {
         emisor_id_sm_vc:   emisorId,
         receptor_id_sm_vc: receptorId,
-        tipo_sm_vc:        esAprobado ? TipoNotificacion.INFORMATIVA : TipoNotificacion.URGENTE,
-        titulo_sm_vc:      esAprobado
-          ? `✔ "${requisitoNombre}" aprobado`
-          : `✗ "${requisitoNombre}" requiere correcciones`,
-        contenido_sm_vc: esAprobado
-          ? `Tu entrega del requisito "${requisitoNombre}" en "${materiaNombre}" fue aprobada.`
-          : `Tu entrega del requisito "${requisitoNombre}" fue reprobada.` +
-            (observaciones ? ` Observaciones: ${observaciones}` : ''),
+        tipo_sm_vc:        tipo,
+        titulo_sm_vc:      titulo,
+        contenido_sm_vc:   contenido,
       },
     });
+
+    console.log(`📤 [EvaluacionesService] DB Notificacion guardada para el Estudiante ${receptorId}. Emitiendo 'notificacion.enviar' al Gateway...`);
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId, notificacion: notif });
   }
 
   private generarRespuesta_sm_vc(evaluacion: any, materiaDesbloqueada: string | null) {

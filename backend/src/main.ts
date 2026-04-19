@@ -26,7 +26,7 @@ async function bootstrap() {
 
   // ── CORS actualizado: exponer Content-Disposition para descargas ──
   app.enableCors({
-    origin:       config.get('FRONTEND_URL') || 'http://localhost:9000',
+    origin:       [config.get('FRONTEND_URL') || 'http://localhost:9000', 'http://localhost:9001', 'http://localhost:9002'],
     credentials:  true,
     // CRÍTICO: sin este header Axios no puede leer el filename del archivo
     // al hacer responseType: 'blob' en las descargas de documentos y deploy.

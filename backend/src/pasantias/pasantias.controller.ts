@@ -18,6 +18,7 @@ import {
 } from '../auth/guards';
 import { PasantiasService_sm_vc } from './pasantias.service';
 import { CreateEntregaDto_sm_vc } from './dto/create-entrega.dto';
+import { EvaluarEntregaDto_sm_vc } from './dto/evaluar-entrega.dto';
 import { multerDocumentosConfig } from '../config/multer.config';
 
 interface RequestWithUser extends Request {
@@ -79,11 +80,25 @@ export class PasantiasController_sm_vc {
   )
   async evaluarEntrega_sm_vc(
     @Request() req: RequestWithUser,
-    @Body() body: any,
+    @Body() body: EvaluarEntregaDto_sm_vc,
     @UploadedFile() file: Express.Multer.File,
   ) {
     const profesorId = req.user.id_sm_vc;
-    const entregaId = parseInt(body.entrega_id_sm_vc);
+    
+    // Si es reprobación global
+    if (body.es_reprobacion_global_sm_vc === true || body.es_reprobacion_global_sm_vc === 'true' as any) {
+      if (!body.estudiante_id_sm_vc || !body.materia_id_sm_vc) {
+        throw new BadRequestException('Para reprobar globalmente se requiere estudiante_id y materia_id.');
+      }
+      return this.pasantiasService.reprobarMateriaGlobal_sm_vc(
+        profesorId,
+        Number(body.estudiante_id_sm_vc),
+        Number(body.materia_id_sm_vc),
+        body.observaciones_sm_vc
+      );
+    }
+    
+    const entregaId = body.entrega_id_sm_vc ? Number(body.entrega_id_sm_vc) : NaN;
 
     // [FIX] Validación defensiva: Prisma lanza PrismaClientValidationError
     // si recibe NaN en un campo Int. Capturamos esto en la capa de Controlador.
@@ -93,8 +108,8 @@ export class PasantiasController_sm_vc {
       );
     }
 
-    const decision = body.decision_sm_vc;
-    const nota = body.nota_sm_dec ? parseFloat(body.nota_sm_dec) : undefined;
+    const decision = body.decision_sm_vc as any;
+    const nota = body.nota_sm_dec ? parseFloat(body.nota_sm_dec.toString()) : undefined;
     const observaciones = body.observaciones_sm_vc;
 
     return this.pasantiasService.evaluarEntrega_sm_vc(

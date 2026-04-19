@@ -83,7 +83,11 @@ export const useProgressBarStore = defineStore('progressBar', () => {
       return {
         id: est_sm_vc.id_sm_vc,
         nombre: `${est_sm_vc.nombre_sm_vc || ''} ${est_sm_vc.apellido_sm_vc || ''}`.trim(),
-        cohorte: est_sm_vc.periodo_sm_vc || 'N/A',
+        // ✅ FIX: est_sm_vc.periodo_sm_vc (string legacy) ya no existe.
+        // La cohorte se deriva del objeto de relación anidada en la materia activa.
+        cohorte: est_sm_vc.materiaActiva?.periodo?.nombre_sm_vc
+               ?? est_sm_vc.materiaActiva?.periodo_id_sm_vc?.toString()
+               ?? 'N/A',
         empresa: est_sm_vc.empresa_sm_vc,
         estado_actual: est_sm_vc.materias_sm_vc?.find(m => m.materia_id_sm_vc === est_sm_vc.materia_activa_id_sm_vc)?.estado_sm_vc || 'PENDIENTE',
         materias: (est_sm_vc.materias_sm_vc || []).map((mat_sm_vc) => ({

@@ -6,6 +6,7 @@ import { AuthModule_sm_vc }          from './auth/auth.module';
 import { UsersModule_sm_vc }         from './users/users.module';
 import { PasantiasModule_sm_vc }     from './pasantias/pasantias.module';
 import { MailerContactoModule_sm_vc } from './mailer/mailer.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { AdminModule }               from './admin/admin.module';
 import { DocumentosModule }          from './documentos/documentos.module';
 import { EvaluacionesModule }        from './evaluaciones/evaluaciones.module';
@@ -32,6 +33,7 @@ import { ChatModule_sm_vc }          from './chat/chat.module';
     ConversacionesModule,
     // ── WebSockets en tiempo real ──
     ChatModule_sm_vc,
+    NotificacionesModule,
   ],
 })
 export class AppModule {}

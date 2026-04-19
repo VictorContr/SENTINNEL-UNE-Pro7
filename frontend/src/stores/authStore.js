@@ -4,6 +4,7 @@ import { LocalStorage, Notify } from "quasar";
 import {
   login_sm_vc,
   cambiarClaveInicial_sm_vc as cambiarClaveService_sm_vc,
+  refresh_sm_vc as refreshService_sm_vc,
 } from "src/services/authService";
 import { purgarContextoRequisitos_sm_vc } from "src/stores/requisitoContextoStore";
 import { decryptSession_sm_vc } from "src/stores/cryptoStore";
@@ -19,6 +20,10 @@ export const useAuthStore = defineStore("auth", () => {
   const loading_sm_vc = ref(false);
   const error_sm_vc = ref(null);
 
+  /* ── Estado de Renovación ── */
+  const mostrarModalRenovacion_sm_vc = ref(false);
+  let timerRenovacion_sm_vc = null;
+
   /* ── Hydrate from localStorage ──────────────────────────────── */
   const _hidratar_sm_vc = async () => {
     try {
@@ -28,6 +33,7 @@ export const useAuthStore = defineStore("auth", () => {
         const decrypted_sm_vc = await decryptSession_sm_vc(stored_sm_vc);
         user_sm_vc.value = decrypted_sm_vc.user;
         token_sm_vc.value = decrypted_sm_vc.token;
+        iniciarTemporizadorRenovacion_sm_vc(token_sm_vc.value);
       }
     } catch (err) {
       console.error("Error decrypting session:", err);
@@ -117,6 +123,7 @@ export const useAuthStore = defineStore("auth", () => {
         icon: "check_circle",
       });
 
+      iniciarTemporizadorRenovacion_sm_vc(token_sm_vc.value);
       return true;
     } catch (err_sm_vc) {
       error_sm_vc.value =
@@ -192,6 +199,8 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   const logout_sm_vc = (motivo_sm_vc = "manual") => {
+    limpiarTemporizadorRenovacion_sm_vc();
+    mostrarModalRenovacion_sm_vc.value = false;
     user_sm_vc.value = null;
     token_sm_vc.value = null;
 
@@ -219,12 +228,70 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
+  /* ── Renovación Proactiva ── */
+  const limpiarTemporizadorRenovacion_sm_vc = () => {
+    if (timerRenovacion_sm_vc) {
+      clearTimeout(timerRenovacion_sm_vc);
+      timerRenovacion_sm_vc = null;
+    }
+  };
+
+  const iniciarTemporizadorRenovacion_sm_vc = (token) => {
+    limpiarTemporizadorRenovacion_sm_vc();
+    if (!token) return;
+
+    try {
+      const payloadBase64_sm_vc = token.split(".")[1];
+      const payload_sm_vc = JSON.parse(atob(payloadBase64_sm_vc));
+      
+      const tiempoExpiracion_sm_vc = payload_sm_vc.exp * 1000;
+      const tiempoActual_sm_vc = Date.now();
+      
+      // Calcular ms hasta 15 segundos antes de expirar
+      const msRestantes_sm_vc = tiempoExpiracion_sm_vc - tiempoActual_sm_vc - 15000;
+      
+      if (msRestantes_sm_vc > 0) {
+        timerRenovacion_sm_vc = setTimeout(() => {
+          mostrarModalRenovacion_sm_vc.value = true;
+        }, msRestantes_sm_vc);
+      } else if (tiempoExpiracion_sm_vc > tiempoActual_sm_vc) {
+        mostrarModalRenovacion_sm_vc.value = true;
+      }
+    } catch (e_sm_vc) {
+      console.error("Error en temporizador de sesión:", e_sm_vc);
+    }
+  };
+
+  const action_refrescarSesion_sm_vc = async () => {
+    try {
+      const data_sm_vc = await refreshService_sm_vc();
+      
+      user_sm_vc.value = data_sm_vc.user_sm_vc;
+      token_sm_vc.value = data_sm_vc.access_token_sm_vc;
+      
+      if (data_sm_vc.session_encrypted_sm_vc) {
+        LocalStorage.set("sentinnel_session", data_sm_vc.session_encrypted_sm_vc);
+      }
+      LocalStorage.set("token_sm_vc", token_sm_vc.value);
+      
+      mostrarModalRenovacion_sm_vc.value = false;
+      iniciarTemporizadorRenovacion_sm_vc(token_sm_vc.value);
+      
+      return true;
+    } catch (err_sm_vc) {
+      console.error("Error al refrescar token:", err_sm_vc);
+      logout_sm_vc("expirado");
+      return false;
+    }
+  };
+
   return {
     /* State */
     user_sm_vc,
     token_sm_vc,
     loading_sm_vc,
     error_sm_vc,
+    mostrarModalRenovacion_sm_vc,
 
     /* Getters */
     is_authenticated_sm_vc,
@@ -245,6 +312,7 @@ export const useAuthStore = defineStore("auth", () => {
     logout_sm_vc,
     cambiar_clave_inicial_sm_vc,
     verificarExpiracion_sm_vc,
+    refrescarSesion_sm_vc: action_refrescarSesion_sm_vc,
 
     /* Hydration */
     _hydratePromise: hydratePromise,

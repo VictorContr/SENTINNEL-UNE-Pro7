@@ -2,10 +2,10 @@ import { IsNotEmpty, IsDateString } from 'class-validator';
 
 /**
  * DTO para actualizar el periodo académico actual desde el módulo de administración.
- * 
- * Se ha refactorizado para aceptar fechas de inicio y cierre, alineándose
- * con la lógica del frontend y la generación automática de nombres de periodo
- * en el servidor.
+ *
+ * DISEÑO: El frontend (CambioPeriodoPage.vue) solo envía las fechas del nuevo período.
+ * El código universitario (ej. "P-166") y la descripción legible (ej. "Mayo 2026 - Agosto 2026")
+ * son AUTO-GENERADOS en PeriodosAcademicosService.create_sm_vc a partir del período activo previo.
  */
 export class ActualizarPeriodoDto {
   @IsNotEmpty({ message: 'La fecha de inicio es obligatoria' })

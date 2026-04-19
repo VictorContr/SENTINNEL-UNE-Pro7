@@ -122,14 +122,14 @@ function formatDate(iso) {
 .page-title-row { display: flex; align-items: center; margin-bottom: 0.25rem; }
 .page-title { font-size: 1.2rem; font-weight: 700; color: var(--sn-texto-principal); letter-spacing: 0.06em; margin: 0; font-family: var(--sn-font-mono); }
 .page-subtitle { font-size: 0.72rem; color: var(--sn-texto-terciario); margin: 0; }
-.code-tag { background: rgba(111,255,233,0.08); color: var(--sn-acento-sec); padding: 1px 5px; border-radius: 3px; font-size: 0.68rem; font-family: var(--sn-font-mono); }
+.code-tag { background: var(--sn-surface-alpha); color: var(--sn-acento-sec); padding: 1px 5px; border-radius: var(--sn-radius-sm); font-size: 0.68rem; font-family: var(--sn-font-mono); }
 .aprobado-text { color: var(--sn-primario); font-weight: 600; }
-.aprobacion-banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: rgba(111,255,233,0.05); border: 1px solid rgba(111,255,233,0.15); border-radius: 10px; margin-bottom: 1.25rem; max-width: 600px; }
+.aprobacion-banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: var(--sn-fondo-panel); border: 1px solid var(--sn-exito); border-radius: var(--sn-radius-lg); margin-bottom: 1.25rem; max-width: 600px; }
 .banner-icon { flex-shrink: 0; }
 .banner-title { font-size: 0.85rem; font-weight: 600; color: var(--sn-primario); margin: 0 0 2px; font-family: var(--sn-font-mono); }
 .banner-detail { font-size: 0.7rem; color: var(--sn-texto-secundario); margin: 0; font-family: var(--sn-font-sans); }
 .nota-val { color: var(--sn-texto-principal); font-weight: 700; }
-.conv-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(111,255,233,0.1); border-radius: 14px; max-width: 780px; }
+.conv-card { background: var(--sn-fondo-panel); border: 1px solid var(--sn-borde); border-radius: var(--sn-radius-xl); max-width: 780px; }
 
 /* ── Estado de carga del contexto ── */
 .loading-contexto_sm_vc {

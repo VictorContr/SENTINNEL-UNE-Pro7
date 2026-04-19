@@ -122,15 +122,12 @@ onMounted(async () => {
 })
 
 /**
- * PREVENCIÓN DE MEMORY LEAK (Obligatorio según arquitectura del Sprint 2).
- *
- * Al desmontar esta página (navegar a otra ruta), se desconecta el socket
- * de WebSocket y se limpia la sala activa. Sin esto, el socket quedaría
- * abierto en background recibiendo mensajes de una conversación que ya
- * no está siendo observada por ningún componente → memory leak.
+ * Al desmontar esta página (navegar a otra ruta), se abandona la sala de chat
+ * para no recibir mensajes ajenos, pero se MANTIENE el socket vivo a nivel
+ * de aplicación para seguir recibiendo notificaciones globales.
  */
 onUnmounted(() => {
-  chatStore_sm_vc.salirDeSala_sm_vc()
+  chatStore_sm_vc.salirDeSalaActual_sm_vc()
 })
 
 /* ══════════════════════════════════════════════════════════════
@@ -145,7 +142,7 @@ const estadoActual = computed(() => {
   const prog_sm_vc = store.progreso_sm_vc.find(
     (p_sm_vc) =>
       String(p_sm_vc.estudiante_id_sm_vc) === String(estudianteId.value) &&
-      String(p_sm_vc.materia_id_sm_vc)    === String(materiaId.value)
+      (String(p_sm_vc.id_sm_vc) === String(materiaId.value) || String(p_sm_vc.materia_id_sm_vc) === String(materiaId.value))
   )
   return prog_sm_vc?.estado_aprobacion_sm_vc ?? 'PENDIENTE'
 })
@@ -180,17 +177,17 @@ function onMensajeEnviado() {
 }
 .page-subtitle { font-size: 0.72rem; color: var(--sn-texto-terciario); margin: 0; }
 .code-tag {
-  background: rgba(111,255,233,0.08);
+  background: var(--sn-surface-alpha);
   color: var(--sn-acento-sec);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--sn-radius-sm);
   font-size: 0.68rem;
   font-family: var(--sn-font-mono);
 }
 .conv-card {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(111,255,233,0.1);
-  border-radius: 14px;
+  background: var(--sn-fondo-panel);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radius-xl);
   max-width: 780px;
 }
 
