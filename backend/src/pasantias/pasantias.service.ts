@@ -314,6 +314,23 @@ export class PasantiasService_sm_vc {
         entrega_id_real: id_real_sm_vc
       });
 
+      // --- [HOTFIX SPRINT NOTIFICACIONES] ---
+      const notifEvaluacion = await tx.notificacion.create({
+        data: {
+          emisor_id_sm_vc: profesorId,
+          receptor_id_sm_vc: entrega.estudiante.usuario_id_sm_vc,
+          tipo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any ? 'INFORMATIVA' : 'IMPORTANTE',
+          titulo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any 
+            ? `✔ "${entrega.requisito.nombre_sm_vc}" aprobado`
+            : `❌ Requisito re-evaluado: "${entrega.requisito.nombre_sm_vc}"`,
+          contenido_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any
+            ? `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" fue aprobada.`
+            : `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" presenta observaciones o fue reprobada.`,
+        }
+      });
+      console.log(`📤 [PasantiasService] DB Notif guardada para Estu_Usuario ${entrega.estudiante.usuario_id_sm_vc}. Emitiendo 'notificacion.enviar' al Gateway...`);
+      this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: entrega.estudiante.usuario_id_sm_vc, notificacion: notifEvaluacion });
+
       return evaluacion;
     });
   }
@@ -391,6 +408,21 @@ export class PasantiasService_sm_vc {
       remitenteId: profesorId,
       remitenteRol: 'PROFESOR',
     });
+
+    // --- [HOTFIX SPRINT NOTIFICACIONES] ---
+    const notifBulk = await this.prisma.notificacion.create({
+      data: {
+        emisor_id_sm_vc: profesorId,
+        receptor_id_sm_vc: estudiante.usuario_id_sm_vc,
+        tipo_sm_vc: 'INFORMATIVA',
+        titulo_sm_vc: esMateriaCompleta ? `🏆 Materia "${materia.nombre_sm_vc}" Aprobada` : `✅ Requisitos de "${materia.nombre_sm_vc}" Aprobados`,
+        contenido_sm_vc: esMateriaCompleta 
+          ? `Felicitaciones, has completado todos los requisitos de la materia.` 
+          : `El profesor ha aprobado un lote de ${requisitosIds.length} requisitos.`,
+      }
+    });
+    console.log(`📤 [PasantiasService BULK] DB Notif guardada para Estu_Usuario ${estudiante.usuario_id_sm_vc}. Emitiendo 'notificacion.enviar'...`);
+    this.eventEmitter_sm_vc.emit('notificacion.enviar', { receptorId: estudiante.usuario_id_sm_vc, notificacion: notifBulk });
 
     return { success: true, count: requisitosIds.length };
   }
