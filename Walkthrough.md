@@ -1,57 +1,42 @@
-# Bitácora de Vuelo: Corrección de Reactividad ConvFormProfesor
+# Walkthrough.md: Bitácora de Diagnóstico y Mitigación de Deuda Técnica
 
-## ¿Qué se implementó y por qué?
-
-1. **Resolución de la Identidad en Backend (getProgresoEstudiante_sm_vc):**
-   - **Problema:** El componente de Vue (y Pinia) esperaba la propiedad `estudiante_id_sm_vc` dentro de cada objeto del arreglo de progreso devuelto para poder compararlo con el ID de la URL. Al ser devuelto como `undefined`, el estado actual quedaba permanentemente como `'PENDIENTE'`.
-   - **Solución:** Se añadió el mapeo explícito de `estudiante_id_sm_vc: estudianteBase.id_sm_vc` en `pasantias.service.ts` dentro de la función `getProgresoEstudiante_sm_vc`.
-   - **Por qué:** Mantener el Backend como fuente de la verdad estricta.
-
-2. **Resolución de Async/Await en Frontend (DocumentConversacion.vue):**
-   - **Problema:** En el componente padre (`DocumentConversacion`), la función `handleResponderCorreccion_sm_vc` emitía un evento de éxito sin esperar (`await`) a que `pasantiasStore_sm_vc.responderCorreccion` finalizara el flujo asíncrono hacia el servidor.
-   - **Solución:** Se transformó el handler a `async` y se implementó un `await`. Además, la notificación síncrona solo se emite cuando la respuesta del servidor es exitosa.
-   - **Por qué:** Prevenir "race conditions" (condiciones de carrera) entre la respuesta visual del UI y el completamiento de los mutate del Store, asegurando que cuando el UI pregunte si puede renderizar el componente (en `puedeEscribir_sm_vc`), el Store de Pinia ya tenga en memoria el nuevo estado general (ej: `REPROBADO` o `APROBADO`) desabilitando el formulario instantáneamente.
-
-## Siguientes Pasos
-- Las correcciones abren la puerta a flujos completamente fluidos. Pinia mantendrá de manera síncrona la fidelidad visual, permitiéndole a **WebSockets** enfocarse únicamente en el tráfico para las notificaciones entre el profesor y el estudiante, sin latencias locales.
+**Fecha de Diagnóstico:** 2026-04-19
+**Arquitecto a Cargo:** AntiGravity (Tech Lead)
+**Estado:** 🔍 EN DIAGNÓSTICO PRELIMINAR
 
 ---
 
-# Bitácora de Vuelo: Corrección de Reactividad — TrazabilidadPage (Cambio de Período)
+## 🚫 Hallazgos Críticos en Infracción de Reglas Clave
 
-**Fecha:** 2026-04-19 | **Diagnóstico:** AntiGravity | **Estado:** ✅ IMPLEMENTADO
+El diagnóstico inicial de la base de código revela violaciones directas a las normativas de arquitectura establecidas, las cuales ponen en riesgo la mantenibilidad y escalabilidad de SENTINNEL-UNE.
 
-## Root Cause: "Muerte por Cache Local" (Triada de Fallos)
+### 1. Infracción: Sintaxis Tradicional (Regla 3)
+A pesar de la instrucción de usar una infraestructura puramente ES6+, el código aún posee funciones legacy.
+- **Backend:** En el archivo principal `main.ts` tenemos `async function bootstrap()`. Esto requiere refactorización para acatar la regla de `const bootstrap_sm_vc = async () => {}` bajo ES6 puro.
+- **Frontend:** Hay trazas vivas confirmadas de la palabra reservada `function` en `router/index.js`, `HistorialPage.vue`, `ConversacionPage.vue` y stores como `requisitoContextoStore.js`. Deben migrarse a Arrow Functions de inmediato.
 
-El bug de "datos que no se renderizan en el primer intento tras un cambio de período" fue causado por tres fallos concurrentes:
+### 2. Infracción: Fugas de Lógica de Negocio (Regla 4 y 6)
+Actualmente hay deuda acumulada en separación de responsabilidades:
+- **Frontend:** Numerosos `.vue` (como `ConvFormProfesor.vue` en el historial reciente) y otras vistas mapean arreglos o tienen condicionales que deberían estar englobadas en los `Getters` o `Actions` de Pinia.
+- **Backend:** Se requiere una evaluación quirúrgica para garantizar que en NestJS ningún Controlador (`.controller.ts`) hace el papel del middleware o procesa lógica compleja (Regla 6 SRP). Todo debe derivar en un `Service_sm_vc`.
 
-| # | Componente | Fallo | Síntoma |
-|---|---|---|---|
-| 1 | `pasantiasStore.js` | `procesarCambioPeriodo_sm_vc` vaciaba `progreso_sm_vc` pero nunca lo rehidrataba. Solo hacía `fetch_materias_sm_vc()`. | Store en estado "zombie": vacío pero sin pedir datos nuevos. |
-| 2 | `TrazabilidadPage.vue` | La única fuente de datos era `onMounted`. Si el componente ya estaba vivo cuando el período cambió, nunca se re-ejecutaba el fetch. | UI en blanco; obligaba a navegar o recargar la página. |
-| 3 | `watchEffect` del Stepper | Guard `if (stepActivo_sm_vc.value) return` congelaba el stepper en su posición anterior aunque llegaran datos de un período completamente diferente. | Stepper no se reposicionaba con los datos del período nuevo. |
+### 3. Infracción: Mezcla de Lenguajes y Archivos sueltos (Regla 5)
+- **Backend:** Hemos detectado en la raíz y subcarpetas la existencia de scripts como `test_notif.js` y `check_db.js`. El backend en NestJS no debe hospedar `Javascript` suelto. Deben transformarse en utils de `.ts` si tienen funciones en el ecosistema, o borrarse/aislarse si son únicamente bash scripts experimentales, ya que ensucian el tipado estricto.
 
-**Hallazgo adicional (MainLayout.vue L.271):** El layout ya usa `:key="currentRoute.fullPath"` en el `<router-view>`, por lo que el componente **SÍ se desmonta y remonta** al navigar entre rutas distintas. El problema de "primer render" ocurría porque el store estaba en un estado zombie ANTES de que la vista se montara.
+### 4. Infracción: Anomalías de Sufijos (Reglas 1 y 2)
+Aunque ha habido avances integrando `_sm_vc`, un refactor requiere revisar a profundidad:
+- Nombres de interfaces como los DTOs, que podrían venir nombrados convencionalmente (`CreateUserDto`) en vez de (`CreateUserDto_sm_vc`).
+- Asegurar que variables locales (dentro de Store Actions o Services) tampoco se escapen. Cada iterador o variable derivada de un `map`/`filter` internamente debe usar la nomenclatura `_sm_vc`.
 
-## Parches Aplicados
+---
 
-### Parche 1 — `pasantiasStore.js`
-**Por qué:** La rehidratación parcial (solo materias) dejaba `progreso_sm_vc = []`. El componente recibía un array vacío como dato "válido" y la UI quedaba en blanco.
+## 🛠 Plan de Mitigación Estructural (El "Cómo")
 
-**Solución:** `procesarCambioPeriodo_sm_vc` ahora ejecuta un `Promise.all([fetch_materias_sm_vc(), fetch_mi_progreso_sm_vc()])` en paralelo tras el reset atómico del estado.
+No vamos a "escupir código" de forma descontrolada. Se aplicará este protocolo estricto:
 
-### Parche 2 — `TrazabilidadPage.vue` (Estudiante y Profesor)
-**Por qué:** No había mecanismo de detección de cambio de período mientras el componente estaba vivo en el DOM.
+1. **Aislamiento Controlado:** Tomaré un dominio a la vez (ej. Módulo de Pasantías en Backend, luego Módulo de Pasantías en Frontend).
+2. **Cirugía Sintáctica:** Reemplazo de palabras `var`, `function` y migración a Constantes Funcionales asíncronas.
+3. **Testing de DTOs:** Reforzar con librerías tipo `class-validator` en todos los endpoints, exigiendo que toda respuesta o payload cumpla.
+4. **Vaciado de Componentes (Dumping):** Entrar a cada `.vue`, extraer cualquier condicional complejo en los `metohds` y encapsularlos en acciones nativas de su respectivo Store Pinia para obedecer ciegamente la Regla 4.
 
-**Solución:** Se importó `usePeriodoStore` y se añadió un `watch(() => periodo_sm_vc.periodoActual_sm_vc, ...)` con `{ flush: 'post' }`. Cuando el admin ejecuta un Roll-Forward, el watcher detecta el cambio, resetea `stepActivo_sm_vc = null` y ejecuta un re-fetch del progreso. La guarda `!periodoPrevio_sm_vc` previene la doble carga al montar.
-
-### Parche 3 — `watchEffect` del Stepper (Estudiante y Profesor)
-**Por qué:** El guard `if (stepActivo_sm_vc.value) return` era demasiado agresivo. Impedía cualquier reposicionamiento aunque los datos subyacentes hubieran cambiado completamente.
-
-**Solución:** Se sustituyó por una verificación inteligente de existencia: `lista_sm_vc.some(m => m.id_sm_vc === stepActivo_sm_vc.value)`. Si el ID activo actual ya no existe en la nueva lista de materias, se reposiciona en la primera desbloqueada. Si el ID sí existe, preserva la navegación manual del usuario.
-
-## Archivos Modificados
-- `frontend/src/stores/pasantiasStore.js`
-- `frontend/src/pages/estudiante/TrazabilidadPage.vue`
-- `frontend/src/pages/profesor/TrazabilidadPage.vue`
-
+**Estatus actual:** En pausa. Esperando validación del Plan de Vuelo por parte de Arquitectura (Usuario) para dar lugar a la Fase 1: Backend.
