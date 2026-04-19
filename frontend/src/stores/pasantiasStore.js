@@ -280,12 +280,36 @@ export const usePasantiasStore = defineStore('pasantias', () => {
 
   const registrarDeploy = () => {}
 
+  /**
+   * procesarCambioPeriodo_sm_vc
+   * ─────────────────────────────────────────────────────────────────
+   * Se invoca desde periodoStore tras un Roll-Forward o cambio de período.
+   * PROTOCOLO:
+   *   1. Limpia el estado local para evitar que la UI muestre datos del
+   *      período anterior (el "estado zombie").
+   *   2. Rehidrata COMPLETAMENTE: materias Y progreso del estudiante
+   *      actual, garantizando que el store quede en un estado válido
+   *      antes de que cualquier componente reaccione.
+   *
+   * FIX: antes solo rehidrataba `materias_sm_vc` y dejaba `progreso_sm_vc`
+   * en `[]`, lo que provocaba que TrazabilidadPage renderizara en blanco
+   * en el primer intento tras un cambio de período.
+   */
   const procesarCambioPeriodo_sm_vc = async () => {
+    // Paso 1: Reset atómico — el store queda en pizarra en blanco
     materias_sm_vc.value    = []
     progreso_sm_vc.value    = []
     misEntregas_sm_vc.value = []
-    await fetch_materias_sm_vc()
-    console.log('[pasantiasStore] Rehidratación completada tras cambio de período.')
+
+    // Paso 2: Rehidratación completa en paralelo
+    // fetch_mi_progreso_sm_vc es el endpoint del estudiante logueado;
+    // si en el futuro se requiere el progreso del profesor, se añade aquí.
+    await Promise.all([
+      fetch_materias_sm_vc(),
+      fetch_mi_progreso_sm_vc()
+    ])
+
+    console.log('[pasantiasStore] Rehidratación completa (materias + progreso) tras cambio de período.')
   }
 
   return {

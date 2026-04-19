@@ -272,7 +272,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Notify } from "quasar";
 import { usePasantiasStore } from "src/stores/pasantiasStore";
@@ -280,17 +280,19 @@ import { useProgressBarStore } from "src/stores/progressBarStore";
 import { useUsersStore } from "src/stores/usersStore";
 import { useDeployStore } from "src/stores/deployStore";
 import { useChatStore_sm_vc } from "src/stores/chatStore_sm_vc";
+import { usePeriodoStore } from "src/stores/periodoStore";
 import MateriaProgressCard from "src/components/shared/MateriaProgressCard.vue";
 import DocumentConversacion from "src/components/shared/DocumentConversacion.vue";
 import { getDetalleEstudiante_sm_vc } from "src/services/estudiantesService";
 
 
-const route_sm_vc = useRoute();
-const router_sm_vc = useRouter();
-const store_sm_vc = usePasantiasStore();
+const route_sm_vc       = useRoute();
+const router_sm_vc      = useRouter();
+const store_sm_vc       = usePasantiasStore();
 const progressBar_sm_vc = useProgressBarStore();
-const usersStore_sm_vc = useUsersStore();
+const usersStore_sm_vc  = useUsersStore();
 const deployStore_sm_vc = useDeployStore();
+const periodo_sm_vc     = usePeriodoStore();
 
 /* ── Store de Chat (WebSocket) ── */
 const chatStore_sm_vc = useChatStore_sm_vc();
@@ -377,11 +379,48 @@ onUnmounted(() => {
   chatStore_sm_vc.salirDeSalaActual_sm_vc();
 });
 
+// --- watch reactivo sobre el período activo ---
+/*
+ * Si el admin ejecuta un Roll-Forward mientras el profesor está observando
+ * la ficha de un estudiante, esta página reacciona automáticamente:
+ * re-fetcha el progreso actualizado sin requerir navegación manual.
+ *
+ * La guarda `!periodoPrevio_sm_vc` evita el disparo en la inicialización
+ * del watcher (primer valor registrado), porque onMounted ya carga los datos.
+ */
+watch(
+  () => periodo_sm_vc.periodoActual_sm_vc,
+  async (nuevoPeriodo_sm_vc, periodoPrevio_sm_vc) => {
+    if (!periodoPrevio_sm_vc || nuevoPeriodo_sm_vc === periodoPrevio_sm_vc) return
+    if (!estudianteId_sm_vc.value) return
+
+    console.log(`[TrazabilidadPage Profesor] Período cambió. Forzando refetch para estudiante ${estudianteId_sm_vc.value}.`)
+
+    // Resetear el stepper para reposicionamiento limpio con el watchEffect
+    stepActivo_sm_vc.value = null
+
+    await store_sm_vc.fetch_progreso_estudiante_sm_vc(estudianteId_sm_vc.value)
+  },
+  { flush: 'post' }
+)
+
 // Inicialización reactiva segura del step activo en el stepper
+/*
+ * FIX (guard eliminado): el guard `if (stepActivo_sm_vc.value) return` fue
+ * removido porque congelaba el stepper cuando el período cambiaba y llegaban
+ * datos nuevos. Ahora el stepper se reposiciona solo si el ID activo ya
+ * no existe en la nueva lista, preservando la navegación manual del usuario.
+ */
 watchEffect(() => {
-  if (stepActivo_sm_vc.value) return;
   const lista_sm_vc = materiasConFases_sm_vc.value;
   if (!lista_sm_vc.length) return;
+
+  // Reposicionar solo si el step activo no existe en la lista actual
+  const existeEnLista_sm_vc = lista_sm_vc.some(
+    (m_sm_vc) => m_sm_vc.id_sm_vc === stepActivo_sm_vc.value
+  );
+  if (existeEnLista_sm_vc) return;
+
   const primera_sm_vc =
     lista_sm_vc.find((m_sm_vc) => !m_sm_vc.bloqueada) ?? lista_sm_vc[0];
   stepActivo_sm_vc.value = primera_sm_vc.id_sm_vc;
@@ -396,9 +435,8 @@ watchEffect(() => {
  * se une a esa sala específica para recibir cualquier actualización en tiempo real.
  * Cuando cierra el panel (materiaSeleccionada = null), emite el leave.
  */
-import { watch } from "vue";
 
-watch(materiaSeleccionada_sm_vc, (nuevaMateria_sm_vc) => {
+ watch(materiaSeleccionada_sm_vc, (nuevaMateria_sm_vc) => {
   if (nuevaMateria_sm_vc && estudianteId_sm_vc.value) {
     // Unirse a la sala de esta materia específica para recibir actualizaciones WS
     chatStore_sm_vc.unirASala_sm_vc(
@@ -715,7 +753,5 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.conv-embed_sm_vc {
-  /* sin padding, DocumentConversacion maneja su propio layout */
-}
+/* .conv-embed_sm_vc — sin padding, DocumentConversacion maneja su propio layout */
 </style>
