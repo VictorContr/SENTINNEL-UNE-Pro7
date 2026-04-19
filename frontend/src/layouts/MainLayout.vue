@@ -319,7 +319,12 @@ const navigate_sm_vc = (to_sm_vc) => {
 
 /* ── Logout ── */
 const handle_logout_sm_vc = () => {
-  chat_store_sm_vc.desconectarSocket_sm_vc() // Cierra el socket global permanentemente
+  console.log("Store instance in logout:", chat_store_sm_vc);
+  if (typeof chat_store_sm_vc.desconectarSocket_sm_vc === 'function') {
+    chat_store_sm_vc.desconectarSocket_sm_vc() // Cierra el socket global permanentemente
+  } else {
+    console.error("desconectarSocket_sm_vc is not a function. Store keys:", Object.keys(chat_store_sm_vc));
+  }
   auth.logout_sm_vc()
   router_sm_vc.push('/login')
 }
