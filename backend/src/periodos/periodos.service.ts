@@ -42,8 +42,35 @@ export class PeriodosAcademicosService {
     const fechaInicio_sm_vc = new Date(createPeriodoDto.fecha_inicio_sm_vc);
     const fechaFin_sm_vc    = new Date(createPeriodoDto.fecha_fin_sm_vc);
 
-    if (fechaInicio_sm_vc >= fechaFin_sm_vc) {
+    const inicioLocal_sm_vc = this.crearFechaLocal_sm_vc(createPeriodoDto.fecha_inicio_sm_vc);
+    const finLocal_sm_vc = this.crearFechaLocal_sm_vc(createPeriodoDto.fecha_fin_sm_vc);
+
+    if (inicioLocal_sm_vc.getTime() >= finLocal_sm_vc.getTime()) {
       throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+    }
+
+    // 1. Barrera de Antisolapamiento
+    const ultimoPeriodoBD_sm_vc = await this.prisma.periodoAcademico.findFirst({
+      orderBy: { fecha_fin_sm_vc: 'desc' },
+    });
+
+    if (ultimoPeriodoBD_sm_vc) {
+      const inicioParseado_sm_vc = this.crearFechaLocal_sm_vc(createPeriodoDto.fecha_inicio_sm_vc);
+      const finParseado_sm_vc = this.crearFechaLocal_sm_vc(ultimoPeriodoBD_sm_vc.fecha_fin_sm_vc);
+
+      if (inicioParseado_sm_vc.getTime() <= finParseado_sm_vc.getTime()) {
+        throw new BadRequestException('BARRERA DE ANTISOLAPAMIENTO: La fecha de inicio del nuevo período debe ser estrictamente mayor a la fecha de fin del último período registrado.');
+      }
+    }
+
+    // 2. Barrera Cronológica (Planificación futura)
+    let estadoActivo_sm_vc = true;
+    
+    const actualParseado_sm_vc = this.crearFechaLocal_sm_vc(new Date());
+    const inicioCronParseado_sm_vc = this.crearFechaLocal_sm_vc(createPeriodoDto.fecha_inicio_sm_vc);
+
+    if (inicioCronParseado_sm_vc.getTime() > actualParseado_sm_vc.getTime()) {
+      estadoActivo_sm_vc = false;
     }
 
     const periodoActivo_sm_vc = await this.prisma.periodoAcademico.findFirst({
@@ -79,10 +106,12 @@ export class PeriodosAcademicosService {
     try {
       return await this.prisma.$transaction(async (tx) => {
 
-        await tx.periodoAcademico.updateMany({
-          where: { estado_activo_sm_vc: true },
-          data:  { estado_activo_sm_vc: false },
-        });
+        if (estadoActivo_sm_vc) {
+          await tx.periodoAcademico.updateMany({
+            where: { estado_activo_sm_vc: true },
+            data:  { estado_activo_sm_vc: false },
+          });
+        }
 
         const nuevoPeriodo = await tx.periodoAcademico.create({
           data: {
@@ -90,7 +119,7 @@ export class PeriodosAcademicosService {
             descripcion_sm_vc,
             fecha_inicio_sm_vc: fechaInicio_sm_vc,
             fecha_fin_sm_vc:    fechaFin_sm_vc,
-            estado_activo_sm_vc: true,
+            estado_activo_sm_vc: estadoActivo_sm_vc,
           },
         });
 
@@ -125,13 +154,15 @@ export class PeriodosAcademicosService {
           ),
         );
 
-        await this.reasignarEstudiantes_sm_vc(tx, nuevasMaterias);
+        if (estadoActivo_sm_vc) {
+          await this.reasignarEstudiantes_sm_vc(tx, nuevasMaterias);
 
-        await tx.configuracionSistema.upsert({
-          where:  { id_sm_vc: 1 },
-          update: { periodo_id_sm_vc: nuevoPeriodo.id_sm_vc },
-          create: { id_sm_vc: 1, periodo_id_sm_vc: nuevoPeriodo.id_sm_vc },
-        });
+          await tx.configuracionSistema.upsert({
+            where:  { id_sm_vc: 1 },
+            update: { periodo_id_sm_vc: nuevoPeriodo.id_sm_vc },
+            create: { id_sm_vc: 1, periodo_id_sm_vc: nuevoPeriodo.id_sm_vc },
+          });
+        }
 
         return nuevoPeriodo;
 
@@ -210,12 +241,20 @@ export class PeriodosAcademicosService {
   }
 
   async activar_sm_vc(id: number) {
+    const periodo_sm_vc = await this.findOne_sm_vc(id);
+
+    // Barrera Cronológica de Activación
+    const actualParseado_sm_vc = this.crearFechaLocal_sm_vc(new Date());
+    const inicioParseado_sm_vc = this.crearFechaLocal_sm_vc(periodo_sm_vc.fecha_inicio_sm_vc);
+
+    if (inicioParseado_sm_vc.getTime() > actualParseado_sm_vc.getTime()) {
+      throw new BadRequestException('BARRERA CRONOLÓGICA: No se puede registrar como activo un período cuya fecha de inicio está en el futuro.');
+    }
+
     await this.prisma.periodoAcademico.updateMany({
       where: { estado_activo_sm_vc: true },
       data:  { estado_activo_sm_vc: false },
     });
-
-    await this.findOne_sm_vc(id);
 
     try {
       await this.prisma.configuracionSistema.update({
@@ -279,6 +318,21 @@ export class PeriodosAcademicosService {
     await this.prisma.periodoAcademico.delete({
       where: { id_sm_vc: id },
     });
+  }
+
+  private crearFechaLocal_sm_vc(fechaInput_sm_vc: any): Date {
+    if (!fechaInput_sm_vc) return new Date();
+    
+    const fechaString_sm_vc = fechaInput_sm_vc instanceof Date 
+        ? fechaInput_sm_vc.toISOString().split('T')[0] 
+        : String(fechaInput_sm_vc).split('T')[0];
+        
+    const partes_sm_vc = fechaString_sm_vc.split('-');
+    const anio_sm_vc = parseInt(partes_sm_vc[0], 10);
+    const mes_sm_vc = parseInt(partes_sm_vc[1], 10) - 1;
+    const dia_sm_vc = parseInt(partes_sm_vc[2], 10);
+    
+    return new Date(anio_sm_vc, mes_sm_vc, dia_sm_vc, 0, 0, 0, 0);
   }
 
   private generarDescripcionPeriodo_sm_vc(inicio_sm_vc: Date, fin_sm_vc: Date): string {
