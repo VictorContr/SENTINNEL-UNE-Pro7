@@ -38,6 +38,7 @@ export class PeriodosAcademicosController {
     return this.periodosService.create_sm_vc(createPeriodoDto);
   }
 
+  // El PATCH solicitado para corregir o editar fechas de un período activo (o cualquier otro)
   @Patch(':id')
   @Roles_sm_vc(RolUsuario.ADMIN)
   async update(

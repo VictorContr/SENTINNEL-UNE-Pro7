@@ -152,7 +152,7 @@ export class PeriodosAcademicosService {
   }
 
   async update_sm_vc(id: number, updatePeriodoDto: UpdatePeriodoDto_sm_vc) {
-    await this.findOne_sm_vc(id);
+    const periodoExistente = await this.findOne_sm_vc(id);
 
     const data_sm_vc: Record<string, unknown> = {};
 
@@ -177,18 +177,36 @@ export class PeriodosAcademicosService {
     }
     if (updatePeriodoDto.descripcion_sm_vc) {
       data_sm_vc.descripcion_sm_vc = updatePeriodoDto.descripcion_sm_vc;
+    } else if (updatePeriodoDto.fecha_inicio_sm_vc && updatePeriodoDto.fecha_fin_sm_vc) {
+      data_sm_vc.descripcion_sm_vc = this.generarDescripcionPeriodo_sm_vc(
+        new Date(updatePeriodoDto.fecha_inicio_sm_vc),
+        new Date(updatePeriodoDto.fecha_fin_sm_vc),
+      );
     }
 
-    if (data_sm_vc.fecha_inicio_sm_vc && data_sm_vc.fecha_fin_sm_vc) {
-      if ((data_sm_vc.fecha_inicio_sm_vc as Date) >= (data_sm_vc.fecha_fin_sm_vc as Date)) {
-        throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+    const nuevaFInicio = (data_sm_vc.fecha_inicio_sm_vc as Date) || periodoExistente.fecha_inicio_sm_vc;
+    const nuevaFFin    = (data_sm_vc.fecha_fin_sm_vc as Date) || periodoExistente.fecha_fin_sm_vc;
+
+    if (nuevaFInicio >= nuevaFFin) {
+      throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+    }
+
+    try {
+      const periodoActualizado = await this.prisma.periodoAcademico.update({
+        where: { id_sm_vc: id },
+        data:  data_sm_vc,
+      });
+      return periodoActualizado;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new BadRequestException('Ya existe un período con ese nombre o características únicas asignadas.');
+        }
+        throw new BadRequestException(`Error validando con la base de datos (Código: ${error.code}). No se pudo actualizar el período.`);
       }
+      console.error('[PeriodosService] Error en update_sm_vc:', error);
+      throw new InternalServerErrorException('Error interno del servidor al intentar actualizar el período académico.');
     }
-
-    return this.prisma.periodoAcademico.update({
-      where: { id_sm_vc: id },
-      data:  data_sm_vc,
-    });
   }
 
   async activar_sm_vc(id: number) {
