@@ -1,13 +1,14 @@
-# Auditoría y Corrección de Reactividad: ConvFormProfesor
+# Plan de Vuelo: Personalización de Sección de Autores
 
 ## Objetivo
-Garantizar el desmontaje síncrono y en tiempo real del formulario de evaluación en la vista conversacional del profesor cuando el estado de la materia pase a `APROBADO` o `REPROBADO`. Se debe asegurar que las actualizaciones de estado local a través de Pinia resuelvan adecuadamente las identidades (IDs) devueltas por el Backend.
+Refinar la estética de la sección `AutoresSection.vue` integrando recursos visuales reales en lugar de placeholders. Específicamente, se debe vincular la imagen de perfil de Víctor Contreras.
 
 ## Checklist de Construcción
-- [x] **Backend**: Inyectar `estudiante_id_sm_vc` en la inicialización del objeto devuelto por `getProgresoEstudiante_sm_vc` (`pasantias.service.ts`).
-- [x] **Frontend (Componente DocumentConversacion)**: Transformar el handler manual de respuestas del profesor (`handleResponderCorreccion_sm_vc`) a función asíncrona (`async/await`) para esperar que el Store rehidrate la data y notifique adecuadamente evitando "fire and forget".
-- [x] **Frontend (Componente DocumentConversacion)**: Mantener intacta, pero verificada la computed property `puedeEscribir_sm_vc` para que proceda de manera robustamente reactiva.
+- [x] **Preparación**: Identificar ruta del asset en `frontend/src/assets/Victor Contreras.jpg`.
+- [x] **Frontend (AutoresSection.vue)**: Importar el recurso estático mediante ESM (Vite).
+- [x] **Frontend (AutoresSection.vue)**: Vincular el recurso importado a la propiedad `avatarUrl_sm_vc` del perfil de Víctor.
+- [x] **Verificación**: Comprobar que el fallback de Vite maneje correctamente el espacio en el nombre del archivo ("Victor Contreras.jpg").
 
 ## Buenas Prácticas
-- Usaremos tipado estricto implícito mediante la consistencia del Backend al devolver campos `estudiante_id_sm_vc` de manera natural y sin parchar el Frontend.
-- Las variables y métodos alterados obligatoriamente incluirán o preservarán el sufijo estructurado `_sm_vc` para unificación de nombramientos.
+- Usaremos la sintaxis de importación de Vite para asegurar que el hash de producción se genere correctamente.
+- Mantendremos la arquitectura de `computed` para la reactividad de colores y temas.
