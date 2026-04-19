@@ -242,13 +242,9 @@ export class PasantiasService_sm_vc {
 
     if (!entrega) throw new NotFoundException('Entrega/Documento no encontrado.');
 
-    // ✅ FIX MAGISTRAL: Mapeador de Enum
-    // El frontend manda "OBSERVACIONES", pero la base de datos solo entiende "REPROBADO" (u otros validos).
-    // Usamos 'as any' para bypassear a TypeScript, ya que en tiempo de ejecución llega un string puro.
-    let estadoReal_sm_vc: any = decision;
-    if (estadoReal_sm_vc === 'OBSERVACIONES') {
-      estadoReal_sm_vc = EstadoAprobacion.REPROBADO; 
-    }
+    // ✅ FIX: No hay más mapeador forzado a REPROBADO. El backend 
+    // reconoce el estado OBSERVACIONES devuelto por Frontend a BD.
+    const estadoReal_sm_vc = decision;
 
     return await this.prisma.$transaction(async (tx) => {
       // 1. Crear/Actualizar Evaluación
@@ -291,9 +287,9 @@ export class PasantiasService_sm_vc {
       }
 
       // 4. Log de trazabilidad con identidad del Profesor
-      const prefijoLog = decision === EstadoAprobacion.APROBADO as any 
-        ? '✅ Aprobado' 
-        : (estadoReal_sm_vc === EstadoAprobacion.REPROBADO && decision !== 'OBSERVACIONES' as any ? '❌ Reprobado' : '📝 Observaciones');
+      const prefijoLog = estadoReal_sm_vc === EstadoAprobacion.APROBADO
+        ? 'Aprobado' 
+        : (estadoReal_sm_vc === EstadoAprobacion.REPROBADO ? 'Reprobado' : 'Observaciones');
       
       const contenidoMensaje = `${prefijoLog}: Requisito **${entrega.requisito.nombre_sm_vc}**.\n\n**Nota:** ${nota || 'N/A'}\n**Observaciones:** ${observaciones || 'Sin observaciones.'}`;
 
@@ -319,13 +315,13 @@ export class PasantiasService_sm_vc {
         data: {
           emisor_id_sm_vc: profesorId,
           receptor_id_sm_vc: entrega.estudiante.usuario_id_sm_vc,
-          tipo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any ? 'INFORMATIVA' : 'IMPORTANTE',
-          titulo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any 
+          tipo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO ? 'INFORMATIVA' : 'IMPORTANTE',
+          titulo_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO 
             ? `✔ "${entrega.requisito.nombre_sm_vc}" aprobado`
-            : `❌ Requisito re-evaluado: "${entrega.requisito.nombre_sm_vc}"`,
-          contenido_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO as any
+            : `⚠ Requisito re-evaluado: "${entrega.requisito.nombre_sm_vc}"`,
+          contenido_sm_vc: estadoReal_sm_vc === EstadoAprobacion.APROBADO
             ? `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" fue aprobada.`
-            : `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" presenta observaciones o fue reprobada.`,
+            : (estadoReal_sm_vc === EstadoAprobacion.OBSERVACIONES ? `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" presenta observaciones.` : `Tu entrega en "${entrega.requisito.materia.nombre_sm_vc}" fue reprobada.`),
         }
       });
       console.log(`📤 [PasantiasService] DB Notif guardada para Estu_Usuario ${entrega.estudiante.usuario_id_sm_vc}. Emitiendo 'notificacion.enviar' al Gateway...`);

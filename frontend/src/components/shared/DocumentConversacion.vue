@@ -159,7 +159,7 @@
         v-else-if="estadoProgreso === 'REPROBADO' && !esAdmin_sm_vc"
         class="readonly-banner-reprobado_sm_vc"
       >
-        <q-icon name="block" size="14px" color="negative" />
+        <q-icon name="cancel" class="text-negative" size="14px" />
         <span>Has reprobado la materia. Queda bloqueada hasta la apertura de un nuevo ciclo.</span>
       </div>
 

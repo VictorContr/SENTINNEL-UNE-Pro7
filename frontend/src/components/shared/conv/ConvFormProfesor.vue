@@ -70,7 +70,7 @@
           </button>
         </div>
         <div v-if="form_sm_vc.estado_evaluacion_sm_vc === 'REPROBADO'" class="reprobado-notice_sm_vc">
-          <q-icon name="warning_amber" size="14px" color="negative" />
+          <q-icon name="cancel" class="text-negative" size="14px" />
           <span>Acción de <strong>Reprobar Materia</strong>: cambia el estado global sin vincular documento.</span>
         </div>
       </div>
@@ -252,7 +252,7 @@ const formAprobarTodo_sm_vc = ref({ nota_sm_dec: null, comentario_sm_vc: "" });
 const evalOpciones_sm_vc = [
   { value: "OBSERVACIONES", label: "Observaciones", icon: "warning", color: "var(--sn-advertencia)" },
   { value: "APROBADO", label: "Aprobar Item", icon: "done", color: "var(--sn-exito)" },
-  { value: "REPROBADO", label: "Reprobar Materia", icon: "block", color: "var(--sn-error)" },
+  { value: "REPROBADO", label: "Reprobar Materia", icon: "cancel", color: "var(--sn-error)" },
 ];
 const requisitosSeleccionados_sm_vc = ref([]);
 
@@ -318,7 +318,7 @@ const materiaCompletada_sm_vc = computed(() => {
 });
 
 const labelBotonEnvio_sm_vc = computed(() => form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO' ? 'Reprobar Materia' : 'Enviar Evaluación');
-const iconBotonEnvio_sm_vc = computed(() => form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO' ? 'block' : 'send');
+const iconBotonEnvio_sm_vc = computed(() => form_sm_vc.value.estado_evaluacion_sm_vc === 'REPROBADO' ? 'cancel' : 'send');
 
 const handleFileProf_sm_vc = (e) => {
   const file = e.target.files[0];

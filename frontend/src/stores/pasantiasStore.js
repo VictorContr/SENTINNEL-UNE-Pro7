@@ -17,10 +17,11 @@ import {
 } from 'src/services/pasantiasService'
 
 export const ESTADO_APROBACION = {
-  PENDIENTE:  { color: '#5a7fa8', bg: 'rgba(90,127,168,0.1)',   icon: 'schedule' },
-  ENTREGADO:  { color: '#7ec8e3', bg: 'rgba(126,200,227,0.1)',  icon: 'upload_file' },
-  APROBADO:   { color: '#6fffe9', bg: 'rgba(111,255,233,0.1)',  icon: 'check_circle' },
-  REPROBADO:  { color: '#ff8fa3', bg: 'rgba(255,143,163,0.1)',  icon: 'cancel' }
+  PENDIENTE:     { color: '#5a7fa8', bg: 'rgba(90,127,168,0.1)',   icon: 'schedule' },
+  ENTREGADO:     { color: '#7ec8e3', bg: 'rgba(126,200,227,0.1)',  icon: 'upload_file' },
+  APROBADO:      { color: '#6fffe9', bg: 'rgba(111,255,233,0.1)',  icon: 'check_circle' },
+  OBSERVACIONES: { color: '#fbbf24', bg: 'rgba(251,191,36,0.1)',   icon: 'warning' },
+  REPROBADO:     { color: '#ff8fa3', bg: 'rgba(255,143,163,0.1)',  icon: 'cancel' }
 }
 
 export const usePasantiasStore = defineStore('pasantias', () => {

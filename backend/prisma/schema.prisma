@@ -307,6 +307,7 @@ enum EstadoAprobacion {
   ENTREGADO
   APROBADO
   REPROBADO
+  OBSERVACIONES
 
   @@map("estadoaprobacion_sm_vc")
 }
