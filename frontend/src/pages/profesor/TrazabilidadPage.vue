@@ -368,15 +368,13 @@ onMounted(async () => {
 });
 
 /**
- * PREVENCIÓN DE MEMORY LEAK (Obligatorio según arquitectura del Sprint 2).
- *
  * Al desmontar esta página (profesor sale de la ficha del estudiante),
- * se desconecta el socket y se limpia cualquier sala activa.
- * Esto previene listeners acumulados en memoria si el profesor navega
- * entre diferentes estudiantes sin recargar la aplicación.
+ * se abandona la sala de chat de la materia que estuviese observando,
+ * pero se MANTIENE el socket vivo para asegurar la recepción
+ * de notificaciones globales.
  */
 onUnmounted(() => {
-  chatStore_sm_vc.salirDeSala_sm_vc();
+  chatStore_sm_vc.salirDeSalaActual_sm_vc();
 });
 
 // Inicialización reactiva segura del step activo en el stepper

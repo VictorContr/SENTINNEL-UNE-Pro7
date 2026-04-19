@@ -319,7 +319,7 @@ const navigate_sm_vc = (to_sm_vc) => {
 
 /* ── Logout ── */
 const handle_logout_sm_vc = () => {
-  chat_store_sm_vc.salirDeSala_sm_vc() // Desconecta el socket limpio
+  chat_store_sm_vc.desconectarSocket_sm_vc() // Cierra el socket global permanentemente
   auth.logout_sm_vc()
   router_sm_vc.push('/login')
 }

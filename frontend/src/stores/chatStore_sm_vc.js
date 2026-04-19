@@ -428,17 +428,17 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
   };
 
   /**
-   * salirDeSala_sm_vc — Sale de la sala actual y desconecta el socket.
+   * salirDeSalaActual_sm_vc — Sale de la sala actual sin desconectar el WebSocket.
    *
    * DISEÑO CRÍTICO: Esta función está pensada para ser llamada desde
-   * `onUnmounted` en las vistas Page. Al desmontar la página, se limpia
-   * la conexión para evitar memory leaks y listeners huérfanos.
+   * `onUnmounted` de las vistas Page, permitiendo abandonar el chat activo
+   * sin sacrificar las notificaciones globales, que requieren el socket vivo.
    *
    * IDEMPOTENTE: Si no hay socket o sala activa, no hace nada.
    *
    * @returns {void}
    */
-  const salirDeSala_sm_vc = () => {
+  const salirDeSalaActual_sm_vc = () => {
     if (!socket_sm_vc.value) return;
 
     // Notificar al backend que salimos de la sala antes de desconectar
@@ -449,15 +449,36 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
     // Cancelar todos los timers de escritura pendientes (evitar memory leaks)
     Object.values(_timerEscribiendo_sm_vc.value).forEach(clearTimeout);
 
-    // Desconectar y limpiar el estado local
-    socket_sm_vc.value.disconnect();
-    socket_sm_vc.value = null;
+    // Solo limpiar el estado de la conversación, NO desconectar de la red
     salaActual_sm_vc.value = null;
-    estadoConexion_sm_vc.value = "offline";
     escribiendo_sm_vc.value = {};
     _timerEscribiendo_sm_vc.value = {};
 
-    console.info("[ChatStore] Socket desconectado y sala limpiada.");
+    console.info("[ChatStore] Sala limpiada (Socket sigue conectado para notificaciones).");
+  };
+
+  /**
+   * desconectarSocket_sm_vc — Desconexión total del WebSocket global.
+   *
+   * DISEÑO CRÍTICO: Llamar EXCLUSIVAMENTE al cerrar la sesión (logout) o
+   * en flujos de emergencia por token expirado.
+   *
+   * @returns {void}
+   */
+  const desconectarSocket_sm_vc = () => {
+    if (!socket_sm_vc.value) return;
+
+    socket_sm_vc.value.disconnect();
+    socket_sm_vc.value = null;
+    estadoConexion_sm_vc.value = "offline";
+    conectando_sm_vc.value = false;
+    errorWs_sm_vc.value = null;
+    salaActual_sm_vc.value = null;
+    escribiendo_sm_vc.value = {};
+    Object.values(_timerEscribiendo_sm_vc.value).forEach(clearTimeout);
+    _timerEscribiendo_sm_vc.value = {};
+
+    console.info("[ChatStore] Socket global desconectado permanentemente.");
   };
 
   /* ══════════════════════════════════════════════════════════════
@@ -628,6 +649,7 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
     enviarMensaje_sm_vc,
     /** Emite el evento typing_sm_vc al servidor con el estado de escritura */
     emitirEscribiendo_sm_vc,
-    salirDeSala_sm_vc, // ⬅ EXPUESTO para onUnmounted en vistas Page
+    salirDeSalaActual_sm_vc, // ⬅ EXPUESTO: abandonar chat actual, mantener socket
+    desconectarSocket_sm_vc, // ⬅ EXPUESTO: solo para MainLayout (logout)
   };
 });

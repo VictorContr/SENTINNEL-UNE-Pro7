@@ -122,15 +122,12 @@ onMounted(async () => {
 })
 
 /**
- * PREVENCIÓN DE MEMORY LEAK (Obligatorio según arquitectura del Sprint 2).
- *
- * Al desmontar esta página (navegar a otra ruta), se desconecta el socket
- * de WebSocket y se limpia la sala activa. Sin esto, el socket quedaría
- * abierto en background recibiendo mensajes de una conversación que ya
- * no está siendo observada por ningún componente → memory leak.
+ * Al desmontar esta página (navegar a otra ruta), se abandona la sala de chat
+ * para no recibir mensajes ajenos, pero se MANTIENE el socket vivo a nivel
+ * de aplicación para seguir recibiendo notificaciones globales.
  */
 onUnmounted(() => {
-  chatStore_sm_vc.salirDeSala_sm_vc()
+  chatStore_sm_vc.salirDeSalaActual_sm_vc()
 })
 
 /* ══════════════════════════════════════════════════════════════
