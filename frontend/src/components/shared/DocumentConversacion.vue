@@ -242,13 +242,15 @@ const idEstudianteFinal_sm_vc = computed(() => {
 const puedeEscribir_sm_vc = computed(() => {
   const rol_sm_vc = userRol_sm_vc.value;
   const esModoChat_sm_vc = props.modoVista_sm_vc === "CHAT";
-  const estaAprobada_sm_vc = props.estadoProgreso === "APROBADO";
-  const estaReprobada_sm_vc = props.estadoProgreso === "REPROBADO";
+  
+  const estadosTerminales_sm_vc = ["APROBADO", "REPROBADO"];
+  const esTerminal_sm_vc = estadosTerminales_sm_vc.includes(props.estadoProgreso);
+
   if (esAdmin_sm_vc.value) return false;
-  if (estaReprobada_sm_vc) return false;
+  if (esTerminal_sm_vc) return false;
   if (rol_sm_vc === "ESTUDIANTE")
-    return esModoChat_sm_vc && !estaAprobada_sm_vc;
-  if (rol_sm_vc === "PROFESOR") return esModoChat_sm_vc && !estaAprobada_sm_vc;
+    return esModoChat_sm_vc && !esTerminal_sm_vc;
+  if (rol_sm_vc === "PROFESOR") return esModoChat_sm_vc && !esTerminal_sm_vc;
   return false;
 });
 
@@ -430,13 +432,15 @@ const handleEnviarInforme_sm_vc = async (payload_sm_vc) => {
 };
 
 /* ── Handlers de Profesor (sin cambios) ── */
-const handleResponderCorreccion_sm_vc = (payload_sm_vc) => {
-  const msg_sm_vc = pasantiasStore_sm_vc.responderCorreccion({
+const handleResponderCorreccion_sm_vc = async (payload_sm_vc) => {
+  const msg_sm_vc = await pasantiasStore_sm_vc.responderCorreccion({
     estudiante_id_sm_vc: idEstudianteFinal_sm_vc.value,
     materia_id_sm_vc: props.materiaId,
     ...payload_sm_vc,
   });
-  emit("mensajeEnviado", msg_sm_vc);
+  if (msg_sm_vc) {
+    emit("mensajeEnviado", msg_sm_vc);
+  }
 };
 
 const handleGuardarRequisitos_sm_vc = async (payload_sm_vc) => {

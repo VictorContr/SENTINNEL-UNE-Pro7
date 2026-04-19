@@ -590,6 +590,7 @@ export class PasantiasService_sm_vc {
       }
 
       return {
+        estudiante_id_sm_vc: estudianteBase.id_sm_vc,
         id_sm_vc:        materia.id_sm_vc,
         nombre_sm_vc:    materia.nombre_sm_vc,
         orden_sm_int:    materia.posicion_sm_vc,

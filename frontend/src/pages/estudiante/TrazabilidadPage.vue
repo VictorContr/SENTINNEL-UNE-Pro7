@@ -188,8 +188,8 @@
         <DocumentConversacion
           :materia-id="materiaActiva_sm_vc.id_sm_vc"
           :estudiante-id="auth_sm_vc.user_sm_vc?.id_sm_vc ?? ''"
-          :readonly="materiaActiva_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
-          :estado-progreso="materiaActiva_sm_vc.estado_aprobacion_sm_vc"
+          :readonly="['APROBADO', 'REPROBADO'].includes(materiasConFases_sm_vc.find(m => m.id_sm_vc === materiaActiva_sm_vc.id_sm_vc)?.estado_aprobacion_sm_vc || materiaActiva_sm_vc.estado_aprobacion_sm_vc)"
+          :estado-progreso="materiasConFases_sm_vc.find(m => m.id_sm_vc === materiaActiva_sm_vc.id_sm_vc)?.estado_aprobacion_sm_vc || materiaActiva_sm_vc.estado_aprobacion_sm_vc"
           @mensaje-enviado="onMensajeEnviado_sm_vc" />
       </div>
     </div>

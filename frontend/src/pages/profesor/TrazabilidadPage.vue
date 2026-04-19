@@ -263,7 +263,7 @@
           :materia-id="materiaSeleccionada_sm_vc.id_sm_vc"
           :estudiante-id="estudianteId_sm_vc"
           :modo-vista_sm_vc="'CHAT'"
-          :estado-progreso="materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc"
+          :estado-progreso="materiasConFases_sm_vc.find(m => m.id_sm_vc === materiaSeleccionada_sm_vc.id_sm_vc)?.estado_aprobacion_sm_vc || materiaSeleccionada_sm_vc.estado_aprobacion_sm_vc"
           @mensajeEnviado="onMensajeEnviado"
         />
       </div>

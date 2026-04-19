@@ -142,7 +142,7 @@ const estadoActual = computed(() => {
   const prog_sm_vc = store.progreso_sm_vc.find(
     (p_sm_vc) =>
       String(p_sm_vc.estudiante_id_sm_vc) === String(estudianteId.value) &&
-      String(p_sm_vc.materia_id_sm_vc)    === String(materiaId.value)
+      (String(p_sm_vc.id_sm_vc) === String(materiaId.value) || String(p_sm_vc.materia_id_sm_vc) === String(materiaId.value))
   )
   return prog_sm_vc?.estado_aprobacion_sm_vc ?? 'PENDIENTE'
 })

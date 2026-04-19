@@ -214,6 +214,15 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         icon: 'how_to_reg'
       })
 
+      // 💥 Mutación optimista y reactiva para ESTADOS TERMINALES
+      if (payload_sm_vc.es_reprobacion_global_sm_vc || payload_sm_vc.estado_evaluacion_sm_vc === 'REPROBADO') {
+        const itemProgreso_sm_vc = progreso_sm_vc.value.find(
+          p => String(p.estudiante_id_sm_vc) === String(payload_sm_vc.estudiante_id_sm_vc) &&
+              (String(p.id_sm_vc) === String(payload_sm_vc.materia_id_sm_vc) || String(p.materia_id_sm_vc) === String(payload_sm_vc.materia_id_sm_vc))
+        );
+        if (itemProgreso_sm_vc) itemProgreso_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO';
+      }
+
       // Refrescamos progreso del estudiante
       if (payload_sm_vc.estudiante_id_sm_vc) {
         await fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudiante_id_sm_vc)

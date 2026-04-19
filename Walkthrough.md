@@ -1,29 +1,16 @@
-# 🛸 Walkthrough: Bitácora de Vuelo de AntiGravity
+# Bitácora de Vuelo: Corrección de Reactividad ConvFormProfesor
 
-## 📌 Contexto
-Se completó auditoría y refactor del flujo de "Reprobación de Materia". Antes, el frontend enviaba un estado de "REPROBADO" sin identificar el payload adecuado ni inhabilitar la UI consecuentemente, lo que provocaba una excepción 400 del Backend (requería `entrega_id_sm_vc` por defecto para evaluación puntual). 
+## ¿Qué se implementó y por qué?
 
-## 🛠️ Modificaciones y Decisiones (Sprint: Resolución de Reprobación)
+1. **Resolución de la Identidad en Backend (getProgresoEstudiante_sm_vc):**
+   - **Problema:** El componente de Vue (y Pinia) esperaba la propiedad `estudiante_id_sm_vc` dentro de cada objeto del arreglo de progreso devuelto para poder compararlo con el ID de la URL. Al ser devuelto como `undefined`, el estado actual quedaba permanentemente como `'PENDIENTE'`.
+   - **Solución:** Se añadió el mapeo explícito de `estudiante_id_sm_vc: estudianteBase.id_sm_vc` en `pasantias.service.ts` dentro de la función `getProgresoEstudiante_sm_vc`.
+   - **Por qué:** Mantener el Backend como fuente de la verdad estricta.
 
-### 1. Reajuste de Esquemas en Pasantías DTO (Backend)
-- `backend/src/pasantias/dto/evaluar-entrega.dto.ts` ✅ **Implementado**
-- **Por qué:** Aplicamos `@ValidateIf` para condicionalmente tolerar transacciones que NO posean el ID de una entrega (`entrega_id_sm_vc = null`), de manera que el sistema comprenda que estamos abortando globalmente, y en su lugar exigimos `estudiante_id` y `materia_id`. Validar DTOs con la capa de `class-validator` y `class-transformer` previene mutaciones inesperadas y 500 Internals. 
+2. **Resolución de Async/Await en Frontend (DocumentConversacion.vue):**
+   - **Problema:** En el componente padre (`DocumentConversacion`), la función `handleResponderCorreccion_sm_vc` emitía un evento de éxito sin esperar (`await`) a que `pasantiasStore_sm_vc.responderCorreccion` finalizara el flujo asíncrono hacia el servidor.
+   - **Solución:** Se transformó el handler a `async` y se implementó un `await`. Además, la notificación síncrona solo se emite cuando la respuesta del servidor es exitosa.
+   - **Por qué:** Prevenir "race conditions" (condiciones de carrera) entre la respuesta visual del UI y el completamiento de los mutate del Store, asegurando que cuando el UI pregunte si puede renderizar el componente (en `puedeEscribir_sm_vc`), el Store de Pinia ya tenga en memoria el nuevo estado general (ej: `REPROBADO` o `APROBADO`) desabilitando el formulario instantáneamente.
 
-### 2. Controlador de Pasantías (Backend)
-- `backend/src/pasantias/pasantias.controller.ts` ✅ **Implementado**
-- **Por qué:** El endpoint ahora intercepta si posee el flag de *Reprobación Global*. Redirige la data cruda, ya limpia mediante el interceptor de DTO a un método transaccional de Pasantías Service adaptado.
-
-### 3. Función `reprobarMateriaGlobal_sm_vc` en `PasantiasService` (Backend)
-- `backend/src/pasantias/pasantias.service.ts` ✅ **Implementado**
-- **Por qué:** Un ciclo iterativo basado en los requisitos formales de la materia, iterando y forzando con `upsert` que se escriban las entregas como "REPROBADAS", más el guardado global en evaluaciones. Tras la transacción ACID exitosa emitimos por Gateway. 
-
-### 4. Modificaciones en el Store Pinia (Frontend)
-- `frontend/src/stores/pasantiasStore.js` ✅ **Implementado**
-- **Por qué:** Al disparar la reprobación desde el modal, el formData de `responderCorreccion` ahora acopla los id forzosos (estudiante y materia).
-
-### 5. Interfaz Restrictiva (Frontend)
-- `frontend/src/components/shared/DocumentConversacion.vue` ✅ **Implementado**
-- **Por qué:** Hemos agregado la directiva condicional computada que verifica si `props.estadoProgreso === "REPROBADO"`. Cortamos del DOM (`v-if`) cualquier capa de inputs impidiendo enviar cosas adicionales. Además inyectamos el cartel de `.readonly-banner-reprobado_sm_vc`.
-
-### 🚨 Conclusión
-La base de código se mantiene fiel a SOLID y DRY preservando `EstadoAprobacion.REPROBADO` en vez de migraciones nuevas. La transición funcionará de forma natural cuando ocurra el cambio semestral y la UI vuelva al estado "PENDIENTE".
+## Siguientes Pasos
+- Las correcciones abren la puerta a flujos completamente fluidos. Pinia mantendrá de manera síncrona la fidelidad visual, permitiéndole a **WebSockets** enfocarse únicamente en el tráfico para las notificaciones entre el profesor y el estudiante, sin latencias locales.
