@@ -23,14 +23,18 @@ cd backend
 npm install
 ```
 
+> [!IMPORTANT]
+> **Nota Crítica (Prisma):** El proyecto cuenta con un script `postinstall` (`prisma generate`) en el `package.json`. Esto garantiza que el tipado estricto de la base de datos (enums, modelos) se compile correctamente dentro de `node_modules/@prisma/client` tras cada instalación, evitando errores `TS2305` de TypeScript.
+
 ## 🗄️ Configuración de Base de Datos (CRÍTICO)
 Para inicializar el sistema por primera vez o realizar un reset completo bajo el nuevo esquema de arquitectura estricta, ejecute el siguiente comando. 
 
-> [!CAUTION]
-> **ESTE COMANDO BORRARÁ LA BASE DE DATOS ACTUAL**, aplicará las nuevas migraciones y ejecutará el `seed` oficial con datos maestros.
+> [!WARNING]
+> Este comando no borra datos, pero empuja el esquema actual a la base de datos y reconstruye el tipado de TypeScript.
 
 ```bash
-npx prisma migrate reset
+npx prisma db push
+npx prisma generate
 ```
 
 ## ⚙️ Comandos de Ejecución
