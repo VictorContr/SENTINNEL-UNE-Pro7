@@ -290,6 +290,7 @@ export class EstudiantesService {
       materia_activa_id_sm_vc: e.materia_activa_id_sm_vc,
       // Exponemos el ID del período (FK real) en lugar del string eliminado
       periodo_id_sm_vc:        e.materiaActiva.periodo_id_sm_vc,
+      materiaActiva:           e.materiaActiva,
       materias_sm_vc,
     };
   }

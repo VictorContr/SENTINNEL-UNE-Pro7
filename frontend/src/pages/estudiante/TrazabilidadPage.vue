@@ -6,7 +6,7 @@
      Sufijos _sm_vc en todas las variables reactivas internas.
      ══════════════════════════════════════════════════════════════════ -->
 <template>
-  <q-page class="sntnl-page_sm_vc">
+  <q-page class="sntnl-page_sm_vc escala-aumentada_vc w-full h-full">
 
     <div v-if="!materiaActiva_sm_vc">
       <!-- ── Header ── -->
@@ -77,9 +77,11 @@
         animated
         flat
         class="stepper_sm_vc"
+        :class="{ 'stepper-libre_sm_vc': puedeNavegarLibremente_sm_vc }"
         active-color="teal-3"
         done-color="teal-4"
         inactive-color="blue-grey-7"
+        :header-nav="puedeNavegarLibremente_sm_vc"
       >
         <!--
           v-for genera un <q-step> por cada materia computada.
@@ -91,7 +93,7 @@
           :key="materia.id_sm_vc"
           :name="materia.id_sm_vc"
           :title="materia.nombre_sm_vc"
-          :caption="materia.captionFase_sm_vc"
+          :caption="obtenerSubtitulo_sm_vc(materia)"
           :icon="materia.icono_sm_vc"
           :done="materia.estado_aprobacion_sm_vc === 'APROBADO'"
           :disable="materia.bloqueada"
@@ -315,6 +317,21 @@ const progresoGlobal_sm_vc = computed(() => {
   return Math.round((suma_sm_vc / items_sm_vc.length) * 100)
 })
 
+/* ── Lógica de Navegación Rápida ── */
+const puedeNavegarLibremente_sm_vc = computed(() => {
+  const lista_sm_vc = materiasConFases_sm_vc.value
+  const materia3_sm_vc = lista_sm_vc[2] // MAT-003 es la pos 3 (índice 2)
+  return materia3_sm_vc ? !materia3_sm_vc.bloqueada : false
+})
+
+const obtenerSubtitulo_sm_vc = (materia_sm_vc) => {
+  const baseCaption_sm_vc = materia_sm_vc.captionFase_sm_vc || ''
+  if (puedeNavegarLibremente_sm_vc.value && !materia_sm_vc.bloqueada) {
+    return `Clic para saltar • ${baseCaption_sm_vc}`
+  }
+  return materia_sm_vc.bloqueada ? `Bloqueada por prelación` : baseCaption_sm_vc
+}
+
 /* ── Helpers de navegación del stepper ── */
 
 // Devuelve true si la materia es la última de la lista (no muestra botón "Siguiente").
@@ -430,7 +447,7 @@ const onMensajeEnviado_sm_vc = () => {
 }
 
 /* ── Barra de progreso global ── */
-.global-progress-wrap_sm_vc { margin-bottom: 2rem; max-width: 600px; }
+.global-progress-wrap_sm_vc { margin-bottom: 2rem; width: 100%; }
 .global-progress-info_sm_vc {
   display: flex;
   justify-content: space-between;
@@ -448,7 +465,7 @@ const onMensajeEnviado_sm_vc = () => {
   border: 1px solid var(--sn-borde);
   border-radius: 14px;
   margin-bottom: 1.75rem;
-  max-width: 860px;
+  width: 100%;
 }
 
 /* Anula el fondo blanco por defecto de Quasar */
@@ -509,7 +526,7 @@ const onMensajeEnviado_sm_vc = () => {
   background: rgba(111,255,233,.05);
   border: 1px solid rgba(111,255,233,.2);
   border-radius: 12px;
-  max-width: 700px;
+  width: 100%;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
@@ -548,7 +565,7 @@ const onMensajeEnviado_sm_vc = () => {
   border: 1px solid rgba(111,255,233,.12);
   border-radius: 14px;
   overflow: hidden;
-  max-width: 780px;
+  width: 100%;
 }
 .panel-header_sm_vc {
   display: flex; align-items: center; justify-content: space-between;
@@ -567,4 +584,31 @@ const onMensajeEnviado_sm_vc = () => {
 /* ── Transición deploy CTA ── */
 .slide-up-enter-active { transition: all .3s ease; }
 .slide-up-enter-from   { opacity: 0; transform: translateY(10px); }
+
+/* ── Estilos de Navegación Rápida (Material Icons) ── */
+.stepper-libre_sm_vc :deep(.q-step:not(.q-step--disabled):not(.q-step--active) .q-stepper__caption) {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--sn-primario);
+}
+.stepper-libre_sm_vc :deep(.q-step:not(.q-step--disabled):not(.q-step--active) .q-stepper__caption)::before {
+  content: '\e8fb'; /* track_changes (Diana) */
+  font-family: 'Material Icons';
+  font-size: 1.15rem;
+  vertical-align: text-bottom;
+  margin-right: 5px;
+}
+
+.stepper-libre_sm_vc :deep(.q-step.q-step--disabled .q-stepper__caption) {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #ff8fa3;
+}
+.stepper-libre_sm_vc :deep(.q-step.q-step--disabled .q-stepper__caption)::before {
+  content: '\e897'; /* lock (Candado) */
+  font-family: 'Material Icons';
+  font-size: 1.15rem;
+  vertical-align: text-bottom;
+  margin-right: 5px;
+}
 </style>

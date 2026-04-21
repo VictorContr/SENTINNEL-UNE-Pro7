@@ -7,7 +7,6 @@
       <q-toolbar class="sntnl-toolbar_sm_vc">
         <!-- Hamburger (mobile) -->
         <q-btn
-          v-show="$q.screen.width < 960"
           flat dense round icon="menu"
           class="hamburger-btn_sm_vc q-mr-sm"
           @click="drawer_open_sm_vc = !drawer_open_sm_vc"

@@ -442,3 +442,20 @@ html {
 .filter-chip--active_sm_vc {
   background: var(--sn-surface-active) !important;
 }
+
+/* ══════════════════════════════════════════════════════════
+   ESCALADO CONTROLADO DE UI (UX/UI Accesibilidad)
+   ══════════════════════════════════════════════════════════ */
+.escala-aumentada_vc {
+  font-size: 24px; /* 1.5x el base de 16px */
+
+  .q-icon {
+    font-size: 1.8em !important; 
+  }
+
+  .q-btn {
+    line-height: 1.2 !important;
+    min-height: 2.5em !important;
+  }
+}
+

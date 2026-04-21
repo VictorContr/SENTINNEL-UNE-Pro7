@@ -90,9 +90,9 @@
             <p class="student-name_sm_vc">{{ est.nombre }}</p>
             <p class="student-id_sm_vc">{{ est.id }}</p>
             <div class="student-meta_sm_vc">
-              <span class="meta-chip_sm_vc">
-                <q-icon name="calendar_month" size="11px" />
-                {{ est.cohorte }}
+              <span class="meta-chip_sm_vc bg-teal-9 text-teal-1">
+                <q-icon name="menu_book" size="11px" />
+                {{ est.materia_activa_nombre }} ({{ est.cohorte }})
               </span>
               <span
                 class="meta-chip_sm_vc"
@@ -161,6 +161,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "src/stores/authStore";
 import { useProgressBarStore } from "src/stores/progressBarStore";
+import { api as api_vc } from "boot/axios";
 
 const router_sm_vc = useRouter();
 const auth_sm_vc = useAuthStore();
@@ -172,11 +173,7 @@ const filtroPeriodo_sm_vc = ref(null);
 const filtroMateria_sm_vc = ref(null);
 const filtroEstado_sm_vc = ref(null);
 
-const periodosOpc_sm_vc = [
-  { label: "P-165", value: "P-165" },
-  { label: "P-164", value: "P-164" },
-  { label: "P-163", value: "P-163" },
-];
+const periodosOpc_sm_vc = ref([]);
 
 const materiasOpc_sm_vc = computed(() => {
   const opciones_sm_vc = new Map();
@@ -184,15 +181,15 @@ const materiasOpc_sm_vc = computed(() => {
     progressBarStore_sm_vc.progresoEstudiantesProfesor_sm_vc || [];
   for (const est_sm_vc of estudiantes_sm_vc) {
     for (const mat_sm_vc of est_sm_vc.materias || []) {
-      if (!opciones_sm_vc.has(mat_sm_vc.materia_id)) {
-        opciones_sm_vc.set(mat_sm_vc.materia_id, {
+      if (mat_sm_vc.posicion_sm_vc && !opciones_sm_vc.has(mat_sm_vc.posicion_sm_vc)) {
+        opciones_sm_vc.set(mat_sm_vc.posicion_sm_vc, {
           label: mat_sm_vc.materia_nombre,
-          value: mat_sm_vc.materia_id,
+          value: mat_sm_vc.posicion_sm_vc,
         });
       }
     }
   }
-  return Array.from(opciones_sm_vc.values());
+  return Array.from(opciones_sm_vc.values()).sort((a, b) => a.value - b.value);
 });
 
 const estadosOpc_sm_vc = [
@@ -202,9 +199,18 @@ const estadosOpc_sm_vc = [
   { label: "Reprobado", value: "REPROBADO" },
 ];
 
-/* ── Estudiantes filtrados (toda la lógica en computed) ── */
-onMounted(() => {
+/* ── Cargar datos iniciales ── */
+onMounted(async () => {
   progressBarStore_sm_vc.fetchEstudiantesProfesor_sm_vc();
+  try {
+    const resPeriodos_sm_vc = await api_vc.get("/periodos");
+    periodosOpc_sm_vc.value = resPeriodos_sm_vc.data.map((p) => ({
+      label: p.nombre_sm_vc,
+      value: p.nombre_sm_vc,
+    }));
+  } catch (error) {
+    console.error("Error cargando periodos_vc:", error);
+  }
 });
 
 /* ── Estudiantes filtrados (toda la lógica en computed) ── */
@@ -220,7 +226,7 @@ const estudiantesFiltrados_sm_vc = computed(() => {
     if (filtroMateria_sm_vc.value) {
       const tieneMateriaActiva_sm_vc = e.materias?.some(
         (m) =>
-          m.materia_id === filtroMateria_sm_vc.value &&
+          m.posicion_sm_vc === filtroMateria_sm_vc.value &&
           m.estado === "PENDIENTE",
       );
       if (!tieneMateriaActiva_sm_vc) return false;

@@ -15,7 +15,7 @@
      Sufijos _sm_vc en todo el script.
      ══════════════════════════════════════════════════════════════ -->
 <template>
-  <q-page class="sntnl-page_sm_vc">
+  <q-page class="sntnl-page_sm_vc escala-aumentada_vc w-full h-full">
     <!-- ── VISTA PRINCIPAL (Ficha + Stepper + Deploy) ── -->
     <div v-if="!materiaSeleccionada_sm_vc">
       <!-- Botón Volver -->
@@ -104,16 +104,18 @@
         animated
         flat
         class="stepper_sm_vc"
+        :class="{ 'stepper-libre_sm_vc': puedeNavegarLibremente_sm_vc }"
         active-color="teal-3"
         done-color="teal-4"
         inactive-color="blue-grey-7"
+        :header-nav="puedeNavegarLibremente_sm_vc"
       >
         <q-step
           v-for="materia_sm_vc in materiasConFases_sm_vc"
           :key="materia_sm_vc.id_sm_vc"
           :name="materia_sm_vc.id_sm_vc"
           :title="materia_sm_vc.nombre_sm_vc"
-          :caption="materia_sm_vc.captionFase_sm_vc"
+          :caption="obtenerSubtitulo_sm_vc(materia_sm_vc)"
           :icon="materia_sm_vc.icono_sm_vc"
           :done="materia_sm_vc.estado_aprobacion_sm_vc === 'APROBADO'"
           :disable="materia_sm_vc.bloqueada"
@@ -328,6 +330,20 @@ const materiasConFases_sm_vc = computed(() =>
     progresoEstudiante_sm_vc.value,
   ),
 );
+
+const puedeNavegarLibremente_sm_vc = computed(() => {
+  const lista_sm_vc = materiasConFases_sm_vc.value;
+  const materia3_sm_vc = lista_sm_vc[2];
+  return materia3_sm_vc ? !materia3_sm_vc.bloqueada : false;
+});
+
+const obtenerSubtitulo_sm_vc = (materia_sm_vc) => {
+  const baseCaption_sm_vc = materia_sm_vc.captionFase_sm_vc || '';
+  if (puedeNavegarLibremente_sm_vc.value && !materia_sm_vc.bloqueada) {
+    return `Clic para saltar • ${baseCaption_sm_vc}`;
+  }
+  return materia_sm_vc.bloqueada ? `Bloqueada por prelación` : baseCaption_sm_vc;
+};
 
 /* ══════════════════════════════════════════════════════════════
  *  CICLO DE VIDA
@@ -614,7 +630,7 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   border: 1px solid var(--sn-borde);
   border-radius: 14px;
   margin-bottom: 1.75rem;
-  max-width: 860px;
+  width: 100%;
 }
 :deep(.q-stepper__tab) {
   font-family: var(--sn-font-mono);
@@ -667,7 +683,7 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(111, 255, 233, 0.08);
   border-radius: 12px;
-  max-width: 860px;
+  width: 100%;
 }
 .deploy-exists-card_sm_vc {
   display: flex;
@@ -734,7 +750,7 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   border: 1px solid rgba(111, 255, 233, 0.12);
   border-radius: 14px;
   overflow: hidden;
-  max-width: 860px;
+  width: 100%;
 }
 .panel-header_sm_vc {
   display: flex;
@@ -754,4 +770,31 @@ const formatDate_sm_vc = (iso_sm_vc) =>
   text-transform: uppercase;
 }
 /* .conv-embed_sm_vc — sin padding, DocumentConversacion maneja su propio layout */
+
+/* ── Estilos de Navegación Rápida (Material Icons) ── */
+.stepper-libre_sm_vc :deep(.q-step:not(.q-step--disabled):not(.q-step--active) .q-stepper__caption) {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--sn-primario);
+}
+.stepper-libre_sm_vc :deep(.q-step:not(.q-step--disabled):not(.q-step--active) .q-stepper__caption)::before {
+  content: '\e8fb'; /* track_changes (Diana) */
+  font-family: 'Material Icons';
+  font-size: 1.15rem;
+  vertical-align: text-bottom;
+  margin-right: 5px;
+}
+
+.stepper-libre_sm_vc :deep(.q-step.q-step--disabled .q-stepper__caption) {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #ff8fa3;
+}
+.stepper-libre_sm_vc :deep(.q-step.q-step--disabled .q-stepper__caption)::before {
+  content: '\e897'; /* lock (Candado) */
+  font-family: 'Material Icons';
+  font-size: 1.15rem;
+  vertical-align: text-bottom;
+  margin-right: 5px;
+}
 </style>

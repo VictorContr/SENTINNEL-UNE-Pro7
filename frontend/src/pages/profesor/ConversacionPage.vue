@@ -15,7 +15,7 @@
        3. onUnmounted→ salirDeSala_sm_vc() libera el socket WebSocket.
      ══════════════════════════════════════════════════════════════ -->
 <template>
-  <q-page class="sntnl-page">
+  <q-page class="sntnl-page escala-aumentada_vc w-full h-full">
     <q-btn
       flat no-caps
       icon="arrow_back"
@@ -188,7 +188,7 @@ function onMensajeEnviado() {
   background: var(--sn-fondo-panel);
   border: 1px solid var(--sn-borde);
   border-radius: var(--sn-radius-xl);
-  max-width: 780px;
+  width: 100%;
 }
 
 /* ── Estado de carga del contexto académico ── */

@@ -247,8 +247,8 @@ export const useAuthStore = defineStore("auth", () => {
       const tiempoExpiracion_sm_vc = payload_sm_vc.exp * 1000;
       const tiempoActual_sm_vc = Date.now();
       
-      // Calcular ms hasta 15 segundos antes de expirar
-      const msRestantes_sm_vc = tiempoExpiracion_sm_vc - tiempoActual_sm_vc - 15000;
+      // Calcular ms hasta 30 segundos antes de expirar
+      const msRestantes_sm_vc = tiempoExpiracion_sm_vc - tiempoActual_sm_vc - 30000;
       
       if (msRestantes_sm_vc > 0) {
         timerRenovacion_sm_vc = setTimeout(() => {

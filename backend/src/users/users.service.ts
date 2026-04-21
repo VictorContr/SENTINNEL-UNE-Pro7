@@ -150,6 +150,16 @@ export class UsersService_sm_vc {
           );
         }
 
+        await tx.notificacion.create({
+          data: {
+            emisor_id_sm_vc: adminUser_sm_vc?.id_sm_vc || 1,
+            receptor_id_sm_vc: nuevoUsuario.id_sm_vc,
+            tipo_sm_vc: 'INFORMATIVA',
+            titulo_sm_vc: 'Cuenta SENTINNEL Activada',
+            contenido_sm_vc: '¡Bienvenido(a) a SENTINNEL! Tu cuenta ha sido creada y activada por la coordinación del sistema. Ya puedes acceder con tus credenciales.',
+          },
+        });
+
         this.eventEmitter.emit('usuario.modificado', {
           emisorId: adminUser_sm_vc?.id_sm_vc || 1,
           accion: 'creado',
@@ -480,6 +490,8 @@ export class UsersService_sm_vc {
       return resultados_sm_vc;
     }
 
+    const usuariosNuevosIds_sm_vc: number[] = [];
+
     // Intentar la inserción fila a fila con Promise.allSettled
     const promesas_sm_vc = tareasValidadas_sm_vc.map(async (tarea_sm_vc) => {
       const { fila_sm_vc, payload_sm_vc } = tarea_sm_vc;
@@ -527,6 +539,7 @@ export class UsersService_sm_vc {
           });
         }
 
+        usuariosNuevosIds_sm_vc.push(usuarioCreado.id_sm_vc);
         return null; // null === éxito
       } catch (err_sm_vc: any) {
         return {
@@ -563,6 +576,18 @@ export class UsersService_sm_vc {
     }
 
     if (resultados_sm_vc.filas_exitosas_sm_vc > 0) {
+      if (usuariosNuevosIds_sm_vc.length > 0) {
+        await this.prisma.notificacion.createMany({
+          data: usuariosNuevosIds_sm_vc.map(id_sm_vc => ({
+            emisor_id_sm_vc: 1, // System/Admin
+            receptor_id_sm_vc: id_sm_vc,
+            tipo_sm_vc: 'INFORMATIVA',
+            titulo_sm_vc: 'Cuenta SENTINNEL Activada',
+            contenido_sm_vc: '¡Bienvenido(a) a SENTINNEL! Tu cuenta ha sido creada y activada por la coordinación del sistema mediante carga masiva.',
+          })),
+        });
+      }
+
       this.eventEmitter.emit('carga_masiva.hecha', {
         emisorId: 1, // System
         mensaje: `Se han importado ${resultados_sm_vc.filas_exitosas_sm_vc} usuarios mediante carga masiva.`

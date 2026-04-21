@@ -88,10 +88,12 @@ export const useProgressBarStore = defineStore('progressBar', () => {
         cohorte: est_sm_vc.materiaActiva?.periodo?.nombre_sm_vc
                ?? est_sm_vc.materiaActiva?.periodo_id_sm_vc?.toString()
                ?? 'N/A',
+        materia_activa_nombre: est_sm_vc.materiaActiva?.nombre_sm_vc ?? 'Sin Materia',
         empresa: est_sm_vc.empresa_sm_vc,
         estado_actual: est_sm_vc.materias_sm_vc?.find(m => m.materia_id_sm_vc === est_sm_vc.materia_activa_id_sm_vc)?.estado_sm_vc || 'PENDIENTE',
         materias: (est_sm_vc.materias_sm_vc || []).map((mat_sm_vc) => ({
           materia_id: mat_sm_vc.materia_id_sm_vc,
+          posicion_sm_vc: mat_sm_vc.posicion_sm_vc,
           materia_nombre: mat_sm_vc.nombre_sm_vc,
           estado: mat_sm_vc.estado_sm_vc,
           progreso: mat_sm_vc.progreso_decimal_sm_vc || 0,

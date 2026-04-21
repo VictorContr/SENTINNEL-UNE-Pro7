@@ -1,5 +1,5 @@
 <template>
-  <q-page class="sntnl-page">
+  <q-page class="sntnl-page escala-aumentada_vc w-full h-full">
     <q-btn flat no-caps icon="arrow_back" label="Volver a Trazabilidad" color="grey-5" size="sm"
       class="q-mb-md back-btn" @click="router.push('/estudiante/trazabilidad')" />
 
@@ -124,12 +124,12 @@ function formatDate(iso) {
 .page-subtitle { font-size: 0.72rem; color: var(--sn-texto-terciario); margin: 0; }
 .code-tag { background: var(--sn-surface-alpha); color: var(--sn-acento-sec); padding: 1px 5px; border-radius: var(--sn-radius-sm); font-size: 0.68rem; font-family: var(--sn-font-mono); }
 .aprobado-text { color: var(--sn-primario); font-weight: 600; }
-.aprobacion-banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: var(--sn-fondo-panel); border: 1px solid var(--sn-exito); border-radius: var(--sn-radius-lg); margin-bottom: 1.25rem; max-width: 600px; }
+.aprobacion-banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: var(--sn-fondo-panel); border: 1px solid var(--sn-exito); border-radius: var(--sn-radius-lg); margin-bottom: 1.25rem; width: 100%; }
 .banner-icon { flex-shrink: 0; }
 .banner-title { font-size: 0.85rem; font-weight: 600; color: var(--sn-primario); margin: 0 0 2px; font-family: var(--sn-font-mono); }
 .banner-detail { font-size: 0.7rem; color: var(--sn-texto-secundario); margin: 0; font-family: var(--sn-font-sans); }
 .nota-val { color: var(--sn-texto-principal); font-weight: 700; }
-.conv-card { background: var(--sn-fondo-panel); border: 1px solid var(--sn-borde); border-radius: var(--sn-radius-xl); max-width: 780px; }
+.conv-card { background: var(--sn-fondo-panel); border: 1px solid var(--sn-borde); border-radius: var(--sn-radius-xl); width: 100%; }
 
 /* ── Estado de carga del contexto ── */
 .loading-contexto_sm_vc {
@@ -152,7 +152,7 @@ function formatDate(iso) {
   border: 1px dashed rgba(148,163,184,0.15);
   border-radius: 10px;
   margin-bottom: 1.25rem;
-  max-width: 600px;
+  width: 100%;
   font-size: 0.75rem;
   color: var(--sn-texto-apagado);
   font-family: var(--sn-font-sans);

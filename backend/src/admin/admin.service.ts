@@ -250,6 +250,8 @@ export class AdminService {
            where: { posicion_sm_vc: 1, periodo_id_sm_vc: PERIODO_ID }
         });
 
+        const idsUsuariosNuevos_sm_vc: number[] = [];
+
         for (const u of rowsUsuarios) {
           const rolClean = ['ADMIN', 'PROFESOR', 'ESTUDIANTE'].includes(u.rol) ? (u.rol as RolUsuario) : RolUsuario.ESTUDIANTE;
 
@@ -297,6 +299,20 @@ export class AdminService {
               }
             });
           }
+
+          idsUsuariosNuevos_sm_vc.push(userCreate.id_sm_vc);
+        }
+
+        if (idsUsuariosNuevos_sm_vc.length > 0) {
+          await tx.notificacion.createMany({
+            data: idsUsuariosNuevos_sm_vc.map(id_sm_vc => ({
+              emisor_id_sm_vc: 1,
+              receptor_id_sm_vc: id_sm_vc,
+              tipo_sm_vc: 'INFORMATIVA',
+              titulo_sm_vc: 'Cuenta SENTINNEL Activada',
+              contenido_sm_vc: '¡Bienvenido(a) a SENTINNEL! Tu cuenta ha sido creada y activada por la coordinación del sistema mediante carga masiva.',
+            })),
+          });
         }
 
         for (const r of rowsRequisitos) {

@@ -75,16 +75,18 @@
         animated
         flat
         class="traz-stepper_sm_vc"
+        :class="{ 'traz-stepper-libre_sm_vc': puedeNavegarLibremente_sm_vc }"
         active-color="teal-3"
         done-color="teal-4"
         inactive-color="blue-grey-7"
+        :header-nav="puedeNavegarLibremente_sm_vc"
       >
         <q-step
           v-for="materia in materiasConFases_sm_vc"
           :key="materia.id_sm_vc"
           :name="materia.id_sm_vc"
           :title="materia.nombre_sm_vc"
-          :caption="materia.captionFase_sm_vc"
+          :caption="obtenerSubtitulo_sm_vc(materia)"
           :icon="materia.icono_sm_vc"
           :done="materia.estado_aprobacion_sm_vc === 'APROBADO'"
           :disable="materia.bloqueada"
@@ -231,6 +233,21 @@ const materiaPasoActivo_sm_vc = computed(() =>
   null
 )
 
+// Lógica del Umbral: Paso 3 (Trabajo de Grado I)
+const puedeNavegarLibremente_sm_vc = computed(() => {
+  const lista_sm_vc = materiasConFases_sm_vc.value
+  const materia3_sm_vc = lista_sm_vc[2] // Índice 2 = Posición 3
+  return materia3_sm_vc ? !materia3_sm_vc.bloqueada : false
+})
+
+const obtenerSubtitulo_sm_vc = (materia_sm_vc) => {
+  const baseCaption_sm_vc = materia_sm_vc.captionFase_sm_vc || ''
+  if (puedeNavegarLibremente_sm_vc.value && !materia_sm_vc.bloqueada) {
+    return `Clic para saltar • ${baseCaption_sm_vc}`
+  }
+  return materia_sm_vc.bloqueada ? `Bloqueada por prelación` : baseCaption_sm_vc
+}
+
 // ✅ FIX: El watch ahora maneja la carga de forma asíncrona segura
 watch(
   () => props.estudianteId,
@@ -330,4 +347,31 @@ const abrirSoloConversacion_sm_vc = (materiaId_sm_vc) => {
 .traz-step-nav_sm_vc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding-top: 0.875rem; }
 .traz-step-nav-btn_sm_vc { font-size: 0.7rem !important; font-weight: 700 !important; border-radius: 6px !important; }
 .traz-btn-solo-chat_sm_vc { color: var(--sn-primario) !important; letter-spacing: 0.05em; }
+
+/* ── Estilos de Navegación Rápida (Material Icons) ── */
+.traz-stepper-libre_sm_vc :deep(.q-step:not(.q-step--disabled):not(.q-step--active) .q-stepper__caption) {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--sn-primario);
+}
+.traz-stepper-libre_sm_vc :deep(.q-step:not(.q-step--disabled):not(.q-step--active) .q-stepper__caption)::before {
+  content: '\e8fb'; /* track_changes (Diana) */
+  font-family: 'Material Icons';
+  font-size: 1.15rem;
+  vertical-align: text-bottom;
+  margin-right: 5px;
+}
+
+.traz-stepper-libre_sm_vc :deep(.q-step.q-step--disabled .q-stepper__caption) {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #ff8fa3;
+}
+.traz-stepper-libre_sm_vc :deep(.q-step.q-step--disabled .q-stepper__caption)::before {
+  content: '\e897'; /* lock (Candado) */
+  font-family: 'Material Icons';
+  font-size: 1.15rem;
+  vertical-align: text-bottom;
+  margin-right: 5px;
+}
 </style>

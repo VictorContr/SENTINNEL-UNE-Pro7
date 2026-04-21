@@ -32,8 +32,11 @@ export default route(function () {
   })
 
   /* ── Navigation Guard ──────────────────────────────────────── */
-  Router.beforeEach((to_sm_vc) => {
+  Router.beforeEach(async (to_sm_vc) => {
     const auth_sm_vc = useAuthStore()
+
+    // ── Paso 0: Esperar hidratación ───────────────────────────
+    await auth_sm_vc._hydratePromise
 
     // ── Paso 1: Ruta pública ──────────────────────────────────
     if (!to_sm_vc.meta.requiresAuth) {
