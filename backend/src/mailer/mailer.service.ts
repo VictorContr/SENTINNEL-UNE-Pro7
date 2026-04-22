@@ -61,7 +61,7 @@ export class MailerContactoService_sm_vc {
       await this.prisma.usuario.create({
         data: {
           nombre_sm_vc: dto_sm_vc.nombre_sm_vc,
-          apellido_sm_vc: '', // Campo no incluido en Formulario de Contacto
+          apellido_sm_vc: dto_sm_vc.apellido_sm_vc,
           cedula_sm_vc: dto_sm_vc.cedula_sm_vc,
           correo_sm_vc: dto_sm_vc.correo_sm_vc,
           clave_sm_vc: claveHash_sm_vc,
@@ -82,10 +82,14 @@ export class MailerContactoService_sm_vc {
             <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Hemos recibido tu solicitud de demo. A continuación, te proporcionamos credenciales temporales para acceder al sistema con el rol administrador:</p>
             <table style="width: 100%; border-collapse: collapse;">
               <tr style="background: #f9f9f9;">
-                <td style="padding: 10px 15px; font-weight: 600; color: #333; width: 120px;">Usuario:</td>
-                <td style="padding: 10px 15px; color: #0d7a6f;">${dto_sm_vc.correo_sm_vc}</td>
+                <td style="padding: 10px 15px; font-weight: 600; color: #333; width: 120px;">Nombre:</td>
+                <td style="padding: 10px 15px; color: #555;">${dto_sm_vc.nombre_sm_vc} ${dto_sm_vc.apellido_sm_vc}</td>
               </tr>
               <tr>
+                <td style="padding: 10px 15px; font-weight: 600; color: #333;">Usuario:</td>
+                <td style="padding: 10px 15px; color: #0d7a6f;">${dto_sm_vc.correo_sm_vc}</td>
+              </tr>
+              <tr style="background: #f9f9f9;">
                 <td style="padding: 10px 15px; font-weight: 600; color: #333;">Clave Temporal:</td>
                 <td style="padding: 10px 15px; color: #555;"><strong>${clavePlana_sm_vc}</strong></td>
               </tr>

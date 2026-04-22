@@ -56,14 +56,36 @@
             <!-- Campo: Nombre -->
             <div class="form-grupo_sm_vc">
               <label class="form-label_sm_vc" for="contacto-nombre">
-                <q-icon name="person" size="xs" /> Nombre completo
+                <q-icon name="person" size="xs" /> Nombre
               </label>
               <q-input
                 id="contacto-nombre"
                 v-model="form_sm_vc.nombre_sm_vc"
                 filled dense
-                placeholder="Ej. María González"
+                placeholder="Ej. María"
                 :rules="[val => !!val || 'El nombre es requerido.']"
+                class="form-input_sm_vc"
+                bg-color="transparent"
+                :dark="isDark_sm_vc"
+                lazy-rules
+              />
+            </div>
+
+            <!-- Campo: Apellido -->
+            <div class="form-grupo_sm_vc">
+              <label class="form-label_sm_vc" for="contacto-apellido">
+                <q-icon name="person_outline" size="xs" /> Apellido
+              </label>
+              <q-input
+                id="contacto-apellido"
+                v-model="form_sm_vc.apellido_sm_vc"
+                filled dense
+                placeholder="Ej. González"
+                :rules="[
+                  val => !!val || 'El apellido es requerido.',
+                  val => val.length >= 2 || 'El apellido debe tener al menos 2 caracteres.',
+                  val => val.length <= 50 || 'El apellido no puede exceder 50 caracteres.'
+                ]"
                 class="form-input_sm_vc"
                 bg-color="transparent"
                 :dark="isDark_sm_vc"
@@ -177,6 +199,7 @@ const store_sm_vc = useContactoStore()
 /* ── Modelo del formulario ── */
 const form_sm_vc = reactive({
   nombre_sm_vc: '',
+  apellido_sm_vc: '',
   cedula_sm_vc: '',
   correo_sm_vc: '',
   asunto_sm_vc: '',
@@ -190,6 +213,7 @@ const onSubmit_sm_vc = async () => {
 /* ── Reiniciar para nuevo envío ── */
 const reiniciar_sm_vc = () => {
   form_sm_vc.nombre_sm_vc = ''
+  form_sm_vc.apellido_sm_vc = ''
   form_sm_vc.cedula_sm_vc = ''
   form_sm_vc.correo_sm_vc = ''
   form_sm_vc.asunto_sm_vc = ''

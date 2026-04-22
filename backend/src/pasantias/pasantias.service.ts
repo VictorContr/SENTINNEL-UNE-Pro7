@@ -218,29 +218,35 @@ export class PasantiasService_sm_vc {
     observaciones?: string,
     archivoCorreccion?: Express.Multer.File
   ) {
-    let id_real_sm_vc = entregaId;
-
-    let entrega = await this.prisma.entrega.findUnique({
-      where: { id_sm_vc: id_real_sm_vc },
+    // ✅ FIX CRÍTICO DE TRAZABILIDAD: Búsqueda ESTRICTA por entrega_id.
+    // Se elimina el bloque "Fallback de Documento" que era el origen del desfase:
+    // cuando el frontend enviaba un documento_id (no entrega_id), el backend
+    // intentaba "adivinar" la entrega y podía encontrar la del requisito equivocado.
+    // Contrato con el frontend: SIEMPRE debe enviar entrega_id_sm_vc (FK real).
+    // Si no existe → BadRequestException explicativa, no silencio.
+    const entrega = await this.prisma.entrega.findUnique({
+      where: { id_sm_vc: entregaId },
       include: { requisito: { include: { materia: true } }, estudiante: true }
     });
 
-    // Fallback de Documento: Si no es ID de Entrega, buscar si es de Documento
     if (!entrega) {
-      const documentoFallback = await this.prisma.documento.findUnique({
-        where: { id_sm_vc: entregaId },
-      });
-
-      if (documentoFallback && documentoFallback.entrega_id_sm_vc) {
-        id_real_sm_vc = documentoFallback.entrega_id_sm_vc;
-        entrega = await this.prisma.entrega.findUnique({
-          where: { id_sm_vc: id_real_sm_vc },
-          include: { requisito: { include: { materia: true } }, estudiante: true }
-        });
-      }
+      throw new NotFoundException(
+        `Entrega con ID ${entregaId} no encontrada. ` +
+        `Asegúrate de enviar el entrega_id_sm_vc y no el documento_id_sm_vc.`
+      );
     }
 
-    if (!entrega) throw new NotFoundException('Entrega/Documento no encontrado.');
+    const id_real_sm_vc = entrega.id_sm_vc;
+
+    // ✅ FIX WS TIEMPO REAL: Consulta separada para obtener el documento_id del ENTREGABLE.
+    // Se hace FUERA del include principal para no confundir la inferencia de tipos de Prisma.
+    // El chatStore necesita este ID para parchear el nodo en el timeline sin recargar.
+    const ultimoDoc_sm_vc = await this.prisma.documento.findFirst({
+      where: { entrega_id_sm_vc: id_real_sm_vc, tipo_sm_vc: 'ENTREGABLE_ESTUDIANTE' },
+      orderBy: { fecha_subida_sm_vc: 'desc' },
+      select: { id_sm_vc: true },
+    });
+    const documentoIdParaParcheo_sm_vc = ultimoDoc_sm_vc?.id_sm_vc ?? null;
 
     // ✅ FIX: No hay más mapeador forzado a REPROBADO. El backend 
     // reconoce el estado OBSERVACIONES devuelto por Frontend a BD.
@@ -305,8 +311,11 @@ export class PasantiasService_sm_vc {
         estudianteId_sm_vc: entrega.estudiante_id_sm_vc,
         materiaId_sm_vc: entrega.requisito.materia_id_sm_vc,
         requisito_id_sm_vc: entrega.requisito_id_sm_vc,
-        estado_sm_vc: estadoReal_sm_vc, // APROBADO o REPROBADO
-        documento_id_original: entregaId, // 🚨 CRÍTICO: El ID que el frontend mandó inicialmente
+        estado_sm_vc: estadoReal_sm_vc,
+        // ✅ FIX WS TIEMPO REAL: Enviar el documento_id del ENTREGABLE del estudiante,
+        // NO el entregaId que recibió el backend. El chatStore necesita este ID para
+        // encontrar el nodo DOCUMENTO en el timeline y parchear su estado reactivamente.
+        documento_id_original: documentoIdParaParcheo_sm_vc,
         entrega_id_real: id_real_sm_vc
       });
 

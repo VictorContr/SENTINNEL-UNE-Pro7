@@ -361,7 +361,7 @@ export class UsersService_sm_vc {
     }
   }
 
-  async toggleBan_sm_vc(id_sm_vc: string) {
+  async toggleBan_sm_vc(id_sm_vc: string, adminUser_sm_vc: any) {
     const usuario_sm_vc = await this.prisma.usuario.findUnique({
       where: { id_sm_vc: parseInt(id_sm_vc) },
     });
@@ -370,14 +370,46 @@ export class UsersService_sm_vc {
       throw new NotFoundException(`Usuario ${id_sm_vc} no encontrado.`);
     }
 
-    return this.prisma.usuario.update({
+    // Determinar la nueva acción: si estaba activo = baneamos; si estaba baneado = restauramos
+    const nuevoEstado_sm_vc = !usuario_sm_vc.activo_sm_vc;
+    const accion_sm_vc = nuevoEstado_sm_vc ? 'restaurado' : 'baneado';
+
+    const usuarioActualizado_sm_vc = await this.prisma.usuario.update({
       where: { id_sm_vc: parseInt(id_sm_vc) },
-      data:  { activo_sm_vc: !usuario_sm_vc.activo_sm_vc },
+      data:  { activo_sm_vc: nuevoEstado_sm_vc },
       select: { id_sm_vc: true, nombre_sm_vc: true, activo_sm_vc: true },
     });
+
+    // 1. Notificación persistente en DB dirigida al usuario afectado
+    //    (sirve como registro histórico, lo verá cuando/si su cuenta se reactiva)
+    const tituloNotif_sm_vc = nuevoEstado_sm_vc
+      ? 'Acceso Restaurado'
+      : 'Cuenta Suspendida';
+    const contenidoNotif_sm_vc = nuevoEstado_sm_vc
+      ? `Tu acceso a SENTINNEL ha sido restaurado por el administrador ${adminUser_sm_vc?.nombre_sm_vc || 'del sistema'}.`
+      : `Tu acceso a SENTINNEL ha sido suspendido por el administrador ${adminUser_sm_vc?.nombre_sm_vc || 'del sistema'}. Contacta a la coordinación si crees que es un error.`;
+
+    await this.prisma.notificacion.create({
+      data: {
+        emisor_id_sm_vc:    adminUser_sm_vc?.id_sm_vc || 1,
+        receptor_id_sm_vc:  usuarioActualizado_sm_vc.id_sm_vc,
+        tipo_sm_vc:         'IMPORTANTE',
+        titulo_sm_vc:       tituloNotif_sm_vc,
+        contenido_sm_vc:    contenidoNotif_sm_vc,
+      },
+    });
+
+    // 2. Evento de sistema: notifica a todos los admins del cambio
+    this.eventEmitter.emit('usuario.modificado', {
+      emisorId: adminUser_sm_vc?.id_sm_vc || 1,
+      accion:   accion_sm_vc,
+      user:     usuarioActualizado_sm_vc.nombre_sm_vc,
+    });
+
+    return usuarioActualizado_sm_vc;
   }
 
-  async deleteUser_sm_vc(id_sm_vc: string) {
+  async deleteUser_sm_vc(id_sm_vc: string, adminUser_sm_vc: any) {
     const usuario_sm_vc = await this.prisma.usuario.findUnique({
       where: { id_sm_vc: parseInt(id_sm_vc) },
     });
@@ -386,12 +418,32 @@ export class UsersService_sm_vc {
       throw new NotFoundException(`Usuario ${id_sm_vc} no encontrado.`);
     }
 
-    // Borrado lógico: activo_sm_vc = false (auditoría total)
-    return this.prisma.usuario.update({
+    // Borrado lógico: activo_sm_vc = false (auditoría total — el registro nunca se borra de la DB)
+    const usuarioEliminado_sm_vc = await this.prisma.usuario.update({
       where: { id_sm_vc: parseInt(id_sm_vc) },
       data:  { activo_sm_vc: false },
       select: { id_sm_vc: true, nombre_sm_vc: true, correo_sm_vc: true, activo_sm_vc: true },
     });
+
+    // 1. Registro de auditoría como notificación persistente en DB
+    await this.prisma.notificacion.create({
+      data: {
+        emisor_id_sm_vc:    adminUser_sm_vc?.id_sm_vc || 1,
+        receptor_id_sm_vc:  usuarioEliminado_sm_vc.id_sm_vc,
+        tipo_sm_vc:         'IMPORTANTE',
+        titulo_sm_vc:       'Cuenta Desactivada',
+        contenido_sm_vc:    `Tu cuenta en SENTINNEL ha sido desactivada por el administrador ${adminUser_sm_vc?.nombre_sm_vc || 'del sistema'}.`,
+      },
+    });
+
+    // 2. Evento de sistema: notifica a todos los admins de la acción ejecutada
+    this.eventEmitter.emit('usuario.modificado', {
+      emisorId: adminUser_sm_vc?.id_sm_vc || 1,
+      accion:   'eliminado (soft-delete)',
+      user:     usuarioEliminado_sm_vc.nombre_sm_vc,
+    });
+
+    return usuarioEliminado_sm_vc;
   }
 
   /**

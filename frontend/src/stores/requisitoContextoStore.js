@@ -27,7 +27,17 @@ export const useRequisitoContextoStore = defineStore(
     
     /**
      * Calcula en tiempo real qué requisitos puede subir el estudiante.
-     * Excluye los APROBADOS y ENTREGADOS (esperando revisión).
+     *
+     * Un requisito aparece en el selector si cumple UNA de estas condiciones:
+     *  1. Nunca ha sido entregado (sin entrega registrada).
+     *  2. Está REPROBADO → el estudiante debe corregir y reenviar.
+     *  3. Está en OBSERVACIONES → el profesor dejó comentarios, debe reenviar.
+     *  4. Su documento activo es un MOCK (simulacro) y no está aprobado
+     *     → el estudiante debe reemplazarlo con su entrega real.
+     *
+     * Permanecen bloqueados:
+     *  - APROBADO → la entrega ya fue aceptada, no se modifica.
+     *  - ENTREGADO → está en revisión activa, no se permite duplicar entrega.
      */
     const getRequisitosDisponiblesEstudiante = computed(() => {
       return (estudianteId, materiaId) => {
@@ -38,11 +48,28 @@ export const useRequisitoContextoStore = defineStore(
         if (!materiaActiva || !materiaActiva.requisitos) return [];
 
         const entregas = materiaActiva.progreso?.entregas_detalle_sm_vc || [];
+
         return materiaActiva.requisitos.filter(req => {
           const entrega = entregas.find(e => String(e.requisito_id_sm_vc) === String(req.id_sm_vc));
-          if (!entrega) return true; // Nunca entregado -> Disponible
-          if (entrega.estado_sm_vc === 'REPROBADO') return true; // Reprobado -> Debe reenviar
-          return false; // Aprobado o en revisión -> Bloqueado
+
+          // Condición 1: Sin entrega previa → siempre disponible
+          if (!entrega) return true;
+
+          // Condición 2: Reprobado → debe reenviar
+          if (entrega.estado_sm_vc === 'REPROBADO') return true;
+
+          // Condición 3: Con observaciones del profesor → debe reenviar
+          if (entrega.estado_sm_vc === 'OBSERVACIONES') return true;
+
+          // Condición 4: Todos los documentos son mocks y no está aprobado
+          // → el estudiante debe reemplazar el simulacro con su entrega real
+          const tieneDocumentos = Array.isArray(entrega.documentos_sm_vc) && entrega.documentos_sm_vc.length > 0;
+          const todosSonMocks = tieneDocumentos && entrega.documentos_sm_vc.every(doc => doc.mock_sm_vc === true);
+          const noEstaAprobado = entrega.estado_sm_vc !== 'APROBADO';
+          if (todosSonMocks && noEstaAprobado) return true;
+
+          // APROBADO o ENTREGADO (en revisión) → bloqueado
+          return false;
         });
       };
     });

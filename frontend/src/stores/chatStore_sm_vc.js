@@ -216,35 +216,47 @@ export const useChatStore_sm_vc = defineStore("chat_sm_vc", () => {
          * de azul (ENTREGADO) a verde/rojo sin recargar la página.
          */
         socket_sm_vc.value.on("entrega_updated_sm_vc", async (payload_sm_vc) => {
-          console.log("🔄 [WS] Recibida actualización de entrega:", payload_sm_vc);
+          // ✅ LOG DE DEBUG: Permite verificar si el ID que llega coincide con el del nodo en UI
+          console.log('[SENTINNEL WS] Intento de parcheo de nodo. ID buscado:', payload_sm_vc.documento_id_original)
+          console.log("🔄 [WS] Recibida actualización de entrega:", payload_sm_vc)
 
           try {
-            // Importamos los stores necesarios
-            const { useConversacionStore_sm_vc } = await import("src/stores/conversacionStore");
-            const { usePasantiasStore } = await import("src/stores/pasantiasStore");
-            
-            const convStore = useConversacionStore_sm_vc();
-            const pasStore = usePasantiasStore();
+            const { useConversacionStore_sm_vc } = await import("src/stores/conversacionStore")
+            const { usePasantiasStore } = await import("src/stores/pasantiasStore")
 
-            // 🚨 Búsqueda estricta usando el documento_id_original
-            const nodo = convStore.conversaciones_sm_vc.find(n => 
-              n.tipo_nodo_sm_vc === 'DOCUMENTO' && 
+            const convStore = useConversacionStore_sm_vc()
+            const pasStore = usePasantiasStore()
+
+            // Buscar el índice del nodo DOCUMENTO en el array
+            const indice_sm_vc = convStore.conversaciones_sm_vc.findIndex(n =>
+              n.tipo_nodo_sm_vc === 'DOCUMENTO' &&
               Number(n.documento_id_sm_vc) === Number(payload_sm_vc.documento_id_original)
-            );
+            )
 
-            if (nodo) {
-              nodo.estado_sm_vc = payload_sm_vc.estado_sm_vc;
-              console.log(`✅ [WS] Nodo ${nodo.id_sm_vc} parcheado a ${payload_sm_vc.estado_sm_vc}`);
+            if (indice_sm_vc !== -1) {
+              // ✅ FIX REACTIVIDAD VUE 3: Reemplazar el objeto en el array (NO mutar propiedad directa).
+              // La mutación directa (nodo.estado = X) no garantiza que Vue dispare el re-render
+              // porque Pinia puede perder el tracking reactivo en arrays de objetos planos.
+              // splice() + Object.assign() crea un nuevo objeto → Vue detecta el cambio y re-renderiza.
+              const nodoActualizado_sm_vc = Object.assign(
+                {},
+                convStore.conversaciones_sm_vc[indice_sm_vc],
+                { estado_sm_vc: payload_sm_vc.estado_sm_vc }
+              )
+              convStore.conversaciones_sm_vc.splice(indice_sm_vc, 1, nodoActualizado_sm_vc)
+              console.log(`✅ [WS] Nodo doc-${payload_sm_vc.documento_id_original} parcheado a ${payload_sm_vc.estado_sm_vc} (índice ${indice_sm_vc})`)
+            } else {
+              console.warn(`⚠️ [WS] No se encontró nodo con documento_id_sm_vc=${payload_sm_vc.documento_id_original} en el store. El Hard Refresh se encargará.`)
             }
 
-            // Refrescar progreso general
+            // Refrescar progreso general en paralelo
             if (payload_sm_vc.estudianteId_sm_vc) {
-              pasStore.fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudianteId_sm_vc);
+              pasStore.fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudianteId_sm_vc)
             }
           } catch (err) {
-            console.error("❌ Error en el parcheo reactivo del socket:", err);
+            console.error("❌ Error en el parcheo reactivo del socket:", err)
           }
-        });
+        })
 
         /**
          * error_sm_vc: Notificaciones de error del servidor

@@ -48,13 +48,15 @@ export class UsersController_sm_vc {
 
   @Patch(':id/ban')
   @Roles_sm_vc('ADMIN')
-  async toggleBan_sm_vc(@Param('id') id_sm_vc: string) {
-    return this.usersService.toggleBan_sm_vc(id_sm_vc);
+  async toggleBan_sm_vc(@Req() req: any, @Param('id') id_sm_vc: string) {
+    // Pasamos el adminUser para que el servicio pueda auditar quién hizo el ban
+    return this.usersService.toggleBan_sm_vc(id_sm_vc, req.user);
   }
 
   @Delete(':id')
   @Roles_sm_vc('ADMIN')
-  async deleteUser_sm_vc(@Param('id') id_sm_vc: string) {
-    return this.usersService.deleteUser_sm_vc(id_sm_vc);
+  async deleteUser_sm_vc(@Req() req: any, @Param('id') id_sm_vc: string) {
+    // Pasamos el adminUser para que el servicio pueda auditar quién ejecutó la eliminación
+    return this.usersService.deleteUser_sm_vc(id_sm_vc, req.user);
   }
 }

@@ -184,7 +184,16 @@ export class ConversacionesService {
           remitente_id_sm_vc: payload.remitenteId ?? null,
           remitente_rol_sm_vc: payload.remitenteRol ?? null,
         },
-        include: { documento_sm_vc: true },
+        include: {
+          documento_sm_vc: {
+            include: {
+              // ✅ FIX TRAZABILIDAD: Join profundo para que formatearNodoTimeline_sm_vc
+              // pueda leer el estado real de la entrega y el nombre del requisito.
+              // Sin esto, el nodo WS no podía distinguir documentos APROBADOS de ENTREGADOS.
+              entrega: { include: { requisito: true } },
+            },
+          },
+        },
       });
 
       this.eventEmitter_sm_vc.emit('mensaje.creado_sm_vc', {
@@ -296,7 +305,15 @@ export class ConversacionesService {
             fecha_creacion_sm_vc: m.fecha_creacion_sm_vc,
             es_sistema_sm_vc:     m.es_sistema_sm_vc,
             requisito_id_sm_vc:   doc_sm_vc.entrega?.requisito_id_sm_vc ?? null,
+            // ✅ FIX TRAZABILIDAD: Exponer el entrega_id explícitamente para que el
+            // frontend lo use directamente en el payload de evaluación (no documento_id).
+            entrega_id_sm_vc:     doc_sm_vc.entrega_id_sm_vc ?? null,
+            // ✅ FIX CRÍTICO: El estado refleja la entrega real, NO un fallback fijo.
+            // Esto evita que documentos ya APROBADOS/OBSERVACIONES aparezcan
+            // como ENTREGADO en la lista de pendientes del profesor.
             estado_sm_vc:         doc_sm_vc.entrega?.estado_sm_vc ?? 'ENTREGADO',
+            // ✅ FIX TRAZABILIDAD: Nombre del requisito para confirmación visual del profesor.
+            requisito_nombre_sm_vc: doc_sm_vc.entrega?.requisito?.nombre_sm_vc ?? null,
             materia_id_sm_vc:
               doc_sm_vc.entrega?.requisito?.materia_id_sm_vc ??
               m.materia_id_sm_vc ??
@@ -359,9 +376,18 @@ export class ConversacionesService {
           ? `${(doc_sm_vc.tamanio_bytes_sm_vc / 1024).toFixed(1)} KB`
           : '1.2 MB',
         mock_sm_vc: doc_sm_vc.mock_sm_vc ?? false,
-        estado_sm_vc: 'ENTREGADO',
+        // ✅ FIX CRÍTICO DE TRAZABILIDAD: Leer el estado REAL de la entrega.
+        // Antes estaba hardcodeado como 'ENTREGADO', causando que documentos ya
+        // evaluados (APROBADOS/OBSERVACIONES) reaparecieran como pendientes en la UI.
+        // El nodo WS ahora refleja el estado real de la BD en tiempo real.
+        estado_sm_vc: doc_sm_vc.entrega?.estado_sm_vc ?? 'ENTREGADO',
+        // ✅ FIX TRAZABILIDAD: Exponer el entrega_id explícitamente.
+        // El frontend DEBE usar este campo (no documento_id_sm_vc) al armar
+        // el payload de evaluación para garantizar la vinculación 1:1.
+        entrega_id_sm_vc: doc_sm_vc.entrega_id_sm_vc ?? null,
         ruta_archivo_sm_vc: doc_sm_vc.ruta_archivo_sm_vc,
         requisito_id_sm_vc: doc_sm_vc.entrega?.requisito_id_sm_vc ?? null,
+        requisito_nombre_sm_vc: doc_sm_vc.entrega?.requisito?.nombre_sm_vc ?? null,
         remitente_id_sm_vc: mensaje_sm_vc.remitente_id_sm_vc ?? null,
         remitente_rol_sm_vc: mensaje_sm_vc.remitente_rol_sm_vc ?? null,
       });

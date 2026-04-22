@@ -196,12 +196,12 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         'es_reprobacion_global_sm_vc',
         payload_sm_vc.es_reprobacion_global_sm_vc ? 'true' : 'false'
       )
-      
+
       if (payload_sm_vc.es_reprobacion_global_sm_vc) {
-        if (payload_sm_vc.estudiante_id_sm_vc) formData.append('estudiante_id_sm_vc', payload_sm_vc.estudiante_id_sm_vc);
-        if (payload_sm_vc.materia_id_sm_vc) formData.append('materia_id_sm_vc', payload_sm_vc.materia_id_sm_vc);
+        if (payload_sm_vc.estudiante_id_sm_vc) formData.append('estudiante_id_sm_vc', payload_sm_vc.estudiante_id_sm_vc)
+        if (payload_sm_vc.materia_id_sm_vc) formData.append('materia_id_sm_vc', payload_sm_vc.materia_id_sm_vc)
       }
-      
+
       if (payload_sm_vc.archivo_correccion_sm_vc) {
         formData.append('archivo_correccion_sm_vc', payload_sm_vc.archivo_correccion_sm_vc)
       }
@@ -215,16 +215,35 @@ export const usePasantiasStore = defineStore('pasantias', () => {
         icon: 'how_to_reg'
       })
 
-      // 💥 Mutación optimista y reactiva para ESTADOS TERMINALES
+      // 💥 Mutación optimista para ESTADOS TERMINALES (reprobación global)
       if (payload_sm_vc.es_reprobacion_global_sm_vc || payload_sm_vc.estado_evaluacion_sm_vc === 'REPROBADO') {
         const itemProgreso_sm_vc = progreso_sm_vc.value.find(
           p => String(p.estudiante_id_sm_vc) === String(payload_sm_vc.estudiante_id_sm_vc) &&
               (String(p.id_sm_vc) === String(payload_sm_vc.materia_id_sm_vc) || String(p.materia_id_sm_vc) === String(payload_sm_vc.materia_id_sm_vc))
-        );
-        if (itemProgreso_sm_vc) itemProgreso_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO';
+        )
+        if (itemProgreso_sm_vc) itemProgreso_sm_vc.estado_aprobacion_sm_vc = 'REPROBADO'
       }
 
-      // Refrescamos progreso del estudiante
+      // ✅ OPCIÓN NUCLEAR DE SINCRONIZACIÓN: Hard Refresh del chat post-evaluación.
+      // No dependemos del parcheo WS (que puede fallar por mismatch de IDs).
+      // Una vez que el servidor confirma éxito (200 OK), recargamos los mensajes
+      // directamente desde la BD para garantizar la verdad absoluta en la UI.
+      if (payload_sm_vc.estudiante_id_sm_vc && payload_sm_vc.materia_id_sm_vc) {
+        try {
+          const { useConversacionStore_sm_vc } = await import('src/stores/conversacionStore')
+          const convStore_sm_vc = useConversacionStore_sm_vc()
+          await convStore_sm_vc.obtenerConversacion_sm_vc(
+            payload_sm_vc.estudiante_id_sm_vc,
+            payload_sm_vc.materia_id_sm_vc
+          )
+          console.log('[SENTINNEL] Hard Refresh del chat completado post-evaluación.')
+        } catch (refreshErr_sm_vc) {
+          // El hard refresh es best-effort: si falla, el WS se encargará de actualizar
+          console.warn('[SENTINNEL] Hard Refresh falló (no crítico):', refreshErr_sm_vc)
+        }
+      }
+
+      // Refrescamos progreso del estudiante en paralelo
       if (payload_sm_vc.estudiante_id_sm_vc) {
         await fetch_progreso_estudiante_sm_vc(payload_sm_vc.estudiante_id_sm_vc)
       }

@@ -144,6 +144,18 @@
             <q-item-section avatar><q-avatar size="32px" color="blue-grey-9" text-color="blue-grey-4"><q-icon name="description" size="16px" /></q-avatar></q-item-section>
             <q-item-section>
               <q-item-label style="font-size: 0.8rem; font-weight: 600;">{{ doc.archivo_nombre_sm_vc || 'Documento sin nombre' }}</q-item-label>
+              <!-- ✅ FIX TRAZABILIDAD: Mostrar el requisito al que pertenece el documento.
+                   El profesor puede confirmar visualmente que está evaluando el requisito correcto
+                   antes de confirmar la vinculación, eliminando errores de selección. -->
+              <q-item-label
+                v-if="doc.requisito_nombre_sm_vc"
+                caption
+                class="text-teal-3"
+                style="font-size: 0.62rem; font-weight: 600; letter-spacing: 0.05em;"
+              >
+                <q-icon name="link" size="10px" class="q-mr-xs" />
+                Requisito: {{ doc.requisito_nombre_sm_vc }}
+              </q-item-label>
               <q-item-label caption class="text-grey-5" style="font-size: 0.65rem;">{{ formatDateTime_sm_vc(doc.fecha_creacion_sm_vc) }}</q-item-label>
             </q-item-section>
             <q-item-section side><q-badge color="amber-9" text-color="dark" label="ENTREGADO" style="font-size: 0.52rem;" /></q-item-section>
@@ -360,7 +372,10 @@ const emitirRespuesta_sm_vc = async (entrega_sm_vc) => {
     emit("responder", {
       ...form_sm_vc.value,
       archivo_correccion_sm_vc: form_sm_vc.value.archivo_raw_sm_vc,
-      id_entrega_sm_vc: esReprobacionGlobal_sm_vc ? null : (entrega_sm_vc?.documento_id_sm_vc ?? null),
+      // ✅ FIX CRÍTICO DE TRAZABILIDAD: Usar el entrega_id_sm_vc (FK real hacia la tabla Entrega)
+      // y NO el documento_id_sm_vc. El backend ahora es estricto y rechaza cualquier
+      // otro identificador, garantizando el mapeo 1:1 Documento -> Entrega -> Requisito.
+      id_entrega_sm_vc: esReprobacionGlobal_sm_vc ? null : (entrega_sm_vc?.entrega_id_sm_vc ?? null),
       es_reprobacion_global_sm_vc: esReprobacionGlobal_sm_vc,
     });
 
